@@ -1,0 +1,6 @@
+{
+  "name": "Fresh Mints",
+  "description": "Identify newly minted and licensed professionals across 13 high-value industries (including Financial Advisors, CPAs, Real Estate, Healthcare & Law), audit live web presence, skip trace contact coordinates, and pitch custom turnkey websites with 2-year hosting included.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
