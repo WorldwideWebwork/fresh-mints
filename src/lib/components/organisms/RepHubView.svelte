@@ -213,24 +213,26 @@
     }
   }
 
-  function handleCopyPhone() {
+  import { copyTextToClipboard } from '../../services/clipboard';
+
+  async function handleCopyPhone() {
     if (!activeLead?.skipTraceData?.verifiedPhone) return;
-    navigator.clipboard.writeText(activeLead.skipTraceData.verifiedPhone);
-    toast.success('Phone copied to clipboard');
+    const success = await copyTextToClipboard(activeLead.skipTraceData.verifiedPhone);
+    if (success) toast.success('Phone copied to clipboard');
   }
 
-  function handleCopyScript() {
+  async function handleCopyScript() {
     if (!scriptData) return;
     const fullText = `HOOK:\n${scriptData.openingHook}\n\nVALUE PITCH:\n${scriptData.valuePitch}\n\n2-YEAR OFFER:\n${scriptData.twoYearOffer}\n\nDOMAIN EQUITY:\n${scriptData.domainEquityClause}`;
-    navigator.clipboard.writeText(fullText);
-    toast.success('Full cold call script copied');
+    const success = await copyTextToClipboard(fullText);
+    if (success) toast.success('Full cold call script copied');
   }
 
-  function handleCopyPitchLink() {
+  async function handleCopyPitchLink() {
     if (!activeLead) return;
     const link = getPreviewLink(activeLead);
-    navigator.clipboard.writeText(link);
-    toast.success('Preview pitch link copied to clipboard');
+    const success = await copyTextToClipboard(link);
+    if (success) toast.success('Preview pitch link copied to clipboard');
   }
 
   function handleGoogleSearch() {

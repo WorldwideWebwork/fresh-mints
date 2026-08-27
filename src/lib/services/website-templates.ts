@@ -1,4 +1,4 @@
-import { type ProfessionCategory, type WebsitePreviewConfig, PROFESSION_CONFIGS } from '../types/lead';
+import { type ProfessionCategory, type WebsitePreviewConfig, type Lead, PROFESSION_CONFIGS } from '../types/lead';
 
 export interface WebsiteThemePreset {
   id: string;
@@ -152,6 +152,7 @@ export function getDefaultWebsiteConfig(
     offerPrice: profMeta.averageWebsiteValue || 1650,
     previewSlug: `${cleanName}-official`,
     callToAction: 'Schedule Free Consultation',
+    templateTheme: 'executive_dark',
     demoPhotos: [
       `https://picsum.photos/seed/${cleanName}1/800/600`,
       `https://picsum.photos/seed/${cleanName}2/800/600`,
@@ -179,17 +180,31 @@ export function getDefaultWebsiteConfig(
   };
 }
 
-export function getPreviewLink(target: string | { id: string; websiteConfig?: { previewSlug?: string } }): string {
-  const slug = typeof target === 'string'
-    ? target
-    : target?.websiteConfig?.previewSlug || target?.id || 'demo';
+export function getPreviewLink(target: string | Partial<Lead> | { id: string; websiteConfig?: { previewSlug?: string } }): string {
+  let slug = 'demo';
+
+  if (typeof target === 'string') {
+    slug = target;
+  } else if (target && typeof target === 'object') {
+    slug = target.websiteConfig?.previewSlug || target.id || 'demo';
+    // Cache the lead in browser storage so that opening in a standalone new tab has instant access to full lead info
+    if (typeof window !== 'undefined') {
+      try {
+        const cleanKey = `fm_preview_${slug.toLowerCase().replace(/^\/?preview\/?/, '').replace(/^\/+/, '')}`;
+        sessionStorage.setItem(cleanKey, JSON.stringify(target));
+        localStorage.setItem(cleanKey, JSON.stringify(target));
+      } catch (e) {
+        // Storage quota / error ignore
+      }
+    }
+  }
 
   const cleanSlug = encodeURIComponent(slug.toLowerCase().replace(/^\/?preview\/?/, '').replace(/^\/+/, ''));
 
   if (typeof window !== 'undefined' && window.location?.origin) {
     const basePath = window.location.pathname.replace(/\/+$/, '');
-    return `${window.location.origin}${basePath}/#/preview/${cleanSlug}`;
+    const search = window.location.search || '';
+    return `${window.location.origin}${basePath}/${search}#/preview/${cleanSlug}`.replace(/([^:])\/\//g, '$1/');
   }
   return `#/preview/${cleanSlug}`;
 }
-

@@ -195,6 +195,7 @@ export interface WebsitePreviewConfig {
   offerPrice: number;
   previewSlug: string;
   demoPhotos: string[];
+  templateTheme?: 'executive_dark' | 'clinical_light';
 }
 
 export interface ExistingWebsiteAudit {

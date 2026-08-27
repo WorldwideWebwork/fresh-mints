@@ -91,14 +91,18 @@
     }
   }
 
-  function handleCopy() {
+  import { copyTextToClipboard } from '../../services/clipboard';
+
+  async function handleCopy() {
     const text = activeTab === 'email' ? `Subject: ${emailSubject}\n\n${emailBody}` : smsBody;
-    navigator.clipboard.writeText(text);
-    copied = true;
-    toast.success('Copied to clipboard!');
-    setTimeout(() => {
-      copied = false;
-    }, 2000);
+    const success = await copyTextToClipboard(text);
+    if (success) {
+      copied = true;
+      toast.success('Copied to clipboard!');
+      setTimeout(() => {
+        copied = false;
+      }, 2000);
+    }
   }
 
   async function handleMarkSent() {

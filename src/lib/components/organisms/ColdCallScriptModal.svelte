@@ -19,7 +19,9 @@
     lead ? generateColdCallScript(lead, lead.estimatedDealValue) : null
   );
 
-  function copyScript() {
+  import { copyTextToClipboard } from '../../services/clipboard';
+
+  async function copyScript() {
     if (!scriptData) return;
     const fullText = `
 HOOK:
@@ -34,8 +36,8 @@ ${scriptData.twoYearOffer}
 DOMAIN EQUITY CLAUSE:
 ${scriptData.domainEquityClause}
     `.trim();
-    navigator.clipboard.writeText(fullText);
-    toast.success('Call script copied to clipboard!');
+    const success = await copyTextToClipboard(fullText);
+    if (success) toast.success('Call script copied to clipboard!');
   }
 </script>
 
