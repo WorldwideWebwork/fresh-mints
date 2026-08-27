@@ -6,15 +6,16 @@
   import Dialog from '../atoms/Dialog.svelte';
   import Button from '../atoms/Button.svelte';
   import Badge from '../atoms/Badge.svelte';
-  import { Send, Sparkles, Copy, Mail, MessageSquare, Check, RotateCw } from 'lucide-svelte';
+  import { Send, Sparkles, Copy, Mail, MessageSquare, Check, RotateCw, PhoneCall, Kanban, FileText } from 'lucide-svelte';
 
   interface Props {
     open?: boolean;
     lead?: Lead | null;
     onclose?: () => void;
+    onopenmodal?: (modalName: string, lead: Lead) => void;
   }
 
-  let { open = $bindable(false), lead = null, onclose }: Props = $props();
+  let { open = $bindable(false), lead = null, onclose, onopenmodal }: Props = $props();
 
   let selectedTemplateId = $state('industry_board_pass');
   let activeTab = $state<'email' | 'sms'>('email');
@@ -23,6 +24,28 @@
   let emailBody = $state('');
   let smsBody = $state('');
   let copied = $state(false);
+
+  function handleOpenRepHub() {
+    if (!lead) return;
+    leadStore.setSelectedLeadId(lead.id);
+    leadStore.setActiveTab('rephub');
+    open = false;
+    onclose?.();
+    toast.info('Loaded in Rep Hub', `${lead.fullName} ready for live dial`);
+  }
+
+  function handleOpenPipeline() {
+    if (!lead) return;
+    leadStore.setSelectedLeadId(lead.id);
+    leadStore.setActiveTab('kanban');
+    open = false;
+    onclose?.();
+  }
+
+  function handleOpenDossier() {
+    if (!lead) return;
+    onopenmodal?.('lead_detail', lead);
+  }
 
   $effect(() => {
     if (lead) {
@@ -213,19 +236,31 @@
         </div>
       {/if}
 
-      <!-- Bottom Action Bar -->
-      <div class="flex items-center justify-between gap-3 pt-3 border-t border-slate-200 dark:border-slate-800">
-        <Button variant="outline" size="sm" onclick={handleCopy} class="gap-1.5 text-xs">
-          {#if copied}
-            <Check class="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
-            <span>Copied!</span>
-          {:else}
-            <Copy class="w-3.5 h-3.5" />
-            <span>Copy to Clipboard</span>
-          {/if}
-        </Button>
+      <!-- Bottom Action Bar with Fluid Links -->
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-3 border-t border-slate-200 dark:border-slate-800">
+        <div class="flex items-center gap-2 flex-wrap">
+          <Button variant="outline" size="sm" onclick={handleCopy} class="gap-1.5 text-xs">
+            {#if copied}
+              <Check class="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
+              <span>Copied!</span>
+            {:else}
+              <Copy class="w-3.5 h-3.5" />
+              <span>Copy to Clipboard</span>
+            {/if}
+          </Button>
 
-        <div class="flex items-center gap-2">
+          <Button variant="outline" size="sm" onclick={handleOpenRepHub} class="gap-1.5 text-xs text-emerald-700 dark:text-emerald-300 border-emerald-800">
+            <PhoneCall class="w-3.5 h-3.5" />
+            <span>Open in Rep Hub</span>
+          </Button>
+
+          <Button variant="outline" size="sm" onclick={handleOpenDossier} class="gap-1.5 text-xs text-slate-700 dark:text-slate-300">
+            <FileText class="w-3.5 h-3.5 text-teal-600" />
+            <span>Dossier</span>
+          </Button>
+        </div>
+
+        <div class="flex items-center gap-2 justify-end">
           <Button
             variant="ghost"
             size="sm"
@@ -237,7 +272,7 @@
           >
             Cancel
           </Button>
-          <Button variant="primary" size="sm" onclick={handleMarkSent} class="gap-1.5 text-xs">
+          <Button variant="primary" size="sm" onclick={handleMarkSent} class="gap-1.5 text-xs font-bold">
             <Send class="w-3.5 h-3.5" />
             <span>Record Log & Mark Sent</span>
           </Button>

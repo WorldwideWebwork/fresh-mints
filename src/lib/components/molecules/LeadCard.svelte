@@ -77,13 +77,24 @@
     toast.info(`Moved ${lead.fullName}`, `Returned to stage: ${prevStage}`);
   }
 
+  function handleOpenRepHub(e: MouseEvent) {
+    e.stopPropagation();
+    leadStore.setSelectedLeadId(lead.id);
+    leadStore.setActiveTab('rephub');
+    toast.info('Loaded in Rep Hub', `${lead.fullName} ready for live dial`);
+  }
+
   function handleStageSelect(e: Event) {
     e.stopPropagation();
     const select = e.target as HTMLSelectElement;
     const newStage = select.value as OutreachStatus;
     if (newStage && newStage !== lead.outreachStatus) {
       leadStore.updateLead(lead.id, { outreachStatus: newStage });
-      toast.success(`Stage Updated`, `${lead.fullName} is now in ${newStage}`);
+      if (newStage === 'Client Won') {
+        toast.success('🏆 Deal Closed Won!', `$300.00 cash bounty locked for ${lead.fullName}`);
+      } else {
+        toast.success(`Stage Updated`, `${lead.fullName} is now in ${newStage}`);
+      }
     }
   }
 </script>
@@ -184,6 +195,18 @@
     </div>
 
     <div class="flex items-center gap-0.5">
+      <!-- 0. Dial in Rep Hub -->
+      <Tooltip text="Start Live Dial in Rep Hub" position="top">
+        <Button
+          variant="ghost"
+          size="sm"
+          onclick={handleOpenRepHub}
+          class="p-1.5 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-950/60"
+        >
+          <PhoneCall class="w-3.5 h-3.5" />
+        </Button>
+      </Tooltip>
+
       <Tooltip text="Audit Website" position="top">
         <Button
           variant="ghost"

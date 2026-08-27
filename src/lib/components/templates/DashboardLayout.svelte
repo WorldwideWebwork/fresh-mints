@@ -20,12 +20,15 @@
     Trash2,
     Info,
     Sun,
-    Moon
+    Moon,
+    Globe,
+    Send,
+    FileText
   } from "lucide-svelte";
 
   interface Props {
     children?: Snippet;
-    onopenmodal?: (modalName: string) => void;
+    onopenmodal?: (modalName: string, lead?: any) => void;
     onopenconfirmclear?: () => void;
   }
 
@@ -367,6 +370,88 @@
         </div>
       </div>
     </header>
+
+    <!-- Active Lead Quick-Context Bar (Fluid multi-tool launcher) -->
+    {#if leadStore.selectedLead}
+      {@const activeL = leadStore.selectedLead}
+      <div
+        class="px-4 sm:px-6 lg:px-8 py-2 bg-[var(--fm-surface-raised)]/90 border-b border-[var(--fm-border-subtle)] flex flex-wrap items-center justify-between gap-3 text-xs backdrop-blur-md transition-colors"
+      >
+        <!-- Active Lead Info -->
+        <div class="flex items-center gap-2.5 min-w-0">
+          <div class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse shrink-0"></div>
+          <span class="text-[11px] font-bold uppercase tracking-wider text-[var(--fm-text-muted)] shrink-0">Active Lead:</span>
+          <button
+            type="button"
+            onclick={() => onopenmodal?.('lead_detail', activeL)}
+            class="font-bold text-[var(--fm-text)] hover:text-emerald-600 dark:hover:text-emerald-400 truncate max-w-[200px] cursor-pointer hover:underline"
+            title="Open Full Lead Dossier"
+          >
+            {activeL.fullName}
+          </button>
+          <span class="text-[var(--fm-text-muted)] text-[11px] hidden sm:inline truncate max-w-[150px]">
+            &bull; {activeL.professionTitle}
+          </span>
+          <span class="px-2 py-0.5 rounded-full text-[10px] font-mono font-bold bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 border border-emerald-500/30 shrink-0">
+            {activeL.outreachStatus}
+          </span>
+        </div>
+
+        <!-- 1-Click Multi-Tool Jump Pills -->
+        <div class="flex items-center gap-1.5 flex-wrap">
+          <button
+            type="button"
+            onclick={() => onopenmodal?.('lead_detail', activeL)}
+            class="px-2.5 py-1 rounded-lg text-[11px] font-semibold bg-[var(--fm-surface-sunken)] border border-[var(--fm-border-subtle)] text-[var(--fm-text)] hover:border-emerald-500/50 hover:text-emerald-600 dark:hover:text-emerald-400 transition-all cursor-pointer flex items-center gap-1"
+          >
+            <FileText class="w-3 h-3 text-emerald-600 dark:text-emerald-400" />
+            <span>Dossier</span>
+          </button>
+
+          <button
+            type="button"
+            onclick={() => {
+              leadStore.setSelectedLeadId(activeL.id);
+              leadStore.setActiveTab('rephub');
+            }}
+            class="px-2.5 py-1 rounded-lg text-[11px] font-semibold bg-emerald-500/10 border border-emerald-500/30 text-emerald-700 dark:text-emerald-300 hover:bg-emerald-500/20 transition-all cursor-pointer flex items-center gap-1"
+          >
+            <PhoneCall class="w-3 h-3 text-emerald-600 dark:text-emerald-400" />
+            <span>Rep Hub Dial</span>
+          </button>
+
+          <button
+            type="button"
+            onclick={() => {
+              leadStore.setSelectedLeadId(activeL.id);
+              leadStore.setActiveTab('kanban');
+            }}
+            class="px-2.5 py-1 rounded-lg text-[11px] font-semibold bg-purple-500/10 border border-purple-500/30 text-purple-700 dark:text-purple-300 hover:bg-purple-500/20 transition-all cursor-pointer flex items-center gap-1"
+          >
+            <Kanban class="w-3 h-3 text-purple-600 dark:text-purple-400" />
+            <span>Pipeline</span>
+          </button>
+
+          <button
+            type="button"
+            onclick={() => onopenmodal?.('website_builder', activeL)}
+            class="px-2.5 py-1 rounded-lg text-[11px] font-semibold bg-cyan-500/10 border border-cyan-500/30 text-cyan-700 dark:text-cyan-300 hover:bg-cyan-500/20 transition-all cursor-pointer flex items-center gap-1"
+          >
+            <Globe class="w-3 h-3 text-cyan-600 dark:text-cyan-400" />
+            <span>Preview</span>
+          </button>
+
+          <button
+            type="button"
+            onclick={() => onopenmodal?.('outreach_generator', activeL)}
+            class="px-2.5 py-1 rounded-lg text-[11px] font-semibold bg-amber-500/10 border border-amber-500/30 text-amber-700 dark:text-amber-300 hover:bg-amber-500/20 transition-all cursor-pointer flex items-center gap-1"
+          >
+            <Send class="w-3 h-3 text-amber-600 dark:text-amber-400" />
+            <span>Pitch</span>
+          </button>
+        </div>
+      </div>
+    {/if}
 
     <!-- Main Content Container -->
     <main

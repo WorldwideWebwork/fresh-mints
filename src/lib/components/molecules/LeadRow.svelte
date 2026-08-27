@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { type Lead, PROFESSION_CONFIGS } from '../../types/lead';
+  import { type Lead, OUTREACH_STAGES, PROFESSION_CONFIGS } from '../../types/lead';
   import { leadStore } from '../../stores/lead-store.svelte';
   import { toast } from '../../stores/toast.svelte';
   import { CRMExportService } from '../../services/crm-export-service';
@@ -26,6 +26,27 @@
   function handleRowClick() {
     onselect?.();
     onopenmodal?.('lead_detail', lead);
+  }
+
+  function handleOpenRepHub(e: MouseEvent) {
+    e.stopPropagation();
+    leadStore.setSelectedLeadId(lead.id);
+    leadStore.setActiveTab('rephub');
+    toast.info('Loaded in Rep Hub', `${lead.fullName} ready for live dial`);
+  }
+
+  async function handleStageChange(e: Event) {
+    e.stopPropagation();
+    const select = e.target as HTMLSelectElement;
+    const newStage = select.value as any;
+    if (newStage && newStage !== lead.outreachStatus) {
+      await leadStore.updateLead(lead.id, { outreachStatus: newStage });
+      if (newStage === 'Client Won') {
+        toast.success('🏆 Deal Closed Won!', `$300.00 cash bounty locked for ${lead.fullName}`);
+      } else {
+        toast.success('Pipeline Stage Updated', `${lead.fullName} moved to ${newStage}`);
+      }
+    }
   }
 
   function handleOpenCrm(e: MouseEvent) {
@@ -85,9 +106,23 @@
     <ContactBadgeList data={lead.skipTraceData} />
   </td>
 
-  <!-- Outreach / Pipeline Stage -->
-  <td class="py-3.5 px-4 whitespace-nowrap">
-    <StatusIndicator status={lead.outreachStatus} />
+  <!-- Outreach / Pipeline Stage with Inline Changer -->
+  <td class="py-3.5 px-4 whitespace-nowrap" onclick={(e) => e.stopPropagation()}>
+    <div class="relative inline-flex items-center group/stage">
+      <StatusIndicator status={lead.outreachStatus} />
+      <select
+        value={lead.outreachStatus}
+        onchange={handleStageChange}
+        class="opacity-0 absolute inset-0 w-full h-full cursor-pointer z-10"
+        title="Click to change pipeline stage"
+      >
+        {#each OUTREACH_STAGES as stage}
+          <option value={stage} class="bg-white dark:bg-slate-900 text-slate-900 dark:text-white">
+            {stage}
+          </option>
+        {/each}
+      </select>
+    </div>
   </td>
 
   <!-- Deal Value & 2-Yr Package -->
@@ -99,6 +134,18 @@
   <!-- Action Buttons -->
   <td class="py-3.5 px-4 text-right whitespace-nowrap" onclick={(e) => e.stopPropagation()}>
     <div class="flex items-center justify-end gap-1.5">
+      <!-- 0. Dial in Rep Hub -->
+      <Tooltip text="Start Live Dial in Rep Hub" position="top">
+        <Button
+          variant="ghost"
+          size="sm"
+          onclick={handleOpenRepHub}
+          class="text-xs px-2 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-950/60"
+        >
+          <PhoneCall class="w-3.5 h-3.5" />
+        </Button>
+      </Tooltip>
+
       <!-- 1. Audit Website Presence -->
       <Tooltip text="Website Presence Audit" position="top">
         <Button

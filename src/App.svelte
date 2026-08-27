@@ -45,51 +45,146 @@
 
   let isClearConfirmOpen = $state(false);
   let isAppLoading = $state(true);
+  let isNavigating = false;
+  let hasMounted = false;
 
-  function checkPreviewRoute() {
+  // Browser History & Route Parser (executed ONLY on popstate/hashchange and initial mount)
+  function parseUrlRoute() {
     if (typeof window === 'undefined') return;
+    isNavigating = true;
 
-    // Check hash (e.g. #/preview/david-sinclair-official or #preview-david-sinclair)
-    const hash = window.location.hash || '';
-    if (hash.startsWith('#/preview/')) {
-      standalonePreviewSlug = hash.replace('#/preview/', '');
-      return;
-    }
-    if (hash.startsWith('#preview-')) {
-      standalonePreviewSlug = hash.replace('#preview-', '');
-      return;
-    }
+    try {
+      const hash = window.location.hash || '';
 
-    // Check query params (e.g. ?preview=david-sinclair-official)
-    const params = new URLSearchParams(window.location.search);
-    const queryPreview = params.get('preview');
-    if (queryPreview) {
-      standalonePreviewSlug = queryPreview;
-      return;
-    }
-
-    // Check path (e.g. /preview/david-sinclair-official)
-    const path = window.location.pathname || '';
-    if (path.includes('/preview/')) {
-      const match = path.match(/\/preview\/([^/?#]+)/);
-      if (match && match[1]) {
-        standalonePreviewSlug = match[1];
+      // 1. Standalone Practice Website Preview Route: #/preview/slug
+      if (hash.startsWith('#/preview/')) {
+        const slug = hash.replace('#/preview/', '').split('?')[0];
+        standalonePreviewSlug = slug;
+        const found = leadStore.leads.find(
+          (l) => (l.websiteConfig?.previewSlug || l.id) === slug
+        );
+        if (found) standalonePreviewLead = found;
         return;
       }
+      if (hash.startsWith('#preview-')) {
+        const slug = hash.replace('#preview-', '').split('?')[0];
+        standalonePreviewSlug = slug;
+        const found = leadStore.leads.find(
+          (l) => (l.websiteConfig?.previewSlug || l.id) === slug
+        );
+        if (found) standalonePreviewLead = found;
+        return;
+      }
+
+      standalonePreviewSlug = null;
+      standalonePreviewLead = null;
+
+      // 2. Main Deck Hash (e.g. #/kanban?lead=123&modal=lead_detail)
+      const cleanHash = hash.replace(/^#\/?/, '');
+      if (!cleanHash || cleanHash === 'fresh-mints') {
+        return;
+      }
+
+      const [pathSegment, querySegment] = cleanHash.split('?');
+      const params = new URLSearchParams(querySegment || '');
+
+      const validTabs = ['search', 'leads', 'kanban', 'rephub', 'economics', 'analytics'];
+      let targetTab = pathSegment;
+      if (targetTab.startsWith('view/')) {
+        targetTab = targetTab.replace('view/', '');
+      }
+
+      const isCustomTab = leadStore.customTabs.some((t) => t.id === targetTab);
+      if (validTabs.includes(targetTab) || isCustomTab) {
+        leadStore.setActiveTab(targetTab);
+      }
+
+      const leadId = params.get('lead');
+      if (leadId) {
+        leadStore.setSelectedLeadId(leadId);
+      }
+
+      const modalName = params.get('modal');
+      if (modalName) {
+        const activeTargetLead =
+          leadStore.leads.find((l) => l.id === (leadId || leadStore.selectedLeadId)) ||
+          leadStore.selectedLead;
+        modalState = {
+          name: modalName,
+          lead: activeTargetLead,
+        };
+      } else {
+        modalState = {
+          name: null,
+          lead: null,
+        };
+      }
+    } finally {
+      setTimeout(() => {
+        isNavigating = false;
+      }, 50);
+    }
+  }
+
+  // Push or Replace browser history entry
+  function syncStateToUrl(push: boolean = true) {
+    if (typeof window === 'undefined' || isNavigating || !hasMounted) return;
+
+    if (standalonePreviewSlug) {
+      const targetHash = `#/preview/${standalonePreviewSlug}`;
+      if (window.location.hash !== targetHash) {
+        if (push) history.pushState(null, '', targetHash);
+        else history.replaceState(null, '', targetHash);
+      }
+      return;
     }
 
-    standalonePreviewSlug = null;
+    let tabPath = leadStore.activeTab;
+    if (leadStore.customTabs.some((t) => t.id === tabPath)) {
+      tabPath = `view/${tabPath}`;
+    }
+
+    const params = new URLSearchParams();
+    if (modalState.name) {
+      params.set('modal', modalState.name);
+    }
+
+    const targetLeadId = modalState.lead?.id || leadStore.selectedLeadId;
+    if (targetLeadId && (modalState.name || leadStore.activeTab === 'rephub')) {
+      params.set('lead', targetLeadId);
+    }
+
+    const queryString = params.toString() ? `?${params.toString()}` : '';
+    const targetHash = `#/${tabPath}${queryString}`;
+
+    if (window.location.hash !== targetHash) {
+      if (push) {
+        history.pushState(null, '', targetHash);
+      } else {
+        history.replaceState(null, '', targetHash);
+      }
+    }
   }
 
   onMount(() => {
-    checkPreviewRoute();
-    window.addEventListener('popstate', checkPreviewRoute);
-    window.addEventListener('hashchange', checkPreviewRoute);
+    hasMounted = true;
+    parseUrlRoute();
+
+    window.addEventListener('popstate', parseUrlRoute);
+    window.addEventListener('hashchange', parseUrlRoute);
 
     return () => {
-      window.removeEventListener('popstate', checkPreviewRoute);
-      window.removeEventListener('hashchange', checkPreviewRoute);
+      window.removeEventListener('popstate', parseUrlRoute);
+      window.removeEventListener('hashchange', parseUrlRoute);
     };
+  });
+
+  // Track tab changes in browser history
+  $effect(() => {
+    const _tab = leadStore.activeTab;
+    if (hasMounted && !isNavigating) {
+      syncStateToUrl(true);
+    }
   });
 
   function openModal(name: string, lead?: Lead) {
@@ -97,10 +192,15 @@
       isClearConfirmOpen = true;
       return;
     }
+    const targetLead = lead || leadStore.selectedLead;
     modalState = {
       name,
-      lead: lead || leadStore.selectedLead,
+      lead: targetLead,
     };
+    if (targetLead) {
+      leadStore.setSelectedLeadId(targetLead.id);
+    }
+    syncStateToUrl(true);
   }
 
   function closeModal() {
@@ -108,18 +208,19 @@
       name: null,
       lead: null,
     };
+    syncStateToUrl(true);
   }
 
   function handleOpenFullPreview(lead: Lead) {
     standalonePreviewLead = lead;
     standalonePreviewSlug = lead.websiteConfig?.previewSlug || lead.id;
-    window.location.hash = `#/preview/${standalonePreviewSlug}`;
+    syncStateToUrl(true);
   }
 
   function handleCloseFullPreview() {
     standalonePreviewSlug = null;
     standalonePreviewLead = null;
-    window.location.hash = '';
+    syncStateToUrl(true);
   }
 </script>
 
@@ -168,7 +269,7 @@
   </DashboardLayout>
 {/if}
 
-<!-- Modals -->
+<!-- Modals with Fluid History Integration -->
 <WebsiteBuilderModal
   open={modalState.name === 'website_builder'}
   lead={modalState.lead}
@@ -181,18 +282,21 @@
   open={modalState.name === 'call_script'}
   lead={modalState.lead}
   onclose={closeModal}
+  onopenmodal={openModal}
 />
 
 <OutreachGeneratorModal
   open={modalState.name === 'outreach_generator'}
   lead={modalState.lead}
   onclose={closeModal}
+  onopenmodal={openModal}
 />
 
 <LeadDetailModal
   open={modalState.name === 'lead_detail'}
   lead={modalState.lead}
   onclose={closeModal}
+  onopenmodal={openModal}
 />
 
 <WebsiteAuditModal

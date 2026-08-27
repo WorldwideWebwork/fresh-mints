@@ -51,6 +51,9 @@
     HelpCircle,
     MessageSquare,
     TrendingUp,
+    Kanban,
+    Table,
+    FileText,
   } from 'lucide-svelte';
 
   interface Props {
@@ -125,11 +128,33 @@
     profMeta ? W4_HOSTING_PLANS[profMeta.hostingTier] || W4_HOSTING_PLANS.bronze : null
   );
 
+  // Sync activeLeadIndex when leadStore.selectedLeadId changes globally
+  $effect(() => {
+    if (leadStore.selectedLeadId) {
+      const queueIdx = activeQueue.findIndex((l) => l.id === leadStore.selectedLeadId);
+      if (queueIdx !== -1) {
+        activeLeadIndex = queueIdx;
+      } else {
+        const leadExists = leadStore.leads.find((l) => l.id === leadStore.selectedLeadId);
+        if (leadExists) {
+          queueFilter = 'all';
+          const allIdx = leadStore.leads.findIndex((l) => l.id === leadStore.selectedLeadId);
+          if (allIdx !== -1) {
+            activeLeadIndex = allIdx;
+          }
+        }
+      }
+    }
+  });
+
   // Sync notes when active lead changes
   $effect(() => {
     if (activeLead) {
       callNotesInput = activeLead.notes || '';
       selectedObjectionIndex = null;
+      if (leadStore.selectedLeadId !== activeLead.id) {
+        leadStore.setSelectedLeadId(activeLead.id);
+      }
     }
   });
 
@@ -139,6 +164,8 @@
     } else {
       activeLeadIndex = 0;
     }
+    const target = activeQueue[activeLeadIndex];
+    if (target) leadStore.setSelectedLeadId(target.id);
   }
 
   function handlePrevLead() {
@@ -147,6 +174,8 @@
     } else {
       activeLeadIndex = activeQueue.length - 1;
     }
+    const target = activeQueue[activeLeadIndex];
+    if (target) leadStore.setSelectedLeadId(target.id);
   }
 
   function handleSelectLead(lead: Lead) {
@@ -154,6 +183,7 @@
     if (idx !== -1) {
       activeLeadIndex = idx;
     }
+    leadStore.setSelectedLeadId(lead.id);
   }
 
   async function handlePerformSkipTrace() {
@@ -464,6 +494,8 @@
                 {#if activeLead.skipTraceData?.verifiedPhone}
                   <a
                     href="tel:{activeLead.skipTraceData.verifiedPhone}"
+                    target="_blank"
+                    rel="noopener noreferrer"
                     class="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-sm flex items-center gap-2 shadow-sm transition-transform active:scale-98"
                   >
                     <PhoneCall class="w-4 h-4 animate-bounce" />
@@ -500,6 +532,8 @@
                 {#if activeLead.skipTraceData?.primaryEmail}
                   <a
                     href="mailto:{activeLead.skipTraceData.primaryEmail}"
+                    target="_blank"
+                    rel="noopener noreferrer"
                     class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800"
                   >
                     <Mail class="w-3.5 h-3.5 text-teal-600" />
@@ -509,8 +543,35 @@
               </div>
             </div>
 
-            <!-- Quick Action Links -->
+            <!-- Quick Action Links & Navigation -->
             <div class="flex flex-wrap items-center gap-2 pt-2 border-t border-slate-200 dark:border-slate-800/80 text-xs">
+              <button
+                type="button"
+                onclick={() => onopenmodal?.('lead_detail', activeLead)}
+                class="px-2.5 py-1 rounded-lg bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-300 dark:border-emerald-800 text-emerald-700 dark:text-emerald-300 hover:bg-emerald-100 dark:hover:bg-emerald-900/60 flex items-center gap-1.5 cursor-pointer font-bold"
+              >
+                <FileText class="w-3.5 h-3.5" />
+                <span>Full Dossier</span>
+              </button>
+
+              <button
+                type="button"
+                onclick={() => { leadStore.setSelectedLeadId(activeLead.id); leadStore.setActiveTab('kanban'); }}
+                class="px-2.5 py-1 rounded-lg bg-purple-50 dark:bg-purple-950/60 border border-purple-300 dark:border-purple-800 text-purple-700 dark:text-purple-300 hover:bg-purple-100 dark:hover:bg-purple-900/60 flex items-center gap-1.5 cursor-pointer font-medium"
+              >
+                <Kanban class="w-3.5 h-3.5" />
+                <span>View in Pipeline</span>
+              </button>
+
+              <button
+                type="button"
+                onclick={() => { leadStore.setSelectedLeadId(activeLead.id); leadStore.setActiveTab('leads'); }}
+                class="px-2.5 py-1 rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 flex items-center gap-1.5 cursor-pointer font-medium"
+              >
+                <Table class="w-3.5 h-3.5" />
+                <span>View in Table</span>
+              </button>
+
               <button
                 type="button"
                 onclick={() => onopenmodal?.('website_builder', activeLead)}
