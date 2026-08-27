@@ -4,6 +4,7 @@
   import { toast } from '../../stores/toast.svelte';
   import { CRMExportService } from '../../services/crm-export-service';
   import StatusIndicator from '../atoms/StatusIndicator.svelte';
+  import IndustryBadge from '../atoms/IndustryBadge.svelte';
   import ContactBadgeList from './ContactBadgeList.svelte';
   import Button from '../atoms/Button.svelte';
   import Tooltip from '../atoms/Tooltip.svelte';
@@ -54,12 +55,15 @@
   class="border-b border-slate-100 dark:border-slate-800/60 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors cursor-pointer {isSelected ? 'bg-emerald-50 dark:bg-emerald-950/20 border-l-2 border-l-emerald-500' : ''}"
   onclick={handleRowClick}
 >
-  <!-- Practitioner Name & Title -->
-  <td class="py-3.5 px-4 min-w-[220px]">
-    <div class="font-semibold text-slate-900 dark:text-slate-100 text-sm flex items-center gap-1.5 hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors">
-      <span>{lead.fullName}</span>
+  <!-- Practitioner Name & Specialty with Industry Visual Indicator -->
+  <td class="py-3.5 px-4 min-w-[240px]">
+    <div class="flex items-center gap-2 flex-wrap">
+      <span class="font-semibold text-slate-900 dark:text-slate-100 text-sm hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors">
+        {lead.fullName}
+      </span>
+      <IndustryBadge profession={lead.profession} variant="badge" size="sm" />
     </div>
-    <div class="text-xs text-slate-500 dark:text-slate-400 mt-0.5 truncate max-w-[240px]">
+    <div class="text-xs text-slate-500 dark:text-slate-400 mt-0.5 truncate max-w-[260px]">
       {lead.professionTitle}
     </div>
   </td>

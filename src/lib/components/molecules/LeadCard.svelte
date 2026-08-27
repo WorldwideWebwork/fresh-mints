@@ -7,6 +7,7 @@
   import Button from '../atoms/Button.svelte';
   import Tooltip from '../atoms/Tooltip.svelte';
   import StatusIndicator from '../atoms/StatusIndicator.svelte';
+  import IndustryBadge from '../atoms/IndustryBadge.svelte';
   import ContactBadgeList from './ContactBadgeList.svelte';
   import {
     Search,
@@ -89,12 +90,15 @@
 
 <Card class="flex flex-col justify-between h-full hover:border-teal-500/50 dark:hover:border-teal-500/40 transition-all duration-150 group shadow-xs hover:shadow-md bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800">
   <div>
-    <!-- Header: Name & Status -->
+    <!-- Header: Industry Badge, Name & Status -->
     <div
       class="flex items-start justify-between gap-2 mb-2 cursor-pointer"
       onclick={() => onopenmodal?.('lead_detail', lead)}
     >
       <div class="flex-1 min-w-0">
+        <div class="flex items-center gap-1.5 mb-1.5">
+          <IndustryBadge profession={lead.profession} variant="badge" size="sm" />
+        </div>
         <h4 class="font-bold text-slate-900 dark:text-slate-100 text-sm group-hover:text-teal-600 dark:group-hover:text-teal-400 transition-colors truncate">
           {lead.fullName}
         </h4>

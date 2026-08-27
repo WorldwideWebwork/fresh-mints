@@ -6,6 +6,8 @@
   import Button from '../atoms/Button.svelte';
   import Input from '../atoms/Input.svelte';
   import Select from '../atoms/Select.svelte';
+  import IndustryIcon from '../atoms/IndustryIcon.svelte';
+  import IndustryBadge from '../atoms/IndustryBadge.svelte';
   import { Plus } from 'lucide-svelte';
 
   interface Props {
@@ -20,7 +22,7 @@
   let stateFilter = $state('all');
 
   const professionOptions = [
-    { value: 'all', label: 'All Professions' },
+    { value: 'all', label: 'All Industries (13 High-Value Sectors)' },
     ...Object.values(PROFESSION_CONFIGS).map((p) => ({ value: p.id, label: p.label })),
   ];
 
@@ -53,8 +55,18 @@
     </div>
 
     <div>
-      <label class="text-xs font-semibold text-slate-700 dark:text-slate-300 block mb-1">Profession Filter:</label>
-      <Select bind:value={professionFilter} options={professionOptions} class="text-xs" />
+      <div class="flex items-center justify-between gap-2 mb-1">
+        <label class="text-xs font-semibold text-slate-700 dark:text-slate-300 block">Target Sector / Profession:</label>
+        {#if professionFilter !== 'all'}
+          <IndustryBadge profession={professionFilter} variant="badge" size="sm" />
+        {/if}
+      </div>
+      <div class="relative">
+        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none z-10">
+          <IndustryIcon profession={professionFilter} class="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
+        </div>
+        <Select bind:value={professionFilter} options={professionOptions} class="text-xs pl-9" />
+      </div>
     </div>
 
     <div class="flex items-center justify-end gap-3 pt-3 border-t border-slate-200 dark:border-slate-800">

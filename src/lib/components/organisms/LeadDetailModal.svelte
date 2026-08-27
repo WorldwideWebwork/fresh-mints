@@ -7,6 +7,7 @@
   import Button from '../atoms/Button.svelte';
   import Badge from '../atoms/Badge.svelte';
   import StatusIndicator from '../atoms/StatusIndicator.svelte';
+  import IndustryBadge from '../atoms/IndustryBadge.svelte';
   import { User, MapPin, Building, Award, Phone, Mail, Linkedin, UserPlus, UserCheck, ExternalLink, Send, Trash2, Clock, Search } from 'lucide-svelte';
 
   interface Props {
@@ -64,8 +65,9 @@
       <!-- Header Overview Card -->
       <div class="p-5 rounded-2xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <div class="flex items-center gap-2">
+          <div class="flex items-center gap-2.5 flex-wrap">
             <h3 class="text-lg font-bold text-slate-900 dark:text-white">{lead.fullName}</h3>
+            <IndustryBadge profession={lead.profession} variant="badge" size="sm" />
             <StatusIndicator status={lead.outreachStatus} />
           </div>
           <p class="text-xs text-slate-500 dark:text-slate-400 mt-1 font-medium">{lead.professionTitle}</p>

@@ -14,6 +14,7 @@
   import Card from '../atoms/Card.svelte';
   import Button from '../atoms/Button.svelte';
   import Badge from '../atoms/Badge.svelte';
+  import IndustryBadge from '../atoms/IndustryBadge.svelte';
   import Tooltip from '../atoms/Tooltip.svelte';
   import StatusIndicator from '../atoms/StatusIndicator.svelte';
   import {
@@ -425,10 +426,11 @@
           <!-- Active Lead Profile Header -->
           <div class="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
             <div class="space-y-1 flex-1">
-              <div class="flex items-center gap-2 flex-wrap">
+              <div class="flex items-center gap-2.5 flex-wrap">
                 <h2 class="text-xl font-extrabold text-slate-900 dark:text-white">
                   {activeLead.fullName}
                 </h2>
+                <IndustryBadge profession={activeLead.profession} variant="badge" size="sm" />
                 <StatusIndicator status={activeLead.outreachStatus} />
               </div>
               <p class="text-xs text-slate-600 dark:text-slate-300 font-medium">
@@ -817,10 +819,11 @@
                 onclick={() => handleSelectLead(lead)}
               >
                 <div class="min-w-0 flex-1">
-                  <div class="flex items-center gap-1.5">
+                  <div class="flex items-center gap-1.5 flex-wrap">
                     <span class="font-bold text-slate-900 dark:text-slate-100 truncate">
                       {lead.fullName}
                     </span>
+                    <IndustryBadge profession={lead.profession} variant="badge" size="sm" />
                     {#if lead.skipTraceData?.verifiedPhone}
                       <span class="w-2 h-2 rounded-full bg-emerald-500 flex-shrink-0" title="Phone verified"></span>
                     {/if}

@@ -93,6 +93,10 @@
   });
 
   function openModal(name: string, lead?: Lead) {
+    if (name === 'confirm_clear') {
+      isClearConfirmOpen = true;
+      return;
+    }
     modalState = {
       name,
       lead: lead || leadStore.selectedLead,
@@ -135,7 +139,10 @@
   />
 {:else}
   <!-- Main Fresh Mints Command Deck Dashboard -->
-  <DashboardLayout onopenmodal={openModal}>
+  <DashboardLayout
+    onopenmodal={openModal}
+    onopenconfirmclear={() => (isClearConfirmOpen = true)}
+  >
     <!-- Search and Filter Bar (shown on discovery, table, kanban, and custom views) -->
     {#if ['search', 'leads', 'kanban'].includes(leadStore.activeTab) || leadStore.customTabs.some((t) => t.id === leadStore.activeTab)}
       <FilterBar />
