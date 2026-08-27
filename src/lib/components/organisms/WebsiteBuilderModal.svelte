@@ -32,20 +32,27 @@
     MapPin,
     Flame,
     Check,
+    Lock,
   } from 'lucide-svelte';
 
   interface Props {
     open?: boolean;
     lead?: Lead | null;
+    onclose?: () => void;
     onopenoutreach?: (lead: Lead) => void;
     onopenfullpreview?: (lead: Lead) => void;
   }
 
-  let { open = $bindable(false), lead = null, onopenoutreach, onopenfullpreview }: Props = $props();
+  let { open = $bindable(false), lead = null, onclose, onopenoutreach, onopenfullpreview }: Props = $props();
 
   let deviceMode = $state<'desktop' | 'mobile'>('desktop');
   let isEditing = $state(false);
   let copied = $state(false);
+
+  function close() {
+    open = false;
+    onclose?.();
+  }
 
   const siteConfig = $derived.by<WebsitePreviewConfig>(() => {
     if (lead?.websiteConfig) return lead.websiteConfig;
@@ -111,7 +118,7 @@
     });
   }
 
-  function copyShareLink() {
+  function handleCopyLink() {
     if (!lead) return;
     const link = getPreviewLink(lead);
     navigator.clipboard.writeText(link);
@@ -121,6 +128,8 @@
       copied = false;
     }, 2500);
   }
+
+  const copyShareLink = handleCopyLink;
 
   function handleLaunchOutreach() {
     if (!lead) return;
@@ -283,17 +292,19 @@
           class="transition-all bg-white text-stone-900 rounded-xl overflow-hidden shadow-2xl border border-slate-200 dark:border-slate-800/60 flex flex-col {deviceMode === 'mobile' ? 'w-[375px] min-h-[667px]' : 'w-full max-w-5xl'}"
         >
           <!-- Website Mock Browser Nav -->
-          <div class="bg-stone-100 px-4 py-2 border-b border-stone-200 flex items-center justify-between text-xs text-slate-400 dark:text-slate-500">
+          <div class="bg-stone-100 px-4 py-2.5 border-b border-stone-200 flex items-center justify-between text-xs text-slate-500">
             <div class="flex items-center gap-1.5">
               <span class="w-2.5 h-2.5 rounded-full bg-rose-400 inline-block"></span>
               <span class="w-2.5 h-2.5 rounded-full bg-amber-400 inline-block"></span>
               <span class="w-2.5 h-2.5 rounded-full bg-emerald-400 inline-block"></span>
             </div>
-            <div class="bg-white border border-stone-300 rounded-md px-3 py-0.5 text-[11px] font-mono text-slate-400 dark:text-slate-600 truncate max-w-xs">
-              https://{siteConfig.previewSlug}.compassportal.pro
+            <div class="bg-white border border-stone-300 rounded-md px-3 py-0.5 text-[11px] font-mono text-slate-600 truncate max-w-sm flex items-center gap-1.5 shadow-2xs">
+              <Lock class="w-3 h-3 text-emerald-600 flex-shrink-0" />
+              <span class="truncate">https://{siteConfig.previewSlug}.practiceportal.pro</span>
             </div>
-            <div class="flex items-center gap-1 text-[10px] font-semibold text-emerald-700 bg-emerald-100/80 px-2 py-0.5 rounded">
-              <ShieldCheck class="w-3 h-3" /> Licensed Professional Site
+            <div class="flex items-center gap-1 text-[10px] font-semibold text-emerald-800 bg-emerald-100/90 px-2 py-0.5 rounded border border-emerald-300">
+              <ShieldCheck class="w-3 h-3 text-emerald-700" />
+              <span class="hidden sm:inline">Official Licensed Site</span>
             </div>
           </div>
 

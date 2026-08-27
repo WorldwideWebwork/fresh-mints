@@ -7,6 +7,7 @@
   import FilterBar from './lib/components/molecules/FilterBar.svelte';
   import Toast from './lib/components/molecules/Toast.svelte';
   import ConfirmDialog from './lib/components/molecules/ConfirmDialog.svelte';
+  import LoadingScreen from './lib/components/organisms/LoadingScreen.svelte';
 
   // Standalone Website Preview
   import PracticeWebsitePreview from './lib/components/organisms/PracticeWebsitePreview.svelte';
@@ -43,6 +44,7 @@
   });
 
   let isClearConfirmOpen = $state(false);
+  let isAppLoading = $state(true);
 
   function checkPreviewRoute() {
     if (typeof window === 'undefined') return;
@@ -116,6 +118,13 @@
     window.location.hash = '';
   }
 </script>
+
+{#if isAppLoading && !standalonePreviewSlug}
+  <LoadingScreen
+    isReady={leadStore.isInitialized}
+    oncomplete={() => (isAppLoading = false)}
+  />
+{/if}
 
 {#if standalonePreviewSlug}
   <!-- Standalone Turnkey Practice Website View -->

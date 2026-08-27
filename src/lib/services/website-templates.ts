@@ -179,9 +179,17 @@ export function getDefaultWebsiteConfig(
   };
 }
 
-export function getPreviewLink(slug: string): string {
-  if (typeof window !== 'undefined' && window.location?.hostname) {
-    return `${window.location.origin}/preview/${slug}`;
+export function getPreviewLink(target: string | { id: string; websiteConfig?: { previewSlug?: string } }): string {
+  const slug = typeof target === 'string'
+    ? target
+    : target?.websiteConfig?.previewSlug || target?.id || 'demo';
+
+  const cleanSlug = encodeURIComponent(slug.toLowerCase().replace(/^\/?preview\/?/, '').replace(/^\/+/, ''));
+
+  if (typeof window !== 'undefined' && window.location?.origin) {
+    const basePath = window.location.pathname.replace(/\/+$/, '');
+    return `${window.location.origin}${basePath}/#/preview/${cleanSlug}`;
   }
-  return `/preview/${slug}`;
+  return `#/preview/${cleanSlug}`;
 }
+
