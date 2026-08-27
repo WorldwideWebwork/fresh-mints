@@ -3,6 +3,7 @@ import {
   Server,
   DollarSign,
   TrendingUp,
+  TrendingDown,
   Flame,
   Globe,
   ShieldCheck,
@@ -10,9 +11,16 @@ import {
   Zap,
   Info,
   Layers,
+  Award,
   ArrowRight,
 } from 'lucide-react';
-import { W4_HOSTING_PLANS, PROFESSION_CONFIGS, W4HostingTier } from '../../types/lead';
+import {
+  W4_HOSTING_PLANS,
+  PROFESSION_CONFIGS,
+  MARKET_PRICE_COMPARISONS,
+  TURNKEY_SCOPE_GUARANTEE,
+  W4HostingTier,
+} from '../../types/lead';
 import { Badge } from '../atoms/Badge';
 import { Button } from '../atoms/Button';
 
@@ -254,6 +262,87 @@ export const W4EconomicsView: React.FC<W4EconomicsViewProps> = ({
               </div>
               <p className="text-xs text-stone-600 leading-relaxed">
                 Registrar ownership remains with My Compass Consulting throughout the 2-year package. Clients have the contractual right to buy out and transfer their .com domain into their private account for a one-time <strong>${selectedPlan.domainBuyoutPrice}</strong> transfer fee, unlocking additional high-margin monetization.
+              </p>
+            </div>
+          </div>
+        </div>
+
+        {/* 2-Year Market TCO Benchmarks & Turnkey Scope Guarantee */}
+        <div className="p-5 rounded-2xl bg-gradient-to-br from-slate-900 via-slate-900 to-indigo-950/70 border border-slate-800 text-white space-y-4 shadow-lg">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-800 pb-3">
+            <div className="flex items-center gap-2">
+              <TrendingDown className="w-5 h-5 text-sky-400" />
+              <div>
+                <h3 className="text-sm font-bold text-white tracking-wide uppercase">
+                  2-Year Market Total Cost of Ownership (TCO) Benchmarks
+                </h3>
+                <p className="text-[11px] text-slate-400">
+                  Why our turnkey 2-year package closes deals instantly without price objections
+                </p>
+              </div>
+            </div>
+            <span className="text-xs font-mono px-2.5 py-1 rounded bg-sky-950 text-sky-300 border border-sky-800">
+              TCO Value Armor
+            </span>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {Object.values(MARKET_PRICE_COMPARISONS).map((comp) => (
+              <div
+                key={comp.id}
+                className="p-4 rounded-xl bg-slate-950/80 border border-slate-800 flex flex-col justify-between space-y-3"
+              >
+                <div className="space-y-2">
+                  <span className="text-xs font-bold text-sky-300">{comp.category}</span>
+                  <div className="space-y-1.5 text-xs pt-1 border-t border-slate-800/80">
+                    <div className="flex justify-between py-0.5">
+                      <span className="text-slate-400">Agency 2-Yr Spend:</span>
+                      <span className="text-rose-400 font-mono font-semibold">{comp.agencyCost2Yr}</span>
+                    </div>
+                    <div className="flex justify-between py-0.5">
+                      <span className="text-slate-400">DIY 2-Yr Spend:</span>
+                      <span className="text-amber-400 font-mono font-semibold">{comp.diyCost2Yr}</span>
+                    </div>
+                    <div className="flex justify-between py-1 bg-emerald-950/60 px-2 rounded border border-emerald-800/60">
+                      <span className="text-emerald-300 font-semibold">Our 2-Yr Package:</span>
+                      <span className="text-emerald-400 font-mono font-bold">{comp.compassPackageCost2Yr}</span>
+                    </div>
+                  </div>
+                  <div className="text-[11px] text-emerald-400 font-medium pt-1">
+                    ★ {comp.totalClientSavings}
+                  </div>
+                </div>
+
+                <ul className="space-y-1 text-[11px] text-slate-400 pt-2 border-t border-slate-800/80">
+                  {comp.dealHighlights.map((hl, idx) => (
+                    <li key={idx} className="flex items-center gap-1.5">
+                      <CheckCircle2 className="w-3 h-3 text-emerald-400 shrink-0" />
+                      <span>{hl}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            ))}
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3 pt-2">
+            <div className="p-3.5 rounded-xl bg-amber-950/30 border border-amber-800/50 space-y-1">
+              <div className="flex items-center gap-1.5 text-xs font-bold text-amber-400 uppercase tracking-wider">
+                <Award className="w-4 h-4 text-amber-400" />
+                <span>Why Our Deal Is The Best Deal</span>
+              </div>
+              <p className="text-xs text-slate-300 leading-relaxed">
+                {TURNKEY_SCOPE_GUARANTEE.whyOurDealIsBest}
+              </p>
+            </div>
+
+            <div className="p-3.5 rounded-xl bg-indigo-950/30 border border-indigo-800/50 space-y-1">
+              <div className="flex items-center gap-1.5 text-xs font-bold text-indigo-400 uppercase tracking-wider">
+                <ShieldCheck className="w-4 h-4 text-indigo-400" />
+                <span>{TURNKEY_SCOPE_GUARANTEE.title} (No-Price-Match Scope Shield)</span>
+              </div>
+              <p className="text-xs text-slate-300 leading-relaxed">
+                {TURNKEY_SCOPE_GUARANTEE.blurb}
               </p>
             </div>
           </div>

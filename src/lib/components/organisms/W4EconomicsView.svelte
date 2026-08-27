@@ -1,5 +1,11 @@
 <script lang="ts">
-  import { W4_HOSTING_PLANS, GLOBAL_PLAN_INCLUSIONS, type W4HostingPlan } from '../../types/lead';
+  import {
+    W4_HOSTING_PLANS,
+    GLOBAL_PLAN_INCLUSIONS,
+    MARKET_PRICE_COMPARISONS,
+    TURNKEY_SCOPE_GUARANTEE,
+    type W4HostingPlan,
+  } from '../../types/lead';
   import Card from '../atoms/Card.svelte';
   import Badge from '../atoms/Badge.svelte';
   import Button from '../atoms/Button.svelte';
@@ -10,6 +16,8 @@
     Check,
     Sparkles,
     TrendingUp,
+    TrendingDown,
+    Award,
     Layers,
     Cpu,
     Shield,
@@ -23,6 +31,7 @@
   } from 'lucide-svelte';
 
   const allPlans = Object.values(W4_HOSTING_PLANS);
+  const comparisonList = Object.values(MARKET_PRICE_COMPARISONS);
 
   type TrackCategory = 'all' | 'micro' | 'macro' | 'omni';
   let activeTrack = $state<TrackCategory>('all');
@@ -151,6 +160,90 @@
       {/each}
     </div>
   </Card>
+
+  <!-- Market Cost Benchmark & Turnkey Scope Guarantee Section -->
+  <div class="space-y-4">
+    <div class="p-5 rounded-2xl bg-gradient-to-br from-slate-900 via-slate-900 to-indigo-950/70 border border-slate-800 text-white space-y-4 shadow-lg">
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-800 pb-3">
+        <div class="flex items-center gap-2">
+          <TrendingDown class="w-5 h-5 text-sky-400" />
+          <div>
+            <h3 class="text-sm font-bold text-white tracking-wide uppercase">
+              2-Year Market Total Cost of Ownership (TCO) Benchmarks
+            </h3>
+            <p class="text-[11px] text-slate-400">
+              Why our turnkey 2-year package closes deals instantly without price objections
+            </p>
+          </div>
+        </div>
+        <Badge variant="info" class="text-xs font-mono">TCO Value Armor</Badge>
+      </div>
+
+      <!-- TCO Comparison Cards -->
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+        {#each comparisonList as comp}
+          <div class="p-4 rounded-xl bg-slate-950/80 border border-slate-800 flex flex-col justify-between space-y-3">
+            <div class="space-y-2">
+              <div class="flex items-center justify-between">
+                <span class="text-xs font-bold text-sky-300">{comp.category}</span>
+              </div>
+
+              <div class="space-y-1.5 text-xs pt-1 border-t border-slate-800/80">
+                <div class="flex justify-between py-0.5">
+                  <span class="text-slate-400">Agency 2-Yr Spend:</span>
+                  <span class="text-rose-400 font-mono font-semibold">{comp.agencyCost2Yr}</span>
+                </div>
+                <div class="flex justify-between py-0.5">
+                  <span class="text-slate-400">DIY 2-Yr Spend:</span>
+                  <span class="text-amber-400 font-mono font-semibold">{comp.diyCost2Yr}</span>
+                </div>
+                <div class="flex justify-between py-1 bg-emerald-950/60 px-2 rounded border border-emerald-800/60">
+                  <span class="text-emerald-300 font-semibold">Our 2-Yr Package:</span>
+                  <span class="text-emerald-400 font-mono font-bold">{comp.compassPackageCost2Yr}</span>
+                </div>
+              </div>
+
+              <div class="text-[11px] text-emerald-400 font-medium pt-1">
+                ★ {comp.totalClientSavings}
+              </div>
+            </div>
+
+            <ul class="space-y-1 text-[11px] text-slate-400 pt-2 border-t border-slate-800/80">
+              {#each comp.dealHighlights as hl}
+                <li class="flex items-center gap-1.5">
+                  <Check class="w-3 h-3 text-emerald-400 flex-shrink-0" />
+                  <span>{hl}</span>
+                </li>
+              {/each}
+            </ul>
+          </div>
+        {/each}
+      </div>
+
+      <!-- Scope Guarantee & Best Deal Punch -->
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-3 pt-2">
+        <div class="p-3.5 rounded-xl bg-amber-950/30 border border-amber-800/50 space-y-1">
+          <div class="flex items-center gap-1.5 text-xs font-bold text-amber-400 uppercase tracking-wider">
+            <Award class="w-4 h-4 text-amber-400" />
+            <span>Why Our Deal Is The Best Deal</span>
+          </div>
+          <p class="text-xs text-slate-300 leading-relaxed">
+            {TURNKEY_SCOPE_GUARANTEE.whyOurDealIsBest}
+          </p>
+        </div>
+
+        <div class="p-3.5 rounded-xl bg-indigo-950/30 border border-indigo-800/50 space-y-1">
+          <div class="flex items-center gap-1.5 text-xs font-bold text-indigo-400 uppercase tracking-wider">
+            <ShieldCheck class="w-4 h-4 text-indigo-400" />
+            <span>{TURNKEY_SCOPE_GUARANTEE.title} (No-Price-Match Scope Shield)</span>
+          </div>
+          <p class="text-xs text-slate-300 leading-relaxed">
+            {TURNKEY_SCOPE_GUARANTEE.blurb}
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
 
   <!-- Plans Grid -->
   <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">

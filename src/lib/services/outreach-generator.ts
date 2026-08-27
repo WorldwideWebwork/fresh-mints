@@ -202,6 +202,13 @@ export interface ColdCallScriptData {
   valuePitch: string;
   twoYearOffer: string;
   domainEquityClause: string;
+  bestDealBlurb: string;
+  scopeGuarantee: {
+    title: string;
+    tagline: string;
+    blurb: string;
+  };
+  marketComparison: MarketPriceComparison;
   objections: {
     objection: string;
     rebuttal: string;
@@ -217,6 +224,15 @@ export function generateColdCallScript(lead: Lead, offerPrice: number): ColdCall
   const hostingPlan = W4_HOSTING_PLANS[profMeta.hostingTier] || W4_HOSTING_PLANS.bronze;
   const siteUrl = getPreviewLink(lead.websiteConfig?.previewSlug || lead.id);
 
+  const comparisonKey =
+    ['quantum', 'bronze'].includes(profMeta.hostingTier)
+      ? 'solo_starter'
+      : ['silver', 'silver_enhanced'].includes(profMeta.hostingTier)
+      ? 'professional'
+      : 'enterprise_legal_cpa';
+
+  const marketComparison = MARKET_PRICE_COMPARISONS[comparisonKey] || MARKET_PRICE_COMPARISONS.solo_starter;
+
   const salutation = ['dental', 'chiropractic', 'veterinary'].includes(lead.profession)
     ? `Dr. ${lastName}`
     : firstName;
@@ -226,14 +242,25 @@ export function generateColdCallScript(lead: Lead, offerPrice: number): ColdCall
     valuePitch: `"The reason for my call is that in your industry, ${industryProfile.clientType} search online first. Our engineering team at My Compass Consulting already secured your official practice domain and pre-built a live interactive portal powered by our Compass Software Suite on w4 high-speed cloud hosting so nobody else takes your brand."`,
     twoYearOffer: `"We give newly licensed practitioners a complete 2-year launch package for a single flat rate of $${offerPrice.toLocaleString()}. That gives you zero monthly hosting fees for 24 full months, a dedicated isolated IP, 10 professional @yourdomain email accounts, automated nightly backups, and real-time firewall security. After 2 years, your service simply continues at our base w4 rate of just $${hostingPlan.monthlyBaseRate}/mo with no lock-in contracts."`,
     domainEquityClause: `"Plus, you have full lease-to-own equity on your custom domain with a guaranteed unencumbered transfer option at $999 whenever you want full registrar custody."`,
+    bestDealBlurb: TURNKEY_SCOPE_GUARANTEE.whyOurDealIsBest,
+    scopeGuarantee: {
+      title: TURNKEY_SCOPE_GUARANTEE.title,
+      tagline: TURNKEY_SCOPE_GUARANTEE.tagline,
+      blurb: TURNKEY_SCOPE_GUARANTEE.blurb,
+    },
+    marketComparison,
     objections: [
+      {
+        objection: `"Can you beat or match someone else's cheaper price (e.g. Wix, GoDaddy, or a freelancer)?"`,
+        rebuttal: `"We do not play games with cheap commodity hosting because those budget hosts give you empty templates and charge extra for every single email mailbox. Instead, we offer our Turnkey Scope Guarantee: If any certified agency will build a custom practice portal, configure 10 domain emails, provide a dedicated IP, and give you 2 full years of managed cloud hosting for less than our flat package rate, we will credit the difference in full."`,
+      },
       {
         objection: `"I already work with an existing firm, hospital, or brokerage."`,
         rebuttal: `"That's awesome! Most top performers still maintain their personal professional brand so their direct referrals, 5-star reviews, and client inquiries belong to them, not just the parent company."`,
       },
       {
         objection: `"I already have a friend building my website or I was going to use Squarespace."`,
-        rebuttal: `"Totally understand. The challenge is DIY builders still charge $30-$50/month just for basic hosting, plus you have to buy Google Workspace separately. Our package gives you a fully custom practice portal, 10 free domain email accounts, dedicated IP, and 2 full years of high-speed hosting included for one flat fee."`,
+        rebuttal: `"Totally understand. The challenge is DIY builders still charge $30-$50/month just for basic hosting, plus you have to buy Google Workspace separately at $7.20 per user each month. Our package gives you a fully custom practice portal, 10 free domain email accounts, dedicated IP, and 2 full years of high-speed hosting included for one flat fee with zero setup labor on your end."`,
       },
       {
         objection: `"Can I see what it looks like before making a decision?"`,
