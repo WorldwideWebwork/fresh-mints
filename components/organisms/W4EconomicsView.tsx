@@ -165,7 +165,7 @@ export const W4EconomicsView: React.FC<W4EconomicsViewProps> = ({
           </span>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-5 gap-3">
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3">
           {Object.values(W4_HOSTING_PLANS).map((plan) => {
             const isSelected = plan.id === selectedPlanId;
             return (

@@ -216,7 +216,7 @@ export function generateColdCallScript(lead: Lead, offerPrice: number): ColdCall
   return {
     openingHook: `"Hi ${salutation}, this is [Your Name] with My Compass Consulting. First off, huge congratulations on officially receiving your ${lead.professionTitle} license in ${lead.state}! I saw your recent board pass from ${lead.collegeOrSchool}."`,
     valuePitch: `"The reason for my call is that in your industry, ${industryProfile.clientType} search online first. Our engineering team at My Compass Consulting already secured your official practice domain and pre-built a live interactive portal powered by our Compass Software Suite on w4 high-speed cloud hosting so nobody else takes your brand."`,
-    twoYearOffer: `"We give newly licensed practitioners a complete 2-year launch package for a single flat rate of $${offerPrice.toLocaleString()}. That gives you zero monthly hosting fees for 24 full months. After the 2 years, your service simply continues at our base w4 rate of just $${hostingPlan.monthlyBaseRate}/mo with no lock-in contracts."`,
+    twoYearOffer: `"We give newly licensed practitioners a complete 2-year launch package for a single flat rate of $${offerPrice.toLocaleString()}. That gives you zero monthly hosting fees for 24 full months, a dedicated isolated IP, 10 professional @yourdomain email accounts, automated nightly backups, and real-time firewall security. After 2 years, your service simply continues at our base w4 rate of just $${hostingPlan.monthlyBaseRate}/mo with no lock-in contracts."`,
     domainEquityClause: `"Plus, you have full lease-to-own equity on your custom domain with a guaranteed unencumbered transfer option at $999 whenever you want full registrar custody."`,
     objections: [
       {
@@ -225,7 +225,7 @@ export function generateColdCallScript(lead: Lead, offerPrice: number): ColdCall
       },
       {
         objection: `"I already have a friend building my website or I was going to use Squarespace."`,
-        rebuttal: `"Totally understand. The challenge is DIY builders still charge $30-$50/month just for basic hosting, plus you have to build the whole intake system yourself. Our package gives you a fully custom, compliant practice portal with 2 full years of w4 cloud hosting included for one flat promotional fee."`,
+        rebuttal: `"Totally understand. The challenge is DIY builders still charge $30-$50/month just for basic hosting, plus you have to buy Google Workspace separately. Our package gives you a fully custom practice portal, 10 free domain email accounts, dedicated IP, and 2 full years of high-speed hosting included for one flat fee."`,
       },
       {
         objection: `"Can I see what it looks like before making a decision?"`,
@@ -233,7 +233,7 @@ export function generateColdCallScript(lead: Lead, offerPrice: number): ColdCall
       },
       {
         objection: `"What happens after the 2-year promotion ends?"`,
-        rebuttal: `"It simply rolls over to our standard w4 hosting rate of $${hostingPlan.monthlyBaseRate}/mo to keep your Compass Suite and SSL active, with no contracts. You can also buy out your domain asset for $999 at any time."`,
+        rebuttal: `"It simply rolls over to our standard w4 hosting rate of $${hostingPlan.monthlyBaseRate}/mo to keep your Compass Suite, emails, and SSL active with no contracts. You can also buy out your domain asset for $999 at any time."`,
       },
     ],
     callerBountyNote: `Rep Commission: Earn $300.00 cash on this closed deal! (Pipeline deal value: $${offerPrice.toLocaleString()})`,
