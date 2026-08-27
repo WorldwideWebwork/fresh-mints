@@ -124,8 +124,12 @@ export const LeadRow: React.FC<LeadRowProps> = ({
           <div className="flex items-center gap-2">
             <span className="w-2 h-2 bg-green-500 rounded-full"></span>
             <div>
-              <span className="text-xs text-slate-700 font-semibold block">{lead.skipTraceData.verifiedPhone}</span>
-              <span className="text-[11px] text-slate-400 font-medium block">{lead.skipTraceData.primaryEmail}</span>
+              <span className="text-xs text-slate-700 font-semibold block">
+                {lead.skipTraceData.verifiedPhone || 'No Phone on Record'}
+              </span>
+              <span className="text-[11px] text-slate-400 font-medium block">
+                {lead.skipTraceData.primaryEmail || 'No Email on Record'}
+              </span>
             </div>
           </div>
         ) : (

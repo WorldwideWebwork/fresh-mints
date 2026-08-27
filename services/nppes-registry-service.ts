@@ -139,9 +139,9 @@ export class NPPESRegistryService {
             confidenceScore: 98,
             verifiedPhone: phone,
             phoneType: 'Practice Direct Line',
-            dncStatus: 'Clean - NPI Verified',
-            primaryEmail: `${firstName.toLowerCase()}.${lastName.toLowerCase()}@healthpractitioner.org`,
-            emailValidation: 'Verified Federal Record',
+            dncStatus: 'CMS NPI Registry Direct Line',
+            primaryEmail: '',
+            emailValidation: 'No email published in public CMS registry',
             currentAddress: `${locationAddr?.address_1 || ''}, ${city}, ${state} ${locationAddr?.postal_code || ''}`,
             enrichmentNotes: `Verified NPI #${record.number} via CMS Federal Registry`,
           }

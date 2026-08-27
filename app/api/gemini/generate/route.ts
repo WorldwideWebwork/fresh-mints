@@ -85,35 +85,33 @@ Return JSON strictly matching this structure:
 
     if (action === "skipTraceEnrichment") {
       const { name, profession, city, state, licenseNumber, college } = payload;
-      const prompt = `Perform a simulated public record skip-trace and background analysis for:
-- Full Name: ${name}
+      const prompt = `Search live public web records, official state licensing boards, professional directories, and business listings for:
+- Professional Name: ${name}
 - Profession: ${profession}
 - Location: ${city}, ${state}
-- License #: ${licenseNumber || "State Active Record"}
-- University/School: ${college || "State Accredited Program"}
+- State License / NPI: ${licenseNumber || "Active Record"}
+- Institution: ${college || "Accredited Program"}
 
-Generate plausible, realistic public record skip-trace findings for outreach purposes:
-- Phone number (mobile with carrier type, landline)
-- Email addresses (personal & work/practice format)
-- Social media profiles (LinkedIn handle, Instagram handle)
-- Mailing address & residence history
-- Skip trace confidence score (85-99%)
-- Recommended outreach channel (Email, Phone, SMS, LinkedIn)
+DATA INTEGRITY RULES:
+1. Search ONLY for verified, publicly available contact and directory details for this professional.
+2. DO NOT invent, hallucinate, simulate, or generate placeholder phone numbers (never output 555- numbers) or synthetic emails (no @example.com or fictional domains).
+3. If a phone number or email is not found in public listings or directories, output an empty string "" for verifiedPhone and primaryEmail.
+4. Provide an accurate confidence score (0 to 100) reflecting whether authentic verifiable contact data was located.
 
 Return JSON format:
 {
-  "confidenceScore": 94,
+  "confidenceScore": 85,
   "verifiedPhone": "+1 (xxx) xxx-xxxx",
-  "phoneType": "Mobile (Verizon Wireless)",
-  "dncStatus": "Clean - Not on DNC List",
-  "primaryEmail": "name@domain.com",
-  "emailValidation": "Deliverable (100% Score)",
-  "secondaryEmail": "name.work@gmail.com",
-  "linkedInUrl": "linkedin.com/in/username",
-  "instagramHandle": "@username.pro",
-  "currentAddress": "123 Main St, City, State ZIP",
-  "mailingAddress": "PO Box or Street",
-  "enrichmentNotes": "Summary of public record match details."
+  "phoneType": "Practice Line / Mobile / Empty",
+  "dncStatus": "Public Directory Listing",
+  "primaryEmail": "verified@domain.com",
+  "emailValidation": "Public Business Record or Empty",
+  "secondaryEmail": "",
+  "linkedInUrl": "linkedin.com/in/...",
+  "instagramHandle": "",
+  "currentAddress": "City, State",
+  "mailingAddress": "",
+  "enrichmentNotes": "Summary of actual public record search findings."
 }`;
 
       const response = await ai.models.generateContent({
@@ -121,11 +119,51 @@ Return JSON format:
         contents: prompt,
         config: {
           responseMimeType: "application/json",
+          tools: [{ googleSearch: {} }],
         },
       });
 
       const text = response.text || "{}";
-      return NextResponse.json({ success: true, data: JSON.parse(text) });
+      let parsed: any = {};
+      try {
+        parsed = JSON.parse(text);
+      } catch (pErr) {
+        parsed = {};
+      }
+
+      // Strict sanitization: ensure no mock, placeholder, or 555 numbers leak
+      let cleanPhone = (parsed.verifiedPhone || "").trim();
+      if (cleanPhone.includes("555-") || cleanPhone.includes("xxx") || cleanPhone.length < 7) {
+        cleanPhone = "";
+      }
+      let cleanEmail = (parsed.primaryEmail || "").trim();
+      if (
+        cleanEmail.includes("example.com") ||
+        cleanEmail.includes("domain.com") ||
+        cleanEmail.includes("xxx") ||
+        !cleanEmail.includes("@")
+      ) {
+        cleanEmail = "";
+      }
+
+      const hasContact = Boolean(cleanPhone || cleanEmail);
+
+      const sanitizedResult = {
+        confidenceScore: hasContact ? Math.max(parsed.confidenceScore || 85, 75) : 30,
+        verifiedPhone: cleanPhone,
+        phoneType: cleanPhone ? (parsed.phoneType || "Public Registry Line") : "Unverified",
+        dncStatus: cleanPhone ? (parsed.dncStatus || "Public Business Directory") : "Unverified",
+        primaryEmail: cleanEmail,
+        emailValidation: cleanEmail ? (parsed.emailValidation || "Live Search Grounding Verified") : "No public email found",
+        secondaryEmail: parsed.secondaryEmail && !parsed.secondaryEmail.includes("example") ? parsed.secondaryEmail : "",
+        linkedInUrl: parsed.linkedInUrl && parsed.linkedInUrl.includes("linkedin.com") && !parsed.linkedInUrl.includes("username") ? parsed.linkedInUrl : "",
+        instagramHandle: parsed.instagramHandle && !parsed.instagramHandle.includes("username") ? parsed.instagramHandle : "",
+        currentAddress: parsed.currentAddress || `${city}, ${state}`,
+        mailingAddress: parsed.mailingAddress || "",
+        enrichmentNotes: parsed.enrichmentNotes || (hasContact ? "Verified via Google Search Grounding." : "No verified public contact details found in public records."),
+      };
+
+      return NextResponse.json({ success: true, data: sanitizedResult });
     }
 
     if (action === "generateSiteCopy") {

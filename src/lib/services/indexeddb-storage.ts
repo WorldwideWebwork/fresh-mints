@@ -1,4 +1,4 @@
-import { Lead } from '../types/lead';
+import type { Lead } from '../types/lead';
 
 const DB_NAME = 'LicensifyDB';
 const DB_VERSION = 1;

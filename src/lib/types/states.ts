@@ -1,0 +1,63 @@
+export interface USState {
+  code: string;
+  name: string;
+  fullName: string;
+}
+
+export const US_STATES: USState[] = [
+  { code: 'AL', name: 'Alabama (AL)', fullName: 'Alabama' },
+  { code: 'AK', name: 'Alaska (AK)', fullName: 'Alaska' },
+  { code: 'AZ', name: 'Arizona (AZ)', fullName: 'Arizona' },
+  { code: 'AR', name: 'Arkansas (AR)', fullName: 'Arkansas' },
+  { code: 'CA', name: 'California (CA)', fullName: 'California' },
+  { code: 'CO', name: 'Colorado (CO)', fullName: 'Colorado' },
+  { code: 'CT', name: 'Connecticut (CT)', fullName: 'Connecticut' },
+  { code: 'DE', name: 'Delaware (DE)', fullName: 'Delaware' },
+  { code: 'FL', name: 'Florida (FL)', fullName: 'Florida' },
+  { code: 'GA', name: 'Georgia (GA)', fullName: 'Georgia' },
+  { code: 'HI', name: 'Hawaii (HI)', fullName: 'Hawaii' },
+  { code: 'ID', name: 'Idaho (ID)', fullName: 'Idaho' },
+  { code: 'IL', name: 'Illinois (IL)', fullName: 'Illinois' },
+  { code: 'IN', name: 'Indiana (IN)', fullName: 'Indiana' },
+  { code: 'IA', name: 'Iowa (IA)', fullName: 'Iowa' },
+  { code: 'KS', name: 'Kansas (KS)', fullName: 'Kansas' },
+  { code: 'KY', name: 'Kentucky (KY)', fullName: 'Kentucky' },
+  { code: 'LA', name: 'Louisiana (LA)', fullName: 'Louisiana' },
+  { code: 'ME', name: 'Maine (ME)', fullName: 'Maine' },
+  { code: 'MD', name: 'Maryland (MD)', fullName: 'Maryland' },
+  { code: 'MA', name: 'Massachusetts (MA)', fullName: 'Massachusetts' },
+  { code: 'MI', name: 'Michigan (MI)', fullName: 'Michigan' },
+  { code: 'MN', name: 'Minnesota (MN)', fullName: 'Minnesota' },
+  { code: 'MS', name: 'Mississippi (MS)', fullName: 'Mississippi' },
+  { code: 'MO', name: 'Missouri (MO)', fullName: 'Missouri' },
+  { code: 'MT', name: 'Montana (MT)', fullName: 'Montana' },
+  { code: 'NE', name: 'Nebraska (NE)', fullName: 'Nebraska' },
+  { code: 'NV', name: 'Nevada (NV)', fullName: 'Nevada' },
+  { code: 'NH', name: 'New Hampshire (NH)', fullName: 'New Hampshire' },
+  { code: 'NJ', name: 'New Jersey (NJ)', fullName: 'New Jersey' },
+  { code: 'NM', name: 'New Mexico (NM)', fullName: 'New Mexico' },
+  { code: 'NY', name: 'New York (NY)', fullName: 'New York' },
+  { code: 'NC', name: 'North Carolina (NC)', fullName: 'North Carolina' },
+  { code: 'ND', name: 'North Dakota (ND)', fullName: 'North Dakota' },
+  { code: 'OH', name: 'Ohio (OH)', fullName: 'Ohio' },
+  { code: 'OK', name: 'Oklahoma (OK)', fullName: 'Oklahoma' },
+  { code: 'OR', name: 'Oregon (OR)', fullName: 'Oregon' },
+  { code: 'PA', name: 'Pennsylvania (PA)', fullName: 'Pennsylvania' },
+  { code: 'RI', name: 'Rhode Island (RI)', fullName: 'Rhode Island' },
+  { code: 'SC', name: 'South Carolina (SC)', fullName: 'South Carolina' },
+  { code: 'SD', name: 'South Dakota (SD)', fullName: 'South Dakota' },
+  { code: 'TN', name: 'Tennessee (TN)', fullName: 'Tennessee' },
+  { code: 'TX', name: 'Texas (TX)', fullName: 'Texas' },
+  { code: 'UT', name: 'Utah (UT)', fullName: 'Utah' },
+  { code: 'VT', name: 'Vermont (VT)', fullName: 'Vermont' },
+  { code: 'VA', name: 'Virginia (VA)', fullName: 'Virginia' },
+  { code: 'WA', name: 'Washington (WA)', fullName: 'Washington' },
+  { code: 'WV', name: 'West Virginia (WV)', fullName: 'West Virginia' },
+  { code: 'WI', name: 'Wisconsin (WI)', fullName: 'Wisconsin' },
+  { code: 'WY', name: 'Wyoming (WY)', fullName: 'Wyoming' },
+];
+
+export const STATE_DROPDOWN_OPTIONS = [
+  { value: 'all', label: 'All US States & Territories' },
+  ...US_STATES.map((s) => ({ value: s.code, label: s.fullName })),
+];

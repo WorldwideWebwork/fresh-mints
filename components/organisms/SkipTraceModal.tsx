@@ -113,48 +113,67 @@ export const SkipTraceModal: React.FC<SkipTraceModalProps> = ({
                     <Phone className="w-4 h-4 text-emerald-600" />
                     Verified Phone Details
                   </span>
-                  <Badge variant="success">{trace.dncStatus}</Badge>
+                  <Badge variant={trace.verifiedPhone ? "success" : "neutral"}>
+                    {trace.verifiedPhone ? trace.dncStatus : "No Phone on File"}
+                  </Badge>
                 </div>
-                <div className="flex items-center justify-between bg-emerald-50/60 rounded-lg p-3 text-sm">
-                  <div>
-                    <span className="font-mono font-bold text-emerald-950 text-base">{trace.verifiedPhone}</span>
-                    <span className="text-xs text-emerald-700 block mt-0.5">{trace.phoneType}</span>
+                {trace.verifiedPhone ? (
+                  <div className="flex items-center justify-between bg-emerald-50/60 rounded-lg p-3 text-sm">
+                    <div>
+                      <span className="font-mono font-bold text-emerald-950 text-base">{trace.verifiedPhone}</span>
+                      <span className="text-xs text-emerald-700 block mt-0.5">{trace.phoneType}</span>
+                    </div>
+                    <a
+                      href={`tel:${trace.verifiedPhone}`}
+                      className="px-3 py-1 bg-emerald-700 hover:bg-emerald-800 text-white text-xs font-semibold rounded-md shadow-xs"
+                    >
+                      Call Now
+                    </a>
                   </div>
-                  <a
-                    href={`tel:${trace.verifiedPhone}`}
-                    className="px-3 py-1 bg-emerald-700 hover:bg-emerald-800 text-white text-xs font-semibold rounded-md shadow-xs"
-                  >
-                    Call Now
-                  </a>
-                </div>
+                ) : (
+                  <div className="bg-stone-50 rounded-lg p-3 text-xs text-stone-500 italic">
+                    No verified direct phone number found in public registry or search results.
+                  </div>
+                )}
               </div>
 
               {/* Email Records */}
               <div className="border border-stone-200 rounded-xl p-4 space-y-2">
-                <span className="text-xs font-bold text-stone-700 flex items-center gap-1.5 uppercase tracking-wider">
-                  <Mail className="w-4 h-4 text-sky-600" />
-                  Email Addresses & Validation
-                </span>
-                <div className="space-y-2 text-sm">
-                  <div className="flex items-center justify-between bg-sky-50/60 rounded-lg p-3">
-                    <div>
-                      <span className="font-semibold text-sky-950 block">{trace.primaryEmail}</span>
-                      <span className="text-xs text-sky-700 font-medium">{trace.emailValidation}</span>
-                    </div>
-                    <a
-                      href={`mailto:${trace.primaryEmail}`}
-                      className="px-3 py-1 bg-sky-700 hover:bg-sky-800 text-white text-xs font-semibold rounded-md shadow-xs"
-                    >
-                      Compose Email
-                    </a>
-                  </div>
-
-                  {trace.secondaryEmail && (
-                    <div className="flex items-center justify-between bg-stone-50 rounded-lg p-2.5 text-xs text-stone-600">
-                      <span>Secondary Work Email: <strong>{trace.secondaryEmail}</strong></span>
-                    </div>
-                  )}
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-bold text-stone-700 flex items-center gap-1.5 uppercase tracking-wider">
+                    <Mail className="w-4 h-4 text-sky-600" />
+                    Email Addresses & Validation
+                  </span>
+                  <Badge variant={trace.primaryEmail ? "success" : "neutral"}>
+                    {trace.primaryEmail ? "Verified" : "Unlisted"}
+                  </Badge>
                 </div>
+                {trace.primaryEmail ? (
+                  <div className="space-y-2 text-sm">
+                    <div className="flex items-center justify-between bg-sky-50/60 rounded-lg p-3">
+                      <div>
+                        <span className="font-semibold text-sky-950 block">{trace.primaryEmail}</span>
+                        <span className="text-xs text-sky-700 font-medium">{trace.emailValidation}</span>
+                      </div>
+                      <a
+                        href={`mailto:${trace.primaryEmail}`}
+                        className="px-3 py-1 bg-sky-700 hover:bg-sky-800 text-white text-xs font-semibold rounded-md shadow-xs"
+                      >
+                        Compose Email
+                      </a>
+                    </div>
+
+                    {trace.secondaryEmail && (
+                      <div className="flex items-center justify-between bg-stone-50 rounded-lg p-2.5 text-xs text-stone-600">
+                        <span>Secondary Work Email: <strong>{trace.secondaryEmail}</strong></span>
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  <div className="bg-stone-50 rounded-lg p-3 text-xs text-stone-500 italic">
+                    No direct email address published in public registry records.
+                  </div>
+                )}
               </div>
 
               {/* Address & Social Footprint */}

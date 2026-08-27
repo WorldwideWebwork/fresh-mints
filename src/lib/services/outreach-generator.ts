@@ -1,4 +1,4 @@
-import { Lead, PROFESSION_CONFIGS, W4_HOSTING_PLANS, ProfessionCategory } from '../types/lead';
+import { type Lead, PROFESSION_CONFIGS, W4_HOSTING_PLANS, type ProfessionCategory } from '../types/lead';
 import { getPreviewLink } from './website-templates';
 
 export interface OutreachTemplateOption {
@@ -79,23 +79,23 @@ export const INDUSTRY_PITCH_PROFILES: Record<ProfessionCategory, IndustryPitchPr
   },
   dental: {
     profession: 'dental',
-    industryLabel: 'Dentistry & Orthodontics',
-    clientType: 'high-value cosmetic, restorative, and family dentistry patients',
-    primaryPainPoint: 'High clinical setup debt and the urgent need to book recurring high-ticket cosmetic procedures and family cleanings',
-    keySoftwareFeature: 'Compass Patient Digital Onboarding & Smile Transformation Gallery',
-    targetConversionGoal: 'new patient appointments and high-ticket treatment consultations',
-    sampleSubjectLine: 'Dr. [Last Name] – Practice domain secured & 2-yr hosting package ready',
-    industryCallOpening: 'Setting up a modern dental practice requires immediate digital trust so patients choose you over corporate dental chains.',
+    industryLabel: 'Dental & Oral Health Practices',
+    clientType: 'new dental patients, family checkups, and cosmetic procedures',
+    primaryPainPoint: 'High patient acquisition costs on Google Ads and lost bookings due to clunky, outdated dental clinic websites',
+    keySoftwareFeature: 'Compass Online Dental Booking & Automated Intake Forms',
+    targetConversionGoal: 'new patient exams and high-margin cosmetic consultations',
+    sampleSubjectLine: 'Dr. [Last Name] - Practice domain secured & 2-yr hosting package ready',
+    industryCallOpening: 'New patients looking for a dentist judge clinical authority based heavily on how clean, modern, and mobile-friendly the clinic website is.',
   },
   chiropractic: {
     profession: 'chiropractic',
-    industryLabel: 'Chiropractic & Physical Wellness',
-    clientType: 'wellness patients, athletes, and chronic pain sufferers',
-    primaryPainPoint: 'Filling weekly adjustment schedules and establishing local credibility beyond standard word-of-mouth',
-    keySoftwareFeature: 'Compass Direct Patient Booking & Condition-Specific Care Pathways',
-    targetConversionGoal: 'initial spinal evaluation bookings and recurring wellness plans',
-    sampleSubjectLine: 'Dr. [Last Name] – Congratulations on your DC license! (Practice portal live)',
-    industryCallOpening: 'Patients experiencing acute discomfort book with the first doctor whose practice site allows instant, seamless appointment scheduling.',
+    industryLabel: 'Chiropractic & Wellness Centers',
+    clientType: 'patients suffering from acute back/neck pain and wellness seekers',
+    primaryPainPoint: 'Competing against entrenched local clinics and failing to convert walk-ins without clear wellness package pricing and online scheduling',
+    keySoftwareFeature: 'Compass Treatment Plan Presenter & Online Appointment Engine',
+    targetConversionGoal: 'initial chiropractic adjustments and recurring wellness packages',
+    sampleSubjectLine: 'Dr. [Last Name] - Congratulations on your DC license! (Practice portal live)',
+    industryCallOpening: 'When someone is in acute pain, they book the first clinic with instant online scheduling and glowing clinical credentials.',
   },
   therapy: {
     profession: 'therapy',
@@ -114,7 +114,7 @@ export const INDUSTRY_PITCH_PROFILES: Record<ProfessionCategory, IndustryPitchPr
     primaryPainPoint: 'Losing booking deposits from Instagram DMs and struggling to charge premium rates without a luxury digital storefront',
     keySoftwareFeature: 'Compass Treatment Menu & Automated Service Deposit Booking',
     targetConversionGoal: 'high-ticket facial packages and recurring monthly skincare memberships',
-    sampleSubjectLine: 'Congratulations on your Esthetics license, [First Name]! ✨ (Your studio booking site is live)',
+    sampleSubjectLine: 'Congratulations on your Esthetics license, [First Name]! (Your studio booking site is live)',
     industryCallOpening: 'Having your own branded studio website immediately elevates you from a standard booth renter to a luxury skincare authority.',
   },
   veterinary: {
@@ -124,7 +124,7 @@ export const INDUSTRY_PITCH_PROFILES: Record<ProfessionCategory, IndustryPitchPr
     primaryPainPoint: 'Pet parents demanding 24/7 digital booking while corporate veterinary conglomerates dominate local search results',
     keySoftwareFeature: 'Compass Pet Patient Registration & In-Clinic/Mobile Booking Engine',
     targetConversionGoal: 'puppy/kitten wellness plans and recurring preventive care visits',
-    sampleSubjectLine: 'Dr. [Last Name] – Veterinary practice web portal ready (w4 Silver Tier)',
+    sampleSubjectLine: 'Dr. [Last Name] - Veterinary practice web portal ready (w4 Silver Tier)',
     industryCallOpening: 'Pet owners treat their animals like family, meaning your digital clinic presence must project instant compassion and clinical expertise.',
   },
   legal: {
@@ -134,7 +134,7 @@ export const INDUSTRY_PITCH_PROFILES: Record<ProfessionCategory, IndustryPitchPr
     primaryPainPoint: 'Attracting lucrative retainer clients while avoiding low-budget inquiries and establishing immediate courtroom authority',
     keySoftwareFeature: 'Compass Case Evaluation Intake & Encrypted Discovery Scheduler',
     targetConversionGoal: 'qualified consultation calls and signed client retainer agreements',
-    sampleSubjectLine: 'Counselor [First Name] – Congratulations on your State Bar admission (Practice portal live)',
+    sampleSubjectLine: 'Counselor [First Name] - Congratulations on your State Bar admission (Practice portal live)',
     industryCallOpening: 'In law, client perception is everything. A high-speed, secure practice site positions you as a premier legal advocate from Day 1.',
   },
   financial_advisor: {
@@ -224,8 +224,8 @@ export function generateColdCallScript(lead: Lead, offerPrice: number): ColdCall
         rebuttal: `"That's awesome! Most top performers still maintain their personal professional brand so their direct referrals, 5-star reviews, and client inquiries belong to them, not just the parent company."`,
       },
       {
-        objection: `"I'm planning to build something myself on Wix or Squarespace."`,
-        rebuttal: `"Totally understand. The challenge is DIY builders still charge $30–$50/mo, take 40+ hours to build, and lack ${industryProfile.keySoftwareFeature}. Our turnkey package has everything live in 24 hours with 2 full years of hosting completely covered."`,
+        objection: `"I already have a friend building my website or I was going to use Squarespace."`,
+        rebuttal: `"Totally understand. The challenge is DIY builders still charge $30-$50/month just for basic hosting, plus you have to build the whole intake system yourself. Our package gives you a fully custom, compliant practice portal with 2 full years of w4 cloud hosting included for one flat promotional fee."`,
       },
       {
         objection: `"Can I see what it looks like before making a decision?"`,
@@ -236,7 +236,7 @@ export function generateColdCallScript(lead: Lead, offerPrice: number): ColdCall
         rebuttal: `"It simply rolls over to our standard w4 hosting rate of $${hostingPlan.monthlyBaseRate}/mo to keep your Compass Suite and SSL active, with no contracts. You can also buy out your domain asset for $999 at any time."`,
       },
     ],
-    callerBountyNote: `💰 Rep Commission: Earn $300.00 cash on this closed deal! (Pipeline deal value: $${offerPrice.toLocaleString()})`,
+    callerBountyNote: `Rep Commission: Earn $300.00 cash on this closed deal! (Pipeline deal value: $${offerPrice.toLocaleString()})`,
   };
 }
 
@@ -256,10 +256,9 @@ export function generateFallbackOutreach(
     ? `Dr. ${lastName}`
     : firstName;
 
-  // Template 1: State Board Pass & Congratulatory (Default Recommended)
   if (templateId === 'industry_board_pass' || templateId === 'congratulations') {
     return {
-      subject: `Congratulations on passing your ${lead.professionTitle} license, ${firstName}! 🎉`,
+      subject: `Congratulations on passing your ${lead.professionTitle} license, ${firstName}!`,
       emailBody: `Hi ${salutation},
 
 I was reviewing the latest state licensing registry updates for ${lead.state} and noticed your newly issued ${lead.professionTitle} license from ${lead.collegeOrSchool}! Huge congratulations on reaching this career milestone.
@@ -268,7 +267,7 @@ As you begin taking on ${industryProfile.clientType} in ${lead.city}, having a v
 
 My Compass Consulting took the liberty of creating a personalized website mockup tailored specifically for your practice, powered by the Compass Software Suite:
 
-👉 Take a look at your website preview: ${siteUrl}
+Take a look at your website preview: ${siteUrl}
 
 Everything is already structured for your practice, from service breakdowns to ${industryProfile.keySoftwareFeature}.
 
@@ -291,7 +290,6 @@ freshmints.ai.studio`,
     };
   }
 
-  // Template 2: Industry Client Acquisition Magnet
   if (templateId === 'industry_client_magnet') {
     return {
       subject: `Client acquisition portal for your new ${lead.professionTitle} practice in ${lead.city}`,
@@ -303,7 +301,7 @@ ${industryProfile.primaryPainPoint}.
 
 To give you an immediate competitive advantage, My Compass Consulting has engineered a turnkey practice portal powered by our Compass Software Suite:
 
-👉 View your live practice preview: ${siteUrl}
+View your live practice preview: ${siteUrl}
 
 Engineered to Convert:
 • ${industryProfile.keySoftwareFeature}
@@ -325,7 +323,6 @@ freshmints.ai.studio`,
     };
   }
 
-  // Template 3: Practice Domain & Brand Protection
   if (templateId === 'industry_domain_protection' || templateId === 'launch_urgency') {
     return {
       subject: `[Action Required] Practice domain secured for ${lead.fullName} (${lead.professionTitle})`,
@@ -337,7 +334,7 @@ When state licensing boards publish new licensee rosters, third-party lead aggre
 
 To protect your professional brand, My Compass Consulting has reserved your custom practice domain and pre-built your live practice web portal:
 
-👉 Inspect your reserved practice preview: ${siteUrl}
+Inspect your reserved practice preview: ${siteUrl}
 
 Your 2-Year Turnkey Package Includes:
 • Dedicated practice web portal configured for ${industryProfile.industryLabel}
@@ -359,7 +356,6 @@ freshmints.ai.studio`,
     };
   }
 
-  // Template 4: My Compass Consulting Executive Proposal
   return {
     subject: `Executive practice consulting proposal: ${lead.fullName} (${lead.professionTitle})`,
     emailBody: `Dear ${salutation},
@@ -370,7 +366,7 @@ As you establish your practice footprint in ${lead.city}, your digital touchpoin
 
 My Compass Consulting is pleased to present a turnkey practice digital infrastructure proposal powered by the Compass Software Suite:
 
-👉 Review your live practice preview: ${siteUrl}
+Review your live practice preview: ${siteUrl}
 
 Executive Specifications:
 • Bespoke practice portfolio & specialty clinical service presentation
@@ -391,5 +387,3 @@ freshmints.ai.studio`,
     smsBody: `Hello ${firstName}, congratulations on your license! Here is your custom practice site preview with 2 years w4 hosting from My Compass Consulting: ${siteUrl}`,
   };
 }
-
-

@@ -1,6 +1,6 @@
-'use client';
+"use client";
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef } from "react";
 import {
   Search,
   Users,
@@ -21,31 +21,31 @@ import {
   Scale,
   Activity,
   Database,
-  CheckCircle2,
-} from 'lucide-react';
-import { useLeadStore } from '../../hooks/use-lead-store';
-import { useToast } from '../../hooks/use-toast';
-import { FilterBar } from '../molecules/FilterBar';
-import { LeadTable } from '../organisms/LeadTable';
-import { SkipTraceModal } from '../organisms/SkipTraceModal';
-import { WebsitePreviewModal } from '../organisms/WebsitePreviewModal';
-import { WebsiteAuditModal } from '../organisms/WebsiteAuditModal';
-import { OutreachComposerModal } from '../organisms/OutreachComposerModal';
-import { KanbanBoard } from '../organisms/KanbanBoard';
-import { AddLeadModal } from '../organisms/AddLeadModal';
-import { CrmExportModal } from '../organisms/CrmExportModal';
-import { AnalyticsView } from '../organisms/AnalyticsView';
-import { ValuationExplainerModal } from '../organisms/ValuationExplainerModal';
-import { RegistrySearchView } from '../organisms/RegistrySearchView';
-import { RepHubView } from '../organisms/RepHubView';
-import { W4EconomicsView } from '../organisms/W4EconomicsView';
-import { AddCustomTabModal } from '../organisms/AddCustomTabModal';
-import { CustomFilteredView } from '../organisms/CustomFilteredView';
-import { ToastContainer } from '../molecules/Toast';
-import { ConfirmDialog } from '../molecules/ConfirmDialog';
-import { Button } from '../atoms/Button';
-import { Badge } from '../atoms/Badge';
-import { Lead, CustomTabConfig, ProfessionCategory, PROFESSION_CONFIGS } from '../../types/lead';
+  CheckCircle2
+} from "lucide-react";
+import { useLeadStore } from "../../hooks/use-lead-store";
+import { useToast } from "../../hooks/use-toast";
+import { FilterBar } from "../molecules/FilterBar";
+import { LeadTable } from "../organisms/LeadTable";
+import { SkipTraceModal } from "../organisms/SkipTraceModal";
+import { WebsitePreviewModal } from "../organisms/WebsitePreviewModal";
+import { WebsiteAuditModal } from "../organisms/WebsiteAuditModal";
+import { OutreachComposerModal } from "../organisms/OutreachComposerModal";
+import { KanbanBoard } from "../organisms/KanbanBoard";
+import { AddLeadModal } from "../organisms/AddLeadModal";
+import { CrmExportModal } from "../organisms/CrmExportModal";
+import { AnalyticsView } from "../organisms/AnalyticsView";
+import { ValuationExplainerModal } from "../organisms/ValuationExplainerModal";
+import { RegistrySearchView } from "../organisms/RegistrySearchView";
+import { RepHubView } from "../organisms/RepHubView";
+import { W4EconomicsView } from "../organisms/W4EconomicsView";
+import { AddCustomTabModal } from "../organisms/AddCustomTabModal";
+import { CustomFilteredView } from "../organisms/CustomFilteredView";
+import { ToastContainer } from "../molecules/Toast";
+import { ConfirmDialog } from "../molecules/ConfirmDialog";
+import { Button } from "../atoms/Button";
+import { Badge } from "../atoms/Badge";
+import { Lead, CustomTabConfig, ProfessionCategory, PROFESSION_CONFIGS } from "../../types/lead";
 
 const TAB_ICONS: Record<string, React.ElementType> = {
   Flame,
@@ -59,7 +59,7 @@ const TAB_ICONS: Record<string, React.ElementType> = {
   Activity,
   Sparkles,
   Server,
-  Search,
+  Search
 };
 
 export const DashboardLayout: React.FC = () => {
@@ -88,7 +88,7 @@ export const DashboardLayout: React.FC = () => {
     fetchLiveOpenRegistryData,
     ensureWebsiteConfig,
     logOutreach,
-    clearAllLeads,
+    clearAllLeads
   } = useLeadStore();
 
   const { toasts, addToast, dismissToast } = useToast();
@@ -97,10 +97,10 @@ export const DashboardLayout: React.FC = () => {
 
   useEffect(() => {
     if (mainScrollRef.current) {
-      mainScrollRef.current.scrollTo({ top: 0, left: 0, behavior: 'instant' });
+      mainScrollRef.current.scrollTo({ top: 0, left: 0, behavior: "instant" });
     }
-    if (typeof window !== 'undefined') {
-      window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
+    if (typeof window !== "undefined") {
+      window.scrollTo({ top: 0, left: 0, behavior: "instant" });
     }
   }, [activeTab]);
 
@@ -125,23 +125,23 @@ export const DashboardLayout: React.FC = () => {
   // Handlers
   const handleFetchLiveOpenData = async (quantity?: number) => {
     setIsLiveFetching(true);
-    const targetProf = filters.profession === 'all' ? undefined : filters.profession;
-    const targetState = filters.state === 'all' ? undefined : filters.state;
+    const targetProf = filters.profession === "all" ? undefined : filters.profession;
+    const targetState = filters.state === "all" ? undefined : filters.state;
     const targetQuantity = quantity || fetchQuantity || 25;
     const newCount = await fetchLiveOpenRegistryData(targetProf, targetState, targetQuantity);
     setIsLiveFetching(false);
 
     if (newCount > 0) {
       addToast({
-        type: 'success',
-        title: 'Live Registry Data Synced & Saved',
-        description: `Successfully retrieved and persisted ${newCount} real practitioners in your IndexedDB NoSQL storage.`,
+        type: "success",
+        title: "Live Registry Data Synced & Saved",
+        description: `Successfully retrieved and persisted ${newCount} real practitioners in your IndexedDB NoSQL storage.`
       });
     } else {
       addToast({
-        type: 'info',
-        title: 'Registry Query Up-to-Date',
-        description: 'No new unique licensees found for current filter criteria.',
+        type: "info",
+        title: "Registry Query Up-to-Date",
+        description: "No new unique licensees found for current filter criteria."
       });
     }
   };
@@ -174,9 +174,9 @@ export const DashboardLayout: React.FC = () => {
     setIsBatchLoading(false);
 
     addToast({
-      type: 'success',
-      title: 'Batch Skip Trace Complete',
-      description: `Discovered and verified contact coordinates for ${updatedCount} untraced lead(s).`,
+      type: "success",
+      title: "Batch Skip Trace Complete",
+      description: `Discovered and verified contact coordinates for ${updatedCount} untraced lead(s).`
     });
   };
 
@@ -189,9 +189,9 @@ export const DashboardLayout: React.FC = () => {
     if (leadToDelete) {
       deleteLead(leadToDelete.id);
       addToast({
-        type: 'info',
-        title: 'Lead Removed',
-        description: `${leadToDelete.fullName} was removed from your database.`,
+        type: "info",
+        title: "Lead Removed",
+        description: `${leadToDelete.fullName} was removed from your database.`
       });
     }
     setLeadToDelete(null);
@@ -202,27 +202,27 @@ export const DashboardLayout: React.FC = () => {
     clearAllLeads();
     setIsClearAllConfirmOpen(false);
     addToast({
-      type: 'info',
-      title: 'Database Cleared',
-      description: 'IndexedDB local storage was wiped clean. You can fetch live records anytime.',
+      type: "info",
+      title: "Database Cleared",
+      description: "IndexedDB local storage was wiped clean. You can fetch live records anytime."
     });
   };
 
   const handleAddNewTab = (tab: CustomTabConfig) => {
     addCustomTab(tab);
     addToast({
-      type: 'success',
-      title: 'Custom Tab Created',
-      description: `"${tab.label}" tab was added to your navigation bar and saved.`,
+      type: "success",
+      title: "Custom Tab Created",
+      description: `"${tab.label}" tab was added to your navigation bar and saved.`
     });
   };
 
   const handleRemoveCustomTab = (tabId: string) => {
     removeCustomTab(tabId);
     addToast({
-      type: 'info',
-      title: 'Tab Removed',
-      description: 'Custom view was removed from your navigation.',
+      type: "info",
+      title: "Tab Removed",
+      description: "Custom view was removed from your navigation."
     });
   };
 
@@ -232,7 +232,10 @@ export const DashboardLayout: React.FC = () => {
   return (
     <div className="flex h-screen bg-slate-50/50 text-slate-900 font-sans antialiased overflow-hidden select-none">
       {/* Toast Notification Layer */}
-      <ToastContainer toasts={toasts} onDismiss={dismissToast} />
+      <ToastContainer
+        toasts={toasts}
+        onDismiss={dismissToast}
+      />
 
       {/* Desktop Sidebar Navigation */}
       <aside
@@ -251,7 +254,9 @@ export const DashboardLayout: React.FC = () => {
                 PRO
               </span>
             </h1>
-            <p className="text-[11px] text-slate-400 font-medium">Newly Minted Leads & Pitch Studio</p>
+            <p className="text-[11px] text-slate-400 font-medium">
+              Newly Minted Leads & Pitch Studio
+            </p>
           </div>
         </div>
 
@@ -260,11 +265,11 @@ export const DashboardLayout: React.FC = () => {
           {/* 1. Search Tab - First item on the left/top */}
           <button
             id="sidebar-nav-search"
-            onClick={() => setActiveTab('search')}
+            onClick={() => setActiveTab("search")}
             className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-semibold cursor-pointer transition-all ${
-              activeTab === 'search'
-                ? 'bg-emerald-600 text-white shadow-md shadow-emerald-600/30'
-                : 'text-slate-400 hover:text-white hover:bg-slate-800/60'
+              activeTab === "search"
+                ? "bg-emerald-600 text-white shadow-md shadow-emerald-600/30"
+                : "text-slate-400 hover:text-white hover:bg-slate-800/60"
             }`}
           >
             <Search className="w-4 h-4 text-emerald-400" />
@@ -277,11 +282,11 @@ export const DashboardLayout: React.FC = () => {
           {/* 2. Leads Directory Tab */}
           <button
             id="sidebar-nav-directory"
-            onClick={() => setActiveTab('directory')}
+            onClick={() => setActiveTab("directory")}
             className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-semibold cursor-pointer transition-all ${
-              activeTab === 'directory'
-                ? 'bg-emerald-600 text-white shadow-md shadow-emerald-600/30'
-                : 'text-slate-400 hover:text-white hover:bg-slate-800/60'
+              activeTab === "directory"
+                ? "bg-emerald-600 text-white shadow-md shadow-emerald-600/30"
+                : "text-slate-400 hover:text-white hover:bg-slate-800/60"
             }`}
           >
             <Users className="w-4 h-4" />
@@ -294,11 +299,11 @@ export const DashboardLayout: React.FC = () => {
           {/* 3. Pipeline Tab */}
           <button
             id="sidebar-nav-pipeline"
-            onClick={() => setActiveTab('pipeline')}
+            onClick={() => setActiveTab("pipeline")}
             className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-semibold cursor-pointer transition-all ${
-              activeTab === 'pipeline'
-                ? 'bg-emerald-600 text-white shadow-md shadow-emerald-600/30'
-                : 'text-slate-400 hover:text-white hover:bg-slate-800/60'
+              activeTab === "pipeline"
+                ? "bg-emerald-600 text-white shadow-md shadow-emerald-600/30"
+                : "text-slate-400 hover:text-white hover:bg-slate-800/60"
             }`}
           >
             <Kanban className="w-4 h-4" />
@@ -308,28 +313,25 @@ export const DashboardLayout: React.FC = () => {
           {/* 4. Rep Hub ($300 Bounty) */}
           <button
             id="sidebar-nav-outreach"
-            onClick={() => setActiveTab('outreach')}
+            onClick={() => setActiveTab("outreach")}
             className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-semibold cursor-pointer transition-all ${
-              activeTab === 'outreach'
-                ? 'bg-emerald-600 text-white shadow-md shadow-emerald-600/30'
-                : 'text-slate-400 hover:text-white hover:bg-slate-800/60'
+              activeTab === "outreach"
+                ? "bg-emerald-600 text-white shadow-md shadow-emerald-600/30"
+                : "text-slate-400 hover:text-white hover:bg-slate-800/60"
             }`}
           >
             <PhoneCall className="w-4 h-4 text-amber-400" />
             <span>Rep Hub &amp; Calls</span>
-            <span className="ml-auto text-[10px] bg-amber-950 text-amber-300 border border-amber-800 px-1.5 py-0.5 rounded font-mono font-bold">
-              $300 Bounty
-            </span>
           </button>
 
           {/* 5. w4 Economics & Tiers */}
           <button
             id="sidebar-nav-economics"
-            onClick={() => setActiveTab('economics')}
+            onClick={() => setActiveTab("economics")}
             className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-semibold cursor-pointer transition-all ${
-              activeTab === 'economics'
-                ? 'bg-emerald-600 text-white shadow-md shadow-emerald-600/30'
-                : 'text-slate-400 hover:text-white hover:bg-slate-800/60'
+              activeTab === "economics"
+                ? "bg-emerald-600 text-white shadow-md shadow-emerald-600/30"
+                : "text-slate-400 hover:text-white hover:bg-slate-800/60"
             }`}
           >
             <Server className="w-4 h-4 text-teal-400" />
@@ -339,11 +341,11 @@ export const DashboardLayout: React.FC = () => {
           {/* 6. Analytics Tab */}
           <button
             id="sidebar-nav-analytics"
-            onClick={() => setActiveTab('analytics')}
+            onClick={() => setActiveTab("analytics")}
             className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-semibold cursor-pointer transition-all ${
-              activeTab === 'analytics'
-                ? 'bg-emerald-600 text-white shadow-md shadow-emerald-600/30'
-                : 'text-slate-400 hover:text-white hover:bg-slate-800/60'
+              activeTab === "analytics"
+                ? "bg-emerald-600 text-white shadow-md shadow-emerald-600/30"
+                : "text-slate-400 hover:text-white hover:bg-slate-800/60"
             }`}
           >
             <BarChart3 className="w-4 h-4" />
@@ -383,8 +385,8 @@ export const DashboardLayout: React.FC = () => {
                       key={tab.id}
                       className={`group flex items-center justify-between px-3 py-2 rounded-xl text-xs font-medium cursor-pointer transition-all ${
                         isSelected
-                          ? 'bg-emerald-600 text-white'
-                          : 'text-slate-400 hover:text-white hover:bg-slate-800/60'
+                          ? "bg-emerald-600 text-white"
+                          : "text-slate-400 hover:text-white hover:bg-slate-800/60"
                       }`}
                     >
                       <button
@@ -437,14 +439,20 @@ export const DashboardLayout: React.FC = () => {
             </p>
             <div className="flex items-center justify-between text-[10px] text-slate-400 font-mono">
               <span>{analytics.totalLeads} saved leads</span>
-              <span className="text-emerald-400 font-semibold group-hover:underline">w4 Math →</span>
+              <span className="text-emerald-400 font-semibold group-hover:underline">
+                w4 Math →
+              </span>
             </div>
           </div>
         </div>
       </aside>
 
       {/* Main Canvas Workspace */}
-      <div id="main-content-scroll" ref={mainScrollRef} className="flex-1 flex flex-col overflow-y-auto">
+      <div
+        id="main-content-scroll"
+        ref={mainScrollRef}
+        className="flex-1 flex flex-col overflow-y-auto"
+      >
         {/* Mobile Header Navigation */}
         <header className="md:hidden bg-slate-900 text-white p-3 flex items-center justify-between border-b border-slate-800 sticky top-0 z-30 shadow-md">
           <div className="flex items-center gap-2">
@@ -452,8 +460,12 @@ export const DashboardLayout: React.FC = () => {
               <Sparkles className="w-4 h-4 text-emerald-100" />
             </div>
             <div>
-              <span className="font-extrabold text-xs tracking-wider block text-white">FRESH MINTS</span>
-              <span className="text-[10px] text-emerald-400 block -mt-0.5">50 State Licensing Registries</span>
+              <span className="font-extrabold text-xs tracking-wider block text-white">
+                FRESH MINTS
+              </span>
+              <span className="text-[10px] text-emerald-400 block -mt-0.5">
+                50 State Licensing Registries
+              </span>
             </div>
           </div>
 
@@ -479,18 +491,18 @@ export const DashboardLayout: React.FC = () => {
         {/* Content View Container */}
         <main
           className={`flex-1 px-3 sm:px-8 py-4 sm:py-6 w-full mx-auto space-y-4 sm:space-y-6 pb-28 md:pb-8 ${
-            activeTab === 'pipeline' ? 'max-w-full' : 'max-w-7xl'
+            activeTab === "pipeline" ? "max-w-full" : "max-w-7xl"
           }`}
         >
           {/* 1. Search & Live Discovery View */}
-          {activeTab === 'search' && (
+          {activeTab === "search" && (
             <RegistrySearchView
               onMintLead={(leadData) => {
                 const added = addLead(leadData);
                 addToast({
-                  type: 'success',
-                  title: 'Licensee Minted to CRM',
-                  description: `${added.fullName} added to your active database.`,
+                  type: "success",
+                  title: "Licensee Minted to CRM",
+                  description: `${added.fullName} added to your active database.`
                 });
               }}
               onPreviewWebsite={handleOpenWebsite}
@@ -501,9 +513,9 @@ export const DashboardLayout: React.FC = () => {
                 setIsLiveFetching(false);
                 if (count > 0) {
                   addToast({
-                    type: 'success',
-                    title: 'Live Registry Records Synced',
-                    description: `Retrieved and saved ${count} newly licensed professionals.`,
+                    type: "success",
+                    title: "Live Registry Records Synced",
+                    description: `Retrieved and saved ${count} newly licensed professionals.`
                   });
                 }
               }}
@@ -513,7 +525,7 @@ export const DashboardLayout: React.FC = () => {
           )}
 
           {/* 2. Leads Directory View */}
-          {activeTab === 'directory' && (
+          {activeTab === "directory" && (
             <div className="space-y-4">
               <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
                 <div>
@@ -524,7 +536,8 @@ export const DashboardLayout: React.FC = () => {
                     </span>
                   </h1>
                   <p className="text-slate-500 text-xs sm:text-sm mt-0.5">
-                    Newly licensed solo practitioners ready for turnkey 2-year web hosting packages ($1,250–$3,950).
+                    Newly licensed solo practitioners ready for turnkey 2-year web hosting packages
+                    ($1,250–$3,950).
                   </p>
                 </div>
 
@@ -538,7 +551,7 @@ export const DashboardLayout: React.FC = () => {
                     title="Query Free Open Public Registries"
                     className="border-emerald-200 hover:bg-emerald-50 text-emerald-900"
                   >
-                    {isLiveFetching ? 'Querying...' : `Live Sync (+${fetchQuantity})`}
+                    {isLiveFetching ? "Querying..." : `Live Sync (+${fetchQuantity})`}
                   </Button>
 
                   <Button
@@ -559,8 +572,12 @@ export const DashboardLayout: React.FC = () => {
                   <p className="text-[10px] sm:text-xs font-bold text-slate-400 uppercase tracking-wider mb-0.5">
                     Saved Graduates
                   </p>
-                  <p className="text-lg sm:text-2xl font-bold text-slate-900">{analytics.totalLeads}</p>
-                  <span className="text-emerald-600 text-[10px] sm:text-xs font-medium">IndexedDB NoSQL Persisted</span>
+                  <p className="text-lg sm:text-2xl font-bold text-slate-900">
+                    {analytics.totalLeads}
+                  </p>
+                  <span className="text-emerald-600 text-[10px] sm:text-xs font-medium">
+                    IndexedDB NoSQL Persisted
+                  </span>
                 </div>
 
                 <div className="bg-white p-3.5 sm:p-5 rounded-2xl border border-slate-100 shadow-xs">
@@ -568,17 +585,26 @@ export const DashboardLayout: React.FC = () => {
                     Skip-Trace Match
                   </p>
                   <p className="text-lg sm:text-2xl font-bold text-slate-900">
-                    {analytics.totalLeads > 0 ? Math.round((analytics.tracedLeads / analytics.totalLeads) * 100) : 0}%
+                    {analytics.totalLeads > 0
+                      ? Math.round((analytics.tracedLeads / analytics.totalLeads) * 100)
+                      : 0}
+                    %
                   </p>
-                  <span className="text-blue-600 text-[10px] sm:text-xs font-medium">{analytics.tracedLeads} Contacts Found</span>
+                  <span className="text-blue-600 text-[10px] sm:text-xs font-medium">
+                    {analytics.tracedLeads} Contacts Found
+                  </span>
                 </div>
 
                 <div className="bg-white p-3.5 sm:p-5 rounded-2xl border border-slate-100 shadow-xs">
                   <p className="text-[10px] sm:text-xs font-bold text-slate-400 uppercase tracking-wider mb-0.5">
                     Contacted
                   </p>
-                  <p className="text-lg sm:text-2xl font-bold text-slate-900">{analytics.contactedLeads}</p>
-                  <span className="text-purple-600 text-[10px] sm:text-xs font-medium">Outreach Pitches</span>
+                  <p className="text-lg sm:text-2xl font-bold text-slate-900">
+                    {analytics.contactedLeads}
+                  </p>
+                  <span className="text-purple-600 text-[10px] sm:text-xs font-medium">
+                    Outreach Pitches
+                  </span>
                 </div>
 
                 <div
@@ -595,7 +621,8 @@ export const DashboardLayout: React.FC = () => {
                     ${analytics.pipelineValue.toLocaleString()}
                   </p>
                   <span className="text-emerald-600 text-[10px] sm:text-xs font-semibold block">
-                    ${analytics.wonRevenue.toLocaleString()} Won • <span className="underline">View Math</span>
+                    ${analytics.wonRevenue.toLocaleString()} Won •{" "}
+                    <span className="underline">View Math</span>
                   </span>
                 </div>
               </div>
@@ -637,7 +664,7 @@ export const DashboardLayout: React.FC = () => {
           )}
 
           {/* 3. CRM Pipeline Kanban View */}
-          {activeTab === 'pipeline' && (
+          {activeTab === "pipeline" && (
             <KanbanBoard
               leads={leads}
               onSelectLead={(l) => setSelectedLeadId(l.id)}
@@ -648,7 +675,7 @@ export const DashboardLayout: React.FC = () => {
           )}
 
           {/* 4. Rep Hub & Cold Call Studio View */}
-          {activeTab === 'outreach' && (
+          {activeTab === "outreach" && (
             <RepHubView
               leads={leads}
               onOpenOutreach={handleOpenOutreach}
@@ -656,16 +683,16 @@ export const DashboardLayout: React.FC = () => {
               onUpdateStatus={(id, status) => {
                 updateLead(id, { outreachStatus: status });
                 addToast({
-                  type: 'success',
-                  title: 'Status Updated',
-                  description: `Lead status moved to "${status}".`,
+                  type: "success",
+                  title: "Status Updated",
+                  description: `Lead status moved to "${status}".`
                 });
               }}
             />
           )}
 
           {/* 5. w4 Economics & Tiers View */}
-          {activeTab === 'economics' && (
+          {activeTab === "economics" && (
             <W4EconomicsView
               totalLeads={analytics.totalLeads}
               pipelineValue={analytics.pipelineValue}
@@ -673,8 +700,11 @@ export const DashboardLayout: React.FC = () => {
           )}
 
           {/* 6. Analytics View */}
-          {activeTab === 'analytics' && (
-            <AnalyticsView leads={leads} analytics={analytics} />
+          {activeTab === "analytics" && (
+            <AnalyticsView
+              leads={leads}
+              analytics={analytics}
+            />
           )}
 
           {/* 7. Custom Filtered Tab View */}
@@ -706,9 +736,11 @@ export const DashboardLayout: React.FC = () => {
         {/* 1. Search Bar - First button on the left! */}
         <button
           id="mobile-nav-search"
-          onClick={() => setActiveTab('search')}
+          onClick={() => setActiveTab("search")}
           className={`flex-1 flex flex-col items-center justify-center py-1 px-0.5 rounded-xl transition-all cursor-pointer min-w-0 min-h-[44px] ${
-            activeTab === 'search' ? 'text-emerald-400 font-bold bg-slate-900/60' : 'text-slate-400 hover:text-slate-200'
+            activeTab === "search"
+              ? "text-emerald-400 font-bold bg-slate-900/60"
+              : "text-slate-400 hover:text-slate-200"
           }`}
         >
           <Search className="w-5 h-5 shrink-0" />
@@ -718,9 +750,11 @@ export const DashboardLayout: React.FC = () => {
         {/* 2. Leads Directory - On its own tab */}
         <button
           id="mobile-nav-directory"
-          onClick={() => setActiveTab('directory')}
+          onClick={() => setActiveTab("directory")}
           className={`flex-1 flex flex-col items-center justify-center py-1 px-0.5 rounded-xl transition-all cursor-pointer min-w-0 min-h-[44px] ${
-            activeTab === 'directory' ? 'text-emerald-400 font-bold bg-slate-900/60' : 'text-slate-400 hover:text-slate-200'
+            activeTab === "directory"
+              ? "text-emerald-400 font-bold bg-slate-900/60"
+              : "text-slate-400 hover:text-slate-200"
           }`}
         >
           <Users className="w-5 h-5 shrink-0" />
@@ -730,9 +764,11 @@ export const DashboardLayout: React.FC = () => {
         {/* 3. Pipeline */}
         <button
           id="mobile-nav-pipeline"
-          onClick={() => setActiveTab('pipeline')}
+          onClick={() => setActiveTab("pipeline")}
           className={`flex-1 flex flex-col items-center justify-center py-1 px-0.5 rounded-xl transition-all cursor-pointer min-w-0 min-h-[44px] ${
-            activeTab === 'pipeline' ? 'text-emerald-400 font-bold bg-slate-900/60' : 'text-slate-400 hover:text-slate-200'
+            activeTab === "pipeline"
+              ? "text-emerald-400 font-bold bg-slate-900/60"
+              : "text-slate-400 hover:text-slate-200"
           }`}
         >
           <Kanban className="w-5 h-5 shrink-0" />
@@ -742,9 +778,11 @@ export const DashboardLayout: React.FC = () => {
         {/* 4. Rep Hub */}
         <button
           id="mobile-nav-outreach"
-          onClick={() => setActiveTab('outreach')}
+          onClick={() => setActiveTab("outreach")}
           className={`flex-1 flex flex-col items-center justify-center py-1 px-0.5 rounded-xl transition-all cursor-pointer min-w-0 min-h-[44px] ${
-            activeTab === 'outreach' ? 'text-emerald-400 font-bold bg-slate-900/60' : 'text-slate-400 hover:text-slate-200'
+            activeTab === "outreach"
+              ? "text-emerald-400 font-bold bg-slate-900/60"
+              : "text-slate-400 hover:text-slate-200"
           }`}
         >
           <PhoneCall className="w-5 h-5 text-amber-400 shrink-0" />
@@ -754,9 +792,11 @@ export const DashboardLayout: React.FC = () => {
         {/* 5. Economics */}
         <button
           id="mobile-nav-economics"
-          onClick={() => setActiveTab('economics')}
+          onClick={() => setActiveTab("economics")}
           className={`flex-1 flex flex-col items-center justify-center py-1 px-0.5 rounded-xl transition-all cursor-pointer min-w-0 min-h-[44px] ${
-            activeTab === 'economics' ? 'text-emerald-400 font-bold bg-slate-900/60' : 'text-slate-400 hover:text-slate-200'
+            activeTab === "economics"
+              ? "text-emerald-400 font-bold bg-slate-900/60"
+              : "text-slate-400 hover:text-slate-200"
           }`}
         >
           <Server className="w-5 h-5 text-teal-400 shrink-0" />
@@ -766,9 +806,11 @@ export const DashboardLayout: React.FC = () => {
         {/* 6. Analytics */}
         <button
           id="mobile-nav-analytics"
-          onClick={() => setActiveTab('analytics')}
+          onClick={() => setActiveTab("analytics")}
           className={`flex-1 flex flex-col items-center justify-center py-1 px-0.5 rounded-xl transition-all cursor-pointer min-w-0 min-h-[44px] ${
-            activeTab === 'analytics' ? 'text-emerald-400 font-bold bg-slate-900/60' : 'text-slate-400 hover:text-slate-200'
+            activeTab === "analytics"
+              ? "text-emerald-400 font-bold bg-slate-900/60"
+              : "text-slate-400 hover:text-slate-200"
           }`}
         >
           <BarChart3 className="w-5 h-5 shrink-0" />
@@ -784,11 +826,15 @@ export const DashboardLayout: React.FC = () => {
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
               className={`flex-1 flex flex-col items-center justify-center py-1 px-0.5 rounded-xl transition-all cursor-pointer min-w-0 min-h-[44px] ${
-                isSelected ? 'text-emerald-400 font-bold bg-slate-900/60' : 'text-slate-400 hover:text-slate-200'
+                isSelected
+                  ? "text-emerald-400 font-bold bg-slate-900/60"
+                  : "text-slate-400 hover:text-slate-200"
               }`}
             >
               <IconComp className="w-5 h-5 shrink-0" />
-              <span className="text-[10px] mt-0.5 truncate max-w-[54px] text-center w-full">{tab.label}</span>
+              <span className="text-[10px] mt-0.5 truncate max-w-[54px] text-center w-full">
+                {tab.label}
+              </span>
             </button>
           );
         })}
@@ -841,11 +887,11 @@ export const DashboardLayout: React.FC = () => {
             const auditResult = await checkLeadWebsite(id);
             if (auditResult) {
               addToast({
-                type: !auditResult.hasWebsite ? 'success' : 'info',
-                title: 'Website Check Complete',
+                type: !auditResult.hasWebsite ? "success" : "info",
+                title: "Website Check Complete",
                 description: !auditResult.hasWebsite
                   ? `Verified: ${modalTargetLead.fullName} has NO active website! Prime turnkey pitch opportunity.`
-                  : `Active web domain detected for ${modalTargetLead.fullName}: ${auditResult.existingUrl || 'Live website'}.`,
+                  : `Active web domain detected for ${modalTargetLead.fullName}: ${auditResult.existingUrl || "Live website"}.`
               });
             }
             return auditResult;
@@ -868,9 +914,9 @@ export const DashboardLayout: React.FC = () => {
           onClose={() => setIsOutreachModalOpen(false)}
           onLogSent={(id, log) => {
             logOutreach(id, {
-              channel: log.type === 'email' ? 'Email' : 'SMS',
+              channel: log.type === "email" ? "Email" : "SMS",
               notes: log.content,
-              newStatus: 'Outreach Sent',
+              newStatus: "Outreach Sent"
             });
           }}
         />
@@ -883,9 +929,9 @@ export const DashboardLayout: React.FC = () => {
           onAddLead={(leadData) => {
             const added = addLead(leadData);
             addToast({
-              type: 'success',
-              title: 'Lead Added to Database',
-              description: `Successfully added and saved ${added.fullName} to your persistent store.`,
+              type: "success",
+              title: "Lead Added to Database",
+              description: `Successfully added and saved ${added.fullName} to your persistent store.`
             });
           }}
         />

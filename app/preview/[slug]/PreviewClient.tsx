@@ -21,7 +21,7 @@ import {
   Clock,
   UserCheck,
 } from 'lucide-react';
-import { INITIAL_LEADS } from '@/lib/sample-data';
+import { useLeadStore } from '@/hooks/use-lead-store';
 import { getDefaultWebsiteConfig } from '@/services/website-templates';
 import { WebsitePreviewConfig, ProfessionCategory, PROFESSION_CONFIGS, W4_HOSTING_PLANS } from '@/types/lead';
 
@@ -42,7 +42,9 @@ export default function PreviewClient({ slug }: PreviewClientProps) {
     notes: '',
   });
 
-  const matchingLead = INITIAL_LEADS.find(
+  const { leads } = useLeadStore();
+
+  const matchingLead = leads.find(
     (l) =>
       l.id === slug ||
       l.websiteConfig?.previewSlug === slug ||
@@ -94,17 +96,18 @@ export default function PreviewClient({ slug }: PreviewClientProps) {
 
   const practitionerName =
     matchingLead?.fullName ||
-    siteConfig.heroHeadline.split(' — ')[0] ||
+    siteConfig.heroHeadline.split(' - ')[0] ||
+    siteConfig.heroHeadline.split(' | ')[0] ||
     'Professional Practice Specialist';
 
   const professionCategory = matchingLead?.profession || 'real_estate';
   const profMeta = PROFESSION_CONFIGS[professionCategory] || PROFESSION_CONFIGS.real_estate;
   const hostingPlan = W4_HOSTING_PLANS[profMeta.hostingTier] || W4_HOSTING_PLANS.bronze;
 
-  const phone = matchingLead?.skipTraceData?.verifiedPhone || '(512) 555-0199';
-  const email = matchingLead?.skipTraceData?.primaryEmail || 'contact@practiceportal.com';
-  const city = matchingLead?.city || 'Austin';
-  const state = matchingLead?.state || 'TX';
+  const phone = matchingLead?.skipTraceData?.verifiedPhone || '';
+  const email = matchingLead?.skipTraceData?.primaryEmail || '';
+  const city = matchingLead?.city || 'San Francisco';
+  const state = matchingLead?.state || 'CA';
   const address = matchingLead?.skipTraceData?.currentAddress || `${city}, ${state}`;
   const school = matchingLead?.collegeOrSchool || 'Accredited Board Certification Program';
 
@@ -207,13 +210,15 @@ export default function PreviewClient({ slug }: PreviewClientProps) {
           </nav>
 
           <div className="flex items-center gap-3">
-            <a
-              href={`tel:${phone}`}
-              className="hidden lg:flex items-center gap-2 text-xs font-semibold text-slate-700 hover:text-slate-900 bg-slate-100 px-3 py-2 rounded-lg border border-slate-200 transition-colors"
-            >
-              <Phone className="w-3.5 h-3.5 text-emerald-600" />
-              <span>{phone}</span>
-            </a>
+            {phone ? (
+              <a
+                href={`tel:${phone}`}
+                className="hidden lg:flex items-center gap-2 text-xs font-semibold text-slate-700 hover:text-slate-900 bg-slate-100 px-3 py-2 rounded-lg border border-slate-200 transition-colors"
+              >
+                <Phone className="w-3.5 h-3.5 text-emerald-600" />
+                <span>{phone}</span>
+              </a>
+            ) : null}
             <button
               id="book-consultation-header-btn"
               onClick={() => setBookingModalOpen(true)}
@@ -257,13 +262,15 @@ export default function PreviewClient({ slug }: PreviewClientProps) {
                 <ArrowRight className="w-4 h-4" />
               </button>
 
-              <a
-                href={`tel:${phone}`}
-                className="px-5 py-3.5 rounded-xl font-semibold text-slate-200 bg-slate-800/80 hover:bg-slate-700 border border-slate-700 flex items-center gap-2 text-sm sm:text-base transition-colors"
-              >
-                <Phone className="w-4 h-4 text-emerald-400" />
-                <span>Call {phone}</span>
-              </a>
+              {phone ? (
+                <a
+                  href={`tel:${phone}`}
+                  className="px-5 py-3.5 rounded-xl font-semibold text-slate-200 bg-slate-800/80 hover:bg-slate-700 border border-slate-700 flex items-center gap-2 text-sm sm:text-base transition-colors"
+                >
+                  <Phone className="w-4 h-4 text-emerald-400" />
+                  <span>Call {phone}</span>
+                </a>
+              ) : null}
             </div>
 
             <div className="grid grid-cols-3 gap-4 pt-6 border-t border-slate-800 max-w-lg">
@@ -316,7 +323,7 @@ export default function PreviewClient({ slug }: PreviewClientProps) {
                       required
                       value={bookingData.phone}
                       onChange={(e) => setBookingData({ ...bookingData, phone: e.target.value })}
-                      placeholder="(555) 000-0000"
+                      placeholder="(123) 456-7890"
                       className="w-full px-3.5 py-2.5 rounded-lg bg-slate-800 border border-slate-700 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500"
                     />
                   </div>
@@ -543,18 +550,27 @@ export default function PreviewClient({ slug }: PreviewClientProps) {
           <div className="md:col-span-4 space-y-3">
             <h4 className="font-semibold text-white text-sm">Direct Contact</h4>
             <div className="space-y-2 text-xs">
-              <div className="flex items-center gap-2 text-slate-300">
-                <Phone className="w-4 h-4 text-emerald-400 shrink-0" />
-                <a href={`tel:${phone}`} className="hover:text-white transition-colors">
-                  {phone}
-                </a>
-              </div>
-              <div className="flex items-center gap-2 text-slate-300">
-                <Mail className="w-4 h-4 text-emerald-400 shrink-0" />
-                <a href={`mailto:${email}`} className="hover:text-white transition-colors">
-                  {email}
-                </a>
-              </div>
+              {phone ? (
+                <div className="flex items-center gap-2 text-slate-300">
+                  <Phone className="w-4 h-4 text-emerald-400 shrink-0" />
+                  <a href={`tel:${phone}`} className="hover:text-white transition-colors">
+                    {phone}
+                  </a>
+                </div>
+              ) : null}
+              {email ? (
+                <div className="flex items-center gap-2 text-slate-300">
+                  <Mail className="w-4 h-4 text-emerald-400 shrink-0" />
+                  <a href={`mailto:${email}`} className="hover:text-white transition-colors">
+                    {email}
+                  </a>
+                </div>
+              ) : null}
+              {!phone && !email ? (
+                <div className="text-slate-400 text-xs italic">
+                  Consultations and inquiries managed via online intake booking.
+                </div>
+              ) : null}
               <div className="flex items-center gap-2 text-slate-300">
                 <MapPin className="w-4 h-4 text-emerald-400 shrink-0" />
                 <span>{address}</span>
@@ -613,7 +629,7 @@ export default function PreviewClient({ slug }: PreviewClientProps) {
                         required
                         value={bookingData.phone}
                         onChange={(e) => setBookingData({ ...bookingData, phone: e.target.value })}
-                        placeholder="(555) 000-0000"
+                        placeholder="(123) 456-7890"
                         className="w-full px-3.5 py-2.5 rounded-lg bg-slate-800 border border-slate-700 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500"
                       />
                     </div>
@@ -624,7 +640,7 @@ export default function PreviewClient({ slug }: PreviewClientProps) {
                         required
                         value={bookingData.email}
                         onChange={(e) => setBookingData({ ...bookingData, email: e.target.value })}
-                        placeholder="jane@example.com"
+                        placeholder="you@email.com"
                         className="w-full px-3.5 py-2.5 rounded-lg bg-slate-800 border border-slate-700 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500"
                       />
                     </div>

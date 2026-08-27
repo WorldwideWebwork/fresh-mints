@@ -24,15 +24,19 @@ export const ContactBadgeList: React.FC<ContactBadgeListProps> = ({ data, onCopy
 
   return (
     <div className="flex flex-wrap items-center gap-2 text-xs">
-      <span className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-emerald-50 text-emerald-800 border border-emerald-200 rounded-md font-medium">
-        <Phone className="w-3.5 h-3.5 text-emerald-600" />
-        <span>{data.verifiedPhone}</span>
-      </span>
+      {data.verifiedPhone ? (
+        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-emerald-50 text-emerald-800 border border-emerald-200 rounded-md font-medium">
+          <Phone className="w-3.5 h-3.5 text-emerald-600" />
+          <span>{data.verifiedPhone}</span>
+        </span>
+      ) : null}
 
-      <span className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-sky-50 text-sky-800 border border-sky-200 rounded-md font-medium">
-        <Mail className="w-3.5 h-3.5 text-sky-600" />
-        <span>{data.primaryEmail}</span>
-      </span>
+      {data.primaryEmail ? (
+        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-sky-50 text-sky-800 border border-sky-200 rounded-md font-medium">
+          <Mail className="w-3.5 h-3.5 text-sky-600" />
+          <span>{data.primaryEmail}</span>
+        </span>
+      ) : null}
 
       {data.linkedInUrl && (
         <a

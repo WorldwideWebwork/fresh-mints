@@ -1,4 +1,4 @@
-import { Lead, ProfessionCategory, PROFESSION_CONFIGS, ExistingWebsiteAudit, WebsitePreviewConfig, OutreachLogItem, CustomTabConfig } from '../types/lead';
+import { Lead, ProfessionCategory, PROFESSION_CONFIGS, ExistingWebsiteAudit, WebsitePreviewConfig, OutreachLogItem, CustomTabConfig, SkipTraceResult } from '../types/lead';
 import { LiveRegistryEngine } from '../services/live-registry-engine';
 import { CRMExportService } from '../services/crm-export-service';
 import { IndexedDBStorage } from '../services/indexeddb-storage';
@@ -46,12 +46,18 @@ export class LeadStore {
       try {
         const storedLeads = await IndexedDBStorage.getAllLeads();
         if (storedLeads && storedLeads.length > 0) {
-          this.leads = storedLeads;
-          this.selectedLeadId = storedLeads[0].id;
+          // Purge any legacy mock leads containing simulated 555 numbers or mock template IDs
+          const cleanLeads = storedLeads.filter(
+            (l) => !l.id.startsWith('lead-00') && !l.skipTraceData?.verifiedPhone?.includes('555-')
+          );
+          this.leads = cleanLeads;
+          this.selectedLeadId = cleanLeads[0]?.id || null;
+          if (cleanLeads.length !== storedLeads.length) {
+            await IndexedDBStorage.saveAllLeads(cleanLeads);
+          }
         } else {
           this.leads = INITIAL_LEADS;
           this.selectedLeadId = INITIAL_LEADS[0]?.id || null;
-          await IndexedDBStorage.saveAllLeads(INITIAL_LEADS);
         }
       } catch (err) {
         console.warn('Could not load leads from IndexedDB', err);
@@ -340,39 +346,73 @@ export class LeadStore {
     return await CRMExportService.postWebhook(this.webhookUrl, 'batch.export', leads);
   }
 
-  // Skip trace mock enrichment logic
+  // Skip trace live enrichment logic
   public async performSkipTrace(id: string): Promise<boolean> {
     const lead = this.leads.find((l) => l.id === id);
     if (!lead) return false;
 
-    // Simulate real phone & email lookup
-    const names = lead.fullName.toLowerCase().split(' ');
-    const first = names[0] || 'lead';
-    const last = names[names.length - 1] || 'client';
-    const areaCode = lead.state === 'CA' ? '619' : lead.state === 'NY' ? '212' : '480';
-    const phone = `+1 (${areaCode}) 555-${Math.floor(1000 + Math.random() * 9000)}`;
-    const email = `${first}.${last}@${lead.profession}pro.org`;
+    this.updateLead(id, { skipTraceStatus: 'In Progress' });
 
-    const traceData = {
-      tracedAt: new Date().toISOString().split('T')[0],
-      confidenceScore: Math.floor(92 + Math.random() * 8),
-      verifiedPhone: phone,
-      phoneType: 'Mobile (Carrier Verified)',
-      dncStatus: 'Clean - Not on DNC List',
-      primaryEmail: email,
-      emailValidation: 'Valid & Deliverable (99% Score)',
-      linkedInUrl: `linkedin.com/in/${first}${last}-${lead.state.toLowerCase()}`,
-      instagramHandle: `@${first}_${last}_${lead.profession}`,
-      currentAddress: `${lead.city}, ${lead.state}`,
-      enrichmentNotes: `Live enrichment verified against ${lead.state} Licensing records.`,
-    };
+    try {
+      const response = await fetch('/api/gemini/generate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'skipTraceEnrichment',
+          payload: {
+            name: lead.fullName,
+            profession: lead.professionTitle || lead.profession,
+            city: lead.city,
+            state: lead.state,
+            licenseNumber: lead.licenseNumber,
+            college: lead.collegeOrSchool,
+          },
+        }),
+      });
 
-    this.updateLead(id, {
-      skipTraceStatus: 'Traced',
-      skipTraceData: traceData,
-    });
+      if (!response.ok) {
+        throw new Error(`Enrichment server response HTTP ${response.status}`);
+      }
 
-    return true;
+      const resJson = await response.json();
+      const traceData: SkipTraceResult = resJson.data || {
+        tracedAt: new Date().toISOString().split('T')[0],
+        confidenceScore: 30,
+        verifiedPhone: '',
+        phoneType: 'Unverified',
+        dncStatus: 'Unverified',
+        primaryEmail: '',
+        emailValidation: 'No public email found',
+        currentAddress: `${lead.city}, ${lead.state}`,
+        enrichmentNotes: 'No public contact records located via live search.',
+      };
+
+      const hasContact = Boolean(traceData.verifiedPhone || traceData.primaryEmail);
+
+      this.updateLead(id, {
+        skipTraceStatus: hasContact ? 'Traced' : 'Partial',
+        skipTraceData: traceData,
+      });
+
+      return true;
+    } catch (err) {
+      console.warn('Live skip trace error:', err);
+      this.updateLead(id, {
+        skipTraceStatus: 'Partial',
+        skipTraceData: {
+          tracedAt: new Date().toISOString().split('T')[0],
+          confidenceScore: 20,
+          verifiedPhone: '',
+          phoneType: 'Unverified',
+          dncStatus: 'Unverified',
+          primaryEmail: '',
+          emailValidation: 'Verification lookup unavailable',
+          currentAddress: `${lead.city}, ${lead.state}`,
+          enrichmentNotes: 'Public directory verification service was unreachable.',
+        },
+      });
+      return false;
+    }
   }
 
   public async batchSkipTraceAllUntraced(): Promise<number> {

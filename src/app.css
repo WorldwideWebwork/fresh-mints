@@ -1,0 +1,195 @@
+@import "tailwindcss";
+
+/* ============================================
+   FRESH MINTS THEME SYSTEM
+   Light-first with dark mode toggle
+   ============================================ */
+
+:root {
+  color-scheme: light;
+  --fm-primary: #10b981;
+  --fm-primary-hover: #059669;
+  --fm-primary-light: #d1fae5;
+  --fm-accent: #06b6d4;
+  
+  /* Light mode surface colors */
+  --fm-bg: #f8fafc;
+  --fm-surface: #ffffff;
+  --fm-surface-raised: #ffffff;
+  --fm-surface-sunken: #f1f5f9;
+  --fm-border: #cbd5e1;
+  --fm-border-subtle: #e2e8f0;
+  
+  /* Light mode text */
+  --fm-text: #0f172a;
+  --fm-text-secondary: #334155;
+  --fm-text-muted: #64748b;
+  
+  /* Light mode glass */
+  --fm-glass-bg: rgba(255, 255, 255, 0.85);
+  --fm-glass-border: rgba(203, 213, 225, 0.8);
+  --fm-glass-card-bg: rgba(255, 255, 255, 0.75);
+  --fm-glass-header-bg: rgba(248, 250, 252, 0.95);
+  
+  /* Scrollbar */
+  --fm-scrollbar-track: rgba(0, 0, 0, 0.04);
+  --fm-scrollbar-thumb: rgba(0, 0, 0, 0.2);
+  --fm-scrollbar-thumb-hover: rgba(0, 0, 0, 0.35);
+}
+
+.dark {
+  color-scheme: dark;
+  --fm-bg: #0f172a;
+  --fm-surface: #1e293b;
+  --fm-surface-raised: #334155;
+  --fm-surface-sunken: #0f172a;
+  --fm-border: #334155;
+  --fm-border-subtle: #1e293b;
+  
+  --fm-text: #f8fafc;
+  --fm-text-secondary: #94a3b8;
+  --fm-text-muted: #64748b;
+  
+  --fm-glass-bg: rgba(30, 41, 59, 0.85);
+  --fm-glass-border: rgba(51, 65, 85, 0.7);
+  --fm-glass-card-bg: rgba(30, 41, 59, 0.7);
+  --fm-glass-header-bg: rgba(15, 23, 42, 0.95);
+  
+  --fm-scrollbar-track: rgba(255, 255, 255, 0.04);
+  --fm-scrollbar-thumb: rgba(255, 255, 255, 0.2);
+  --fm-scrollbar-thumb-hover: rgba(255, 255, 255, 0.35);
+}
+
+/* ============================================
+   NATIVE SELECT & OPTION CONTRAST RULES
+   ============================================ */
+select {
+  color-scheme: light;
+}
+
+.dark select,
+select.dark {
+  color-scheme: dark;
+}
+
+select option {
+  background-color: #ffffff;
+  color: #0f172a;
+}
+
+.dark select option,
+select.dark option {
+  background-color: #0f172a;
+  color: #f8fafc;
+}
+
+select option:disabled {
+  color: #94a3b8;
+}
+
+.dark select option:disabled,
+select.dark option:disabled {
+  color: #64748b;
+}
+
+html {
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+body {
+  margin: 0;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Open Sans", "Helvetica Neue", sans-serif;
+  background-color: var(--fm-bg);
+  color: var(--fm-text);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Glassmorphism utility classes */
+.glass-panel {
+  background: var(--fm-glass-bg);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid var(--fm-glass-border);
+}
+
+.glass-card {
+  background: var(--fm-glass-card-bg);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid var(--fm-glass-border);
+}
+
+.glass-header {
+  background: var(--fm-glass-header-bg);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-bottom: 1px solid var(--fm-border);
+}
+
+/* Scrollbars */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--fm-scrollbar-track);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--fm-scrollbar-thumb);
+  border-radius: 9999px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--fm-scrollbar-thumb-hover);
+}
+
+.custom-scrollbar::-webkit-scrollbar {
+  width: 4px;
+  height: 4px;
+}
+
+/* Selection */
+::selection {
+  background-color: #10b981;
+  color: white;
+}
+
+/* Safe area for mobile bottom nav */
+.safe-bottom {
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+/* Dialog entrance animation */
+@keyframes dialog-enter {
+  from {
+    transform: scale(0.95) translateY(8px);
+    opacity: 0;
+  }
+  to {
+    transform: scale(1) translateY(0);
+    opacity: 1;
+  }
+}
+
+.animate-dialog-enter {
+  animation: dialog-enter 0.2s ease-out;
+}
+
+/* Slide-in animation for toasts */
+@keyframes slide-in-up {
+  from {
+    transform: translateY(16px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.animate-in {
+  animation: slide-in-up 0.2s ease-out;
+}

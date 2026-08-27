@@ -286,7 +286,7 @@ export const WebsiteAuditModal: React.FC<WebsiteAuditModalProps> = ({
                     <div>
                       <p className="font-bold text-slate-800">Digital Footprint Classification</p>
                       <p className="text-[11px] text-slate-500">
-                        {audit.qualifications?.digitalFootprintRating || (!audit.hasWebsite ? 'Registry / Board Listing Only' : 'Custom Independent Practice')} — {!audit.hasWebsite ? 'Appears exclusively on passive state registers or directory stubs; has no personal control of their client acquisition funnel.' : 'Controls their own branded web property.'}
+                        {audit.qualifications?.digitalFootprintRating || (!audit.hasWebsite ? 'Registry / Board Listing Only' : 'Custom Independent Practice')}: {!audit.hasWebsite ? 'Appears exclusively on passive state registers or directory stubs; has no personal control of their client acquisition funnel.' : 'Controls their own branded web property.'}
                       </p>
                     </div>
                   </div>

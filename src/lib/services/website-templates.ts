@@ -1,4 +1,4 @@
-import { ProfessionCategory, WebsitePreviewConfig, PROFESSION_CONFIGS } from '../types/lead';
+import { type ProfessionCategory, type WebsitePreviewConfig, PROFESSION_CONFIGS } from '../types/lead';
 
 export interface WebsiteThemePreset {
   id: string;
@@ -14,8 +14,8 @@ export const THEME_PRESETS: Record<ProfessionCategory, WebsiteThemePreset> = {
   real_estate: {
     id: 'realty_pro',
     name: 'Coastal Luxe Realty',
-    primaryColor: '#0f766e', // Teal-700
-    accentColor: '#f59e0b', // Amber-500
+    primaryColor: '#0f766e',
+    accentColor: '#f59e0b',
     bgGradient: 'from-slate-900 via-teal-950 to-slate-900',
     badgeText: 'State Licensed Real Estate Specialist',
     features: ['Property Valuation Widget', 'Client Consultation Scheduler', 'Active Listings Gallery', 'Neighborhood Guide'],
@@ -23,8 +23,8 @@ export const THEME_PRESETS: Record<ProfessionCategory, WebsiteThemePreset> = {
   nursing: {
     id: 'care_nurse',
     name: 'Serene Care Concierge',
-    primaryColor: '#e11d48', // Rose-600
-    accentColor: '#06b6d4', // Cyan-500
+    primaryColor: '#e11d48',
+    accentColor: '#06b6d4',
     bgGradient: 'from-slate-900 via-rose-950 to-slate-900',
     badgeText: 'Board Certified Registered Nurse (RN)',
     features: ['Telehealth Consultation Booking', 'Medical Credentials Verification', 'Custom Treatment Packages', 'Patient Reviews'],
@@ -32,8 +32,8 @@ export const THEME_PRESETS: Record<ProfessionCategory, WebsiteThemePreset> = {
   dental: {
     id: 'dental_clinic',
     name: 'Pristine Smiles Dental',
-    primaryColor: '#0284c7', // Sky-600
-    accentColor: '#06b6d4', // Cyan-500
+    primaryColor: '#0284c7',
+    accentColor: '#06b6d4',
     bgGradient: 'from-slate-900 via-sky-950 to-slate-900',
     badgeText: 'Licensed Doctor of Dental Surgery (DDS)',
     features: ['Patient Booking & Intake', 'Smile Gallery & Before/After', 'Emergency Care Dispatch', 'Insurance Verification'],
@@ -41,8 +41,8 @@ export const THEME_PRESETS: Record<ProfessionCategory, WebsiteThemePreset> = {
   chiropractic: {
     id: 'chiro_wellness',
     name: 'Kinetic Motion Spine & Rehab',
-    primaryColor: '#059669', // Emerald-600
-    accentColor: '#10b981', // Emerald-500
+    primaryColor: '#059669',
+    accentColor: '#10b981',
     bgGradient: 'from-slate-900 via-emerald-950 to-slate-900',
     badgeText: 'Doctor of Chiropractic (DC)',
     features: ['New Patient Consultation Booking', 'Treatment Modality Breakdown', 'Spine Health Assessment', 'Verified Board Credentials'],
@@ -50,8 +50,8 @@ export const THEME_PRESETS: Record<ProfessionCategory, WebsiteThemePreset> = {
   beauty: {
     id: 'studio_beauty',
     name: 'Luminous Glow Studio',
-    primaryColor: '#db2777', // Pink-600
-    accentColor: '#fb7185', // Rose-400
+    primaryColor: '#db2777',
+    accentColor: '#fb7185',
     bgGradient: 'from-slate-900 via-pink-950 to-slate-900',
     badgeText: 'State Licensed Medical Esthetician',
     features: ['Online Booking Calendar', 'Treatment Menu & Pricing', 'Before/After Transformation Gallery', 'Skin Quiz'],
@@ -59,8 +59,8 @@ export const THEME_PRESETS: Record<ProfessionCategory, WebsiteThemePreset> = {
   therapy: {
     id: 'care_nurse',
     name: 'Mindful Wellness Practice',
-    primaryColor: '#2563eb', // Blue-600
-    accentColor: '#10b981', // Emerald-500
+    primaryColor: '#2563eb',
+    accentColor: '#10b981',
     bgGradient: 'from-slate-900 via-blue-950 to-slate-900',
     badgeText: 'Licensed Professional Counselor',
     features: ['Confidential Intake Form', 'Telehealth Video Integration', 'Specialty Areas Breakdown', 'Insurance & Fees'],
@@ -68,8 +68,8 @@ export const THEME_PRESETS: Record<ProfessionCategory, WebsiteThemePreset> = {
   veterinary: {
     id: 'vet_care',
     name: 'Compassion Pet Veterinary',
-    primaryColor: '#0d9488', // Teal-600
-    accentColor: '#f97316', // Orange-500
+    primaryColor: '#0d9488',
+    accentColor: '#f97316',
     bgGradient: 'from-slate-900 via-teal-950 to-slate-900',
     badgeText: 'Doctor of Veterinary Medicine (DVM)',
     features: ['Pet Appointment Scheduler', 'Mobile & Urgent Care Form', 'Preventative Wellness Packages', 'Patient Portal'],
@@ -77,8 +77,8 @@ export const THEME_PRESETS: Record<ProfessionCategory, WebsiteThemePreset> = {
   trade: {
     id: 'craft_trade',
     name: 'Precision Master Contractor',
-    primaryColor: '#ea580c', // Orange-600
-    accentColor: '#eab308', // Yellow-500
+    primaryColor: '#ea580c',
+    accentColor: '#eab308',
     bgGradient: 'from-slate-900 via-amber-950 to-slate-900',
     badgeText: 'Licensed Master Trade Contractor',
     features: ['Instant Online Estimate Calculator', '24/7 Emergency Dispatch Form', 'Project Portfolio', 'License Verification'],
@@ -86,8 +86,8 @@ export const THEME_PRESETS: Record<ProfessionCategory, WebsiteThemePreset> = {
   legal: {
     id: 'legal_counsel',
     name: 'Apex Legal Counsel',
-    primaryColor: '#1e293b', // Slate-800
-    accentColor: '#d97706', // Amber-600
+    primaryColor: '#1e293b',
+    accentColor: '#d97706',
     bgGradient: 'from-slate-950 via-slate-900 to-indigo-950',
     badgeText: 'Licensed Attorney & Bar Member',
     features: ['Free Case Evaluation Form', 'Practice Areas Directory', 'Client Testimonials', 'Bar Status Badge'],
@@ -95,8 +95,8 @@ export const THEME_PRESETS: Record<ProfessionCategory, WebsiteThemePreset> = {
   financial_advisor: {
     id: 'finance_advisor',
     name: 'Beacon Wealth & Fiduciary Advisors',
-    primaryColor: '#065f46', // Emerald-800
-    accentColor: '#10b981', // Emerald-500
+    primaryColor: '#065f46',
+    accentColor: '#10b981',
     bgGradient: 'from-slate-950 via-emerald-950 to-slate-900',
     badgeText: 'Certified Financial Planner (CFP®) & Fiduciary',
     features: ['Retirement Readiness Calculator', 'Client Discovery Call Scheduler', 'Fee-Only Fiduciary Promise', 'Secure Client Portal'],
@@ -104,8 +104,8 @@ export const THEME_PRESETS: Record<ProfessionCategory, WebsiteThemePreset> = {
   finance: {
     id: 'finance_advisor',
     name: 'Vanguard CPA Advisory',
-    primaryColor: '#047857', // Emerald-700
-    accentColor: '#3b82f6', // Blue-500
+    primaryColor: '#047857',
+    accentColor: '#3b82f6',
     bgGradient: 'from-slate-950 via-emerald-950 to-slate-900',
     badgeText: 'Certified Public Accountant (CPA)',
     features: ['Tax Planning Calculator', 'Client Document Portal', 'Retirement Advisory Consultation', 'CPA Board License'],
@@ -113,8 +113,8 @@ export const THEME_PRESETS: Record<ProfessionCategory, WebsiteThemePreset> = {
   insurance: {
     id: 'insurance_broker',
     name: 'Horizon Shield Insurance',
-    primaryColor: '#1d4ed8', // Blue-700
-    accentColor: '#f59e0b', // Amber-500
+    primaryColor: '#1d4ed8',
+    accentColor: '#f59e0b',
     bgGradient: 'from-slate-950 via-blue-950 to-slate-900',
     badgeText: 'Licensed Insurance & Risk Broker',
     features: ['Instant Policy Quote Request', 'Coverage Comparison Tool', 'Claims Guidance Form', 'State License Verification'],
@@ -122,8 +122,8 @@ export const THEME_PRESETS: Record<ProfessionCategory, WebsiteThemePreset> = {
   architecture: {
     id: 'arch_studio',
     name: 'Blueprint Studio Architects',
-    primaryColor: '#334155', // Slate-700
-    accentColor: '#06b6d4', // Cyan-500
+    primaryColor: '#334155',
+    accentColor: '#06b6d4',
     bgGradient: 'from-slate-950 via-slate-900 to-zinc-900',
     badgeText: 'Licensed Architect & Design Principal',
     features: ['Project Portfolio Showcase', 'Architectural Consultation Scheduler', 'Project Scope Calculator', 'AIA Credentials'],
@@ -139,7 +139,6 @@ export function getDefaultWebsiteConfig(
 ): WebsitePreviewConfig {
   const preset = THEME_PRESETS[profession] || THEME_PRESETS.real_estate;
   const cleanName = fullName.toLowerCase().replace(/[^a-z]/g, '');
-
   const profMeta = PROFESSION_CONFIGS[profession] || PROFESSION_CONFIGS.real_estate;
 
   return {
@@ -182,12 +181,7 @@ export function getDefaultWebsiteConfig(
 
 export function getPreviewLink(slug: string): string {
   if (typeof window !== 'undefined' && window.location?.hostname) {
-    const hostname = window.location.hostname;
-    if (hostname.includes('worldwidewebwork.com')) {
-      return `https://${slug}.worldwidewebwork.com`;
-    }
     return `${window.location.origin}/preview/${slug}`;
   }
   return `/preview/${slug}`;
 }
-
