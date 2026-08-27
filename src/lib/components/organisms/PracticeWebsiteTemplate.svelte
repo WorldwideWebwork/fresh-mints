@@ -36,6 +36,7 @@
     siteConfig: WebsitePreviewConfig;
     deviceMode?: 'desktop' | 'mobile';
     previewUrl?: string;
+    frameless?: boolean;
   }
 
   let {
@@ -43,6 +44,7 @@
     siteConfig,
     deviceMode = 'desktop',
     previewUrl = '',
+    frameless = false,
   }: Props = $props();
 
   let bookingModalOpen = $state(false);
@@ -141,40 +143,44 @@
 </script>
 
 <div
-  class="transition-all rounded-xl overflow-hidden shadow-2xl border flex flex-col {deviceMode === 'mobile' ? 'w-[385px] min-h-[720px]' : 'w-full'} {isDarkTheme ? 'bg-slate-950 text-slate-100 border-slate-800 selection:bg-teal-500 selection:text-white' : 'bg-white text-stone-900 border-slate-200 selection:bg-teal-600 selection:text-white'}"
+  class="{frameless
+    ? 'w-full min-h-screen flex flex-col'
+    : `transition-all rounded-xl overflow-hidden shadow-2xl border flex flex-col ${deviceMode === 'mobile' ? 'w-[385px] min-h-[720px]' : 'w-full'}`} {isDarkTheme ? 'bg-slate-950 text-slate-100 border-slate-800 selection:bg-teal-500 selection:text-white' : 'bg-white text-stone-900 border-slate-200 selection:bg-teal-600 selection:text-white'}"
 >
-  <!-- Browser Chrome Address Bar -->
-  <div class="px-4 py-2.5 border-b flex items-center justify-between text-xs {isDarkTheme ? 'bg-slate-900/90 border-slate-800 text-slate-400' : 'bg-stone-100 border-stone-200 text-slate-500'}">
-    <div class="flex items-center gap-1.5 flex-shrink-0">
-      <span class="w-2.5 h-2.5 rounded-full bg-rose-400 inline-block"></span>
-      <span class="w-2.5 h-2.5 rounded-full bg-amber-400 inline-block"></span>
-      <span class="w-2.5 h-2.5 rounded-full bg-emerald-400 inline-block"></span>
+  {#if !frameless}
+    <!-- Browser Chrome Address Bar -->
+    <div class="px-4 py-2.5 border-b flex items-center justify-between text-xs {isDarkTheme ? 'bg-slate-900/90 border-slate-800 text-slate-400' : 'bg-stone-100 border-stone-200 text-slate-500'}">
+      <div class="flex items-center gap-1.5 flex-shrink-0">
+        <span class="w-2.5 h-2.5 rounded-full bg-rose-400 inline-block"></span>
+        <span class="w-2.5 h-2.5 rounded-full bg-amber-400 inline-block"></span>
+        <span class="w-2.5 h-2.5 rounded-full bg-emerald-400 inline-block"></span>
+      </div>
+
+      <!-- Active Real URL Bar with Copy Button -->
+      <button
+        type="button"
+        onclick={handleCopyAddressBarUrl}
+        title="Click to copy live URL"
+        class="border rounded-md px-3 py-1 text-[11px] font-mono truncate max-w-sm sm:max-w-md flex items-center gap-1.5 shadow-2xs transition-colors cursor-pointer {isDarkTheme ? 'bg-slate-950 border-slate-800 text-slate-300 hover:border-teal-500/50' : 'bg-white border-stone-300 text-slate-600 hover:border-teal-500/50'}"
+      >
+        <Lock class="w-3 h-3 text-emerald-500 flex-shrink-0" />
+        <span class="truncate">{previewUrl || `https://${siteConfig.previewSlug || 'portal'}.practiceportal.pro`}</span>
+        {#if urlCopied}
+          <Check class="w-3 h-3 text-emerald-400 flex-shrink-0 ml-1" />
+        {:else}
+          <Copy class="w-3 h-3 text-slate-400 hover:text-slate-200 flex-shrink-0 ml-1" />
+        {/if}
+      </button>
+
+      <div class="flex items-center gap-1 text-[10px] font-semibold px-2 py-0.5 rounded border flex-shrink-0 {isDarkTheme ? 'text-emerald-300 bg-emerald-950/60 border-emerald-800/80' : 'text-emerald-800 bg-emerald-100/90 border-emerald-300'}">
+        <ShieldCheck class="w-3 h-3 text-emerald-500" />
+        <span class="hidden sm:inline">Official Licensed Site</span>
+      </div>
     </div>
+  {/if}
 
-    <!-- Active Real URL Bar with Copy Button -->
-    <button
-      type="button"
-      onclick={handleCopyAddressBarUrl}
-      title="Click to copy live URL"
-      class="border rounded-md px-3 py-1 text-[11px] font-mono truncate max-w-sm sm:max-w-md flex items-center gap-1.5 shadow-2xs transition-colors cursor-pointer {isDarkTheme ? 'bg-slate-950 border-slate-800 text-slate-300 hover:border-teal-500/50' : 'bg-white border-stone-300 text-slate-600 hover:border-teal-500/50'}"
-    >
-      <Lock class="w-3 h-3 text-emerald-500 flex-shrink-0" />
-      <span class="truncate">{previewUrl || `https://${siteConfig.previewSlug || 'portal'}.practiceportal.pro`}</span>
-      {#if urlCopied}
-        <Check class="w-3 h-3 text-emerald-400 flex-shrink-0 ml-1" />
-      {:else}
-        <Copy class="w-3 h-3 text-slate-400 hover:text-slate-200 flex-shrink-0 ml-1" />
-      {/if}
-    </button>
-
-    <div class="flex items-center gap-1 text-[10px] font-semibold px-2 py-0.5 rounded border flex-shrink-0 {isDarkTheme ? 'text-emerald-300 bg-emerald-950/60 border-emerald-800/80' : 'text-emerald-800 bg-emerald-100/90 border-emerald-300'}">
-      <ShieldCheck class="w-3 h-3 text-emerald-500" />
-      <span class="hidden sm:inline">Official Licensed Site</span>
-    </div>
-  </div>
-
-  <!-- Scrollable Practice Website Container -->
-  <div class="flex-1 overflow-y-auto custom-scrollbar">
+  <!-- Practice Website Container -->
+  <div class="{frameless ? 'w-full flex-1 flex flex-col' : 'flex-1 overflow-y-auto custom-scrollbar'}">
     {#if isDarkTheme}
       <!-- ============================================== -->
       <!-- TEMPLATE 1: EXECUTIVE DARK (FULL SUITE & FORM) -->

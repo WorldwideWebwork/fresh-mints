@@ -2,6 +2,7 @@
   import type { Snippet } from "svelte";
   import { themeStore } from "../../stores/theme.svelte";
   import { leadStore } from "../../stores/lead-store.svelte";
+  import { authStore } from "../../stores/auth-store.svelte";
   import Button from "../atoms/Button.svelte";
   import Badge from "../atoms/Badge.svelte";
   import {
@@ -23,7 +24,10 @@
     Moon,
     Globe,
     Send,
-    FileText
+    FileText,
+    LogOut,
+    User,
+    ShieldCheck
   } from "lucide-svelte";
 
   interface Props {
@@ -273,6 +277,35 @@
           </button>
         </div>
       </div>
+
+      <!-- Logged In User Profile & Logout -->
+      {#if authStore.user}
+        <div class="rounded-2xl bg-[var(--fm-surface-sunken)] border border-[var(--fm-border-subtle)] p-3 space-y-2">
+          <div class="flex items-center justify-between">
+            <div class="flex items-center gap-2.5 min-w-0">
+              <div class="w-7 h-7 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center text-white text-xs font-bold shrink-0 shadow-xs">
+                {authStore.user.fullName?.charAt(0).toUpperCase() || 'U'}
+              </div>
+              <div class="min-w-0">
+                <div class="text-xs font-bold text-[var(--fm-text)] truncate">{authStore.user.fullName}</div>
+                <div class="text-[10px] text-[var(--fm-text-muted)] font-mono truncate">@{authStore.user.username}</div>
+              </div>
+            </div>
+            <Badge variant={authStore.user.role === 'admin' ? 'info' : 'success'} class="text-[9px] uppercase font-mono">
+              {authStore.user.role === 'admin' ? 'Admin' : 'Sales Rep'}
+            </Badge>
+          </div>
+
+          <button
+            type="button"
+            onclick={() => authStore.logout()}
+            class="w-full flex items-center justify-center gap-1.5 py-1.5 px-2 rounded-xl text-[11px] font-semibold text-slate-500 hover:text-rose-500 hover:bg-rose-500/10 border border-transparent hover:border-rose-500/20 transition-all cursor-pointer"
+          >
+            <LogOut class="w-3.5 h-3.5" />
+            <span>Sign Out Session</span>
+          </button>
+        </div>
+      {/if}
     </div>
   </aside>
 
@@ -366,6 +399,23 @@
             >
               <Settings class="w-4 h-4" />
             </Button>
+
+            <!-- Header User Profile & Logout -->
+            {#if authStore.user}
+              <div class="hidden lg:flex items-center gap-2 pl-2 border-l border-[var(--fm-border-subtle)]">
+                <span class="text-xs text-[var(--fm-text-muted)]">
+                  Rep: <strong class="text-[var(--fm-text)]">{authStore.user.fullName}</strong>
+                </span>
+                <button
+                  type="button"
+                  onclick={() => authStore.logout()}
+                  class="p-2 rounded-xl text-[var(--fm-text-muted)] hover:text-rose-500 hover:bg-rose-500/10 transition-all cursor-pointer"
+                  title="Sign Out Session"
+                >
+                  <LogOut class="w-4 h-4" />
+                </button>
+              </div>
+            {/if}
           </div>
         </div>
       </div>

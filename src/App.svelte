@@ -2,6 +2,7 @@
   import { onMount } from 'svelte';
   import { themeStore } from './lib/stores/theme.svelte';
   import { leadStore } from './lib/stores/lead-store.svelte';
+  import { authStore } from './lib/stores/auth-store.svelte';
   import type { Lead } from './lib/types/lead';
   import { generateLeadPreviewSlug } from './lib/services/website-templates';
   import DashboardLayout from './lib/components/templates/DashboardLayout.svelte';
@@ -9,6 +10,9 @@
   import Toast from './lib/components/molecules/Toast.svelte';
   import ConfirmDialog from './lib/components/molecules/ConfirmDialog.svelte';
   import LoadingScreen from './lib/components/organisms/LoadingScreen.svelte';
+
+  // Authentication View
+  import AuthLoginView from './lib/components/organisms/AuthLoginView.svelte';
 
   // Standalone Website Preview
   import PracticeWebsitePreview from './lib/components/organisms/PracticeWebsitePreview.svelte';
@@ -43,6 +47,12 @@
     name: null,
     lead: null,
   });
+
+  const activeModalLead = $derived(
+    modalState.lead
+      ? leadStore.leads.find((l) => l.id === modalState.lead?.id) || modalState.lead
+      : null
+  );
 
   let isClearConfirmOpen = $state(false);
   let isAppLoading = $state(true);
@@ -271,14 +281,17 @@
 {/if}
 
 {#if standalonePreviewSlug}
-  <!-- Standalone Turnkey Practice Website View -->
+  <!-- Standalone Turnkey Practice Website View (Public Access for Prospects) -->
   <PracticeWebsitePreview
     slug={standalonePreviewSlug}
     lead={standalonePreviewLead}
     onback={handleCloseFullPreview}
   />
+{:else if !authStore.isLoggedIn}
+  <!-- Secure Rep & Admin In-App Authentication Gate -->
+  <AuthLoginView />
 {:else}
-  <!-- Main Fresh Mints Command Deck Dashboard -->
+  <!-- Main Fresh Mints Command Deck Dashboard (Authenticated Session) -->
   <DashboardLayout
     onopenmodal={openModal}
     onopenconfirmclear={() => (isClearConfirmOpen = true)}
@@ -311,7 +324,7 @@
 <!-- Modals with Fluid History Integration -->
 <WebsiteBuilderModal
   open={modalState.name === 'website_builder'}
-  lead={modalState.lead}
+  lead={activeModalLead}
   onclose={closeModal}
   onopenoutreach={(l) => openModal('outreach_generator', l)}
   onopenfullpreview={handleOpenFullPreview}
@@ -319,28 +332,28 @@
 
 <ColdCallScriptModal
   open={modalState.name === 'call_script'}
-  lead={modalState.lead}
+  lead={activeModalLead}
   onclose={closeModal}
   onopenmodal={openModal}
 />
 
 <OutreachGeneratorModal
   open={modalState.name === 'outreach_generator'}
-  lead={modalState.lead}
+  lead={activeModalLead}
   onclose={closeModal}
   onopenmodal={openModal}
 />
 
 <LeadDetailModal
   open={modalState.name === 'lead_detail'}
-  lead={modalState.lead}
+  lead={activeModalLead}
   onclose={closeModal}
   onopenmodal={openModal}
 />
 
 <WebsiteAuditModal
   open={modalState.name === 'website_audit'}
-  lead={modalState.lead}
+  lead={activeModalLead}
   onclose={closeModal}
   onopenpreview={(l) => openModal('website_builder', l)}
   onopenpitch={(l) => openModal('outreach_generator', l)}

@@ -13,6 +13,7 @@ import { BombBagService, type BombBagSyncResult } from '../services/bomb-bag-ser
 import { IndexedDBStorage } from '../services/indexeddb-storage';
 import { getDefaultWebsiteConfig, generateLeadPreviewSlug } from '../services/website-templates';
 import { INITIAL_VERIFIED_LEADS } from '../services/initial-seeds';
+import { authStore } from './auth-store.svelte';
 import { toast } from './toast.svelte';
 
 class LeadStoreState {
@@ -215,6 +216,18 @@ class LeadStoreState {
   async updateLead(id: string, updates: Partial<Lead>): Promise<void> {
     const index = this.leads.findIndex((l) => l.id === id);
     if (index === -1) return;
+
+    const repUser = authStore.user;
+    const repName = repUser?.fullName || repUser?.username;
+
+    if (updates.outreachStatus === 'Client Won' && !updates.closedByRep && repName) {
+      updates.closedByRep = repName;
+      updates.closedAt = updates.closedAt || new Date().toISOString();
+    }
+
+    if (repName && !this.leads[index].assignedRep && !updates.assignedRep) {
+      updates.assignedRep = repName;
+    }
 
     const updated = { ...this.leads[index], ...updates };
     const newLeads = [...this.leads];

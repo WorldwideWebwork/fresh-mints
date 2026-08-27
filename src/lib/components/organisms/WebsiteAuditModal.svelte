@@ -44,7 +44,10 @@
   let activeStep = $state(0);
   let showMethodology = $state(false);
 
-  const audit = $derived(lead?.websiteAudit || null);
+  const activeLead = $derived(
+    lead ? leadStore.leads.find((l) => l.id === lead.id) || lead : null
+  );
+  const audit = $derived(activeLead?.websiteAudit || null);
 
   const scanSteps = [
     { title: 'Querying Google Search Index & State Board Registries', detail: 'Target: Name, license, city & state records' },
@@ -54,7 +57,8 @@
   ];
 
   async function handleRunAudit() {
-    if (!lead) return;
+    const target = activeLead || lead;
+    if (!target) return;
     isAuditing = true;
     activeStep = 1;
 
@@ -63,7 +67,7 @@
     const timer3 = setTimeout(() => (activeStep = 4), 1600);
 
     try {
-      const res = await leadStore.checkLeadWebsiteLive(lead.id);
+      const res = await leadStore.checkLeadWebsiteLive(target.id);
       if (res) {
         toast.success('Live audit completed!');
       }
@@ -79,20 +83,22 @@
   }
 
   function handleOpenPreview() {
-    if (!lead) return;
+    const target = activeLead || lead;
+    if (!target) return;
     open = false;
     onclose?.();
     if (onopenpreview) {
-      onopenpreview(lead);
+      onopenpreview(target);
     }
   }
 
   function handleOpenPitch() {
-    if (!lead) return;
+    const target = activeLead || lead;
+    if (!target) return;
     open = false;
     onclose?.();
     if (onopenpitch) {
-      onopenpitch(lead);
+      onopenpitch(target);
     }
   }
 </script>
@@ -104,17 +110,17 @@
   description="Live Google Search grounding & domain footprint verification"
   maxWidth="max-w-2xl"
 >
-  {#if lead}
+  {#if activeLead}
     <div class="space-y-5">
       <!-- Lead Context Bar -->
       <div class="p-4 rounded-xl bg-slate-50 dark:bg-slate-950/80 border border-slate-200 dark:border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
           <div class="flex items-center gap-2 mb-1">
-            <span class="font-bold text-slate-900 dark:text-slate-100 text-sm">{lead.fullName}</span>
-            <Badge variant="default" class="text-[10px]">{lead.professionTitle}</Badge>
+            <span class="font-bold text-slate-900 dark:text-slate-100 text-sm">{activeLead.fullName}</span>
+            <Badge variant="default" class="text-[10px]">{activeLead.professionTitle}</Badge>
           </div>
           <p class="text-xs text-slate-500 dark:text-slate-400">
-            {lead.city}, {lead.state} &bull; License #{lead.licenseNumber}
+            {activeLead.city}, {activeLead.state} &bull; License #{activeLead.licenseNumber}
           </p>
         </div>
 

@@ -481,6 +481,11 @@ export interface Lead {
   notes?: string;
   createdAt: string;
 
+  // Rep attribution & commission bounty tracking
+  assignedRep?: string;
+  closedByRep?: string;
+  closedAt?: string;
+
   // CRM & Bomb Bag Sync tracking
   crmContactId?: number;
   crmSyncedAt?: string;

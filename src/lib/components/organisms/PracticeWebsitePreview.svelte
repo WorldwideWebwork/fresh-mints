@@ -1,5 +1,6 @@
 <script lang="ts">
   import { leadStore } from '../../stores/lead-store.svelte';
+  import { authStore } from '../../stores/auth-store.svelte';
   import { toast } from '../../stores/toast.svelte';
   import {
     getDefaultWebsiteConfig,
@@ -21,13 +22,10 @@
     Check,
     ArrowLeft,
     ExternalLink,
-    Monitor,
-    Smartphone,
     Copy,
     Moon,
     Sun,
     Globe,
-    Link,
   } from 'lucide-svelte';
 
   interface Props {
@@ -40,7 +38,6 @@
 
   let copied = $state(false);
   let copyType = $state<'standard' | 'subdomain' | 'path'>('standard');
-  let viewMode = $state<'desktop' | 'mobile'>('desktop');
   let selectedTheme = $state<'executive_dark' | 'clinical_light'>('executive_dark');
 
   // Resolve matching lead from store or browser storage if not provided directly
@@ -127,16 +124,6 @@
     }
   });
 
-  const practitionerName = $derived(
-    activeLead?.fullName ||
-      siteConfig.heroHeadline.split(' - ')[0] ||
-      siteConfig.heroHeadline.split(' | ')[0] ||
-      'Professional Practice Specialist'
-  );
-
-  const professionCategory: ProfessionCategory = $derived(activeLead?.profession || 'dental');
-  const profMeta = $derived(PROFESSION_CONFIGS[professionCategory] || PROFESSION_CONFIGS.real_estate);
-
   const previewUrl = $derived.by(() => {
     return getPreviewLink(activeLead || siteConfig.previewSlug);
   });
@@ -166,10 +153,6 @@
     }
   }
 
-  function handleOpenNewTab() {
-    window.open(previewUrl, '_blank', 'noopener,noreferrer');
-  }
-
   function handleToggleTheme(theme: 'executive_dark' | 'clinical_light') {
     selectedTheme = theme;
     if (activeLead) {
@@ -192,128 +175,60 @@
   }
 </script>
 
-<div class="min-h-screen bg-slate-950 flex flex-col font-sans antialiased text-stone-900 selection:bg-teal-600 selection:text-white">
-  <!-- Rep Command & Preview Toolbar (Sticky Top Bar) -->
-  <aside aria-label="Rep Preview Bar" class="bg-slate-950 border-b border-slate-800 px-4 py-2.5 text-xs text-slate-200 sticky top-0 z-50 shadow-md">
-    <div class="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-3">
-      <!-- Left: Practitioner Summary & Launch Badge -->
-      <div class="flex items-center gap-3">
-        <button
-          type="button"
-          onclick={handleBackToPortal}
-          class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-teal-400 font-semibold text-xs transition-colors cursor-pointer border border-slate-700"
-        >
-          <ArrowLeft class="w-3.5 h-3.5" />
-          <span>Exit to Command Deck</span>
-        </button>
+<div class="min-h-screen w-full font-sans antialiased text-stone-900 selection:bg-teal-600 selection:text-white">
+  <!-- Full True Standalone Practice Website (Full Bleed / Edge-to-Edge) -->
+  <PracticeWebsiteTemplate
+    lead={activeLead}
+    {siteConfig}
+    frameless={true}
+    {previewUrl}
+  />
 
-        <div class="hidden md:flex items-center gap-2 pl-2 border-l border-slate-800 text-slate-300">
-          <span class="flex h-2 w-2 rounded-full bg-emerald-400 animate-pulse"></span>
-          <span class="font-bold text-white">{practitionerName}</span>
-          <span class="text-slate-400">&bull;</span>
-          <span class="text-slate-400">{profMeta.defaultTitle}</span>
-          <span class="text-[11px] bg-teal-950 text-teal-300 px-2 py-0.5 rounded border border-teal-800/80 font-mono">
-            ${siteConfig.offerPrice.toLocaleString()} (2-Yr w4 Cloud Package)
-          </span>
-        </div>
-      </div>
+  <!-- Discreet Floating Rep Utility Pill (Only visible when user is an authenticated sales rep/admin) -->
+  {#if authStore.isLoggedIn}
+    <div class="fixed bottom-5 right-5 z-50 flex items-center gap-2.5 bg-slate-900/95 backdrop-blur-md border border-slate-700/80 text-white px-4 py-2 rounded-full shadow-2xl text-xs select-none">
+      <button
+        type="button"
+        onclick={handleBackToPortal}
+        class="flex items-center gap-1.5 text-teal-400 hover:text-teal-300 font-semibold cursor-pointer transition-colors"
+        title="Return to Fresh Mints Command Deck"
+      >
+        <ArrowLeft class="w-3.5 h-3.5" />
+        <span>Command Deck</span>
+      </button>
 
-      <!-- Center: Template Theme & Device Switcher -->
-      <div class="flex items-center gap-2">
-        <!-- Template Style Selector -->
-        <div class="bg-slate-900 p-1 rounded-lg border border-slate-800 flex items-center gap-1">
-          <button
-            type="button"
-            onclick={() => handleToggleTheme('executive_dark')}
-            class="px-2.5 py-1 rounded-md text-xs font-semibold flex items-center gap-1 transition-colors cursor-pointer {selectedTheme === 'executive_dark' ? 'bg-teal-600 text-white shadow' : 'text-slate-400 hover:text-white'}"
-          >
-            <Moon class="w-3.5 h-3.5" />
-            <span>Executive Dark</span>
-          </button>
-          <button
-            type="button"
-            onclick={() => handleToggleTheme('clinical_light')}
-            class="px-2.5 py-1 rounded-md text-xs font-semibold flex items-center gap-1 transition-colors cursor-pointer {selectedTheme === 'clinical_light' ? 'bg-teal-600 text-white shadow' : 'text-slate-400 hover:text-white'}"
-          >
-            <Sun class="w-3.5 h-3.5" />
-            <span>Clinical Light</span>
-          </button>
-        </div>
+      <span class="text-slate-600">|</span>
 
-        <!-- Viewport Mode -->
-        <div class="bg-slate-900 p-1 rounded-lg border border-slate-800 flex items-center gap-1">
-          <button
-            type="button"
-            onclick={() => (viewMode = 'desktop')}
-            class="px-2.5 py-1 rounded-md text-xs font-semibold flex items-center gap-1.5 transition-colors cursor-pointer {viewMode === 'desktop' ? 'bg-teal-600 text-white shadow' : 'text-slate-400 hover:text-white'}"
-          >
-            <Monitor class="w-3.5 h-3.5" />
-            <span>Desktop</span>
-          </button>
-          <button
-            type="button"
-            onclick={() => (viewMode = 'mobile')}
-            class="px-2.5 py-1 rounded-md text-xs font-semibold flex items-center gap-1.5 transition-colors cursor-pointer {viewMode === 'mobile' ? 'bg-teal-600 text-white shadow' : 'text-slate-400 hover:text-white'}"
-          >
-            <Smartphone class="w-3.5 h-3.5" />
-            <span>Mobile</span>
-          </button>
-        </div>
-      </div>
+      <button
+        type="button"
+        onclick={() => handleToggleTheme(selectedTheme === 'executive_dark' ? 'clinical_light' : 'executive_dark')}
+        class="text-slate-300 hover:text-white flex items-center gap-1 cursor-pointer transition-colors"
+        title="Toggle Theme"
+      >
+        {#if selectedTheme === 'executive_dark'}
+          <Sun class="w-3.5 h-3.5 text-amber-400" />
+        {:else}
+          <Moon class="w-3.5 h-3.5 text-cyan-400" />
+        {/if}
+        <span class="hidden sm:inline">{selectedTheme === 'executive_dark' ? 'Clinical Light' : 'Executive Dark'}</span>
+      </button>
 
-      <!-- Right: Action Buttons with Subdomain, Path & Hash Copy -->
-      <div class="flex items-center gap-2 flex-wrap">
-        <button
-          type="button"
-          onclick={() => handleCopyShare('standard')}
-          title="Copy standard hash preview link (e.g. #/preview/{siteConfig.previewSlug})"
-          class="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 text-xs font-medium transition-colors cursor-pointer"
-        >
-          {#if copied && copyType === 'standard'}
-            <Check class="w-3.5 h-3.5 text-emerald-400" />
-            <span class="text-emerald-400 font-semibold">Copied!</span>
-          {:else}
-            <Copy class="w-3.5 h-3.5" />
-            <span>Copy Slug Link</span>
-          {/if}
-        </button>
+      <span class="text-slate-600">|</span>
 
-        <button
-          type="button"
-          onclick={() => handleCopyShare('subdomain')}
-          title="Copy tenant subdomain link (e.g. http://{siteConfig.previewSlug}.mycompass/)"
-          class="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-cyan-400 border border-cyan-800/80 text-xs font-medium transition-colors cursor-pointer"
-        >
-          {#if copied && copyType === 'subdomain'}
-            <Check class="w-3.5 h-3.5 text-emerald-400" />
-            <span class="text-emerald-400 font-semibold">Copied!</span>
-          {:else}
-            <Globe class="w-3.5 h-3.5" />
-            <span>Subdomain Link</span>
-          {/if}
-        </button>
-
-        <button
-          type="button"
-          onclick={handleOpenNewTab}
-          class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-teal-600 hover:bg-teal-500 text-white text-xs font-semibold transition-colors cursor-pointer shadow-sm"
-        >
-          <ExternalLink class="w-3.5 h-3.5" />
-          <span>Launch Live</span>
-        </button>
-      </div>
+      <button
+        type="button"
+        onclick={() => handleCopyShare('subdomain')}
+        class="text-cyan-400 hover:text-cyan-300 flex items-center gap-1 cursor-pointer transition-colors"
+        title="Copy Subdomain Link"
+      >
+        {#if copied && copyType === 'subdomain'}
+          <Check class="w-3.5 h-3.5 text-emerald-400" />
+          <span class="text-emerald-400">Copied!</span>
+        {:else}
+          <Globe class="w-3.5 h-3.5" />
+          <span class="hidden sm:inline">Share Link</span>
+        {/if}
+      </button>
     </div>
-  </aside>
-
-  <!-- Website Preview Container Area (Using Shared PracticeWebsiteTemplate) -->
-  <main class="flex-1 bg-slate-900 p-2 sm:p-6 flex justify-center items-start overflow-y-auto">
-    <div class="{viewMode === 'mobile' ? 'w-[385px] my-4' : 'w-full max-w-6xl my-2'}">
-      <PracticeWebsiteTemplate
-        lead={activeLead}
-        {siteConfig}
-        deviceMode={viewMode}
-        {previewUrl}
-      />
-    </div>
-  </main>
+  {/if}
 </div>

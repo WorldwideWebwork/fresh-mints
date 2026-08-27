@@ -477,6 +477,18 @@ export interface Lead {
   websiteAudit?: ExistingWebsiteAudit;
   outreachLogs: OutreachLogItem[];
 
+  // Rep attribution & commission bounty tracking
+  assignedRep?: string;
+  closedByRep?: string;
+  closedAt?: string;
+
+  // CRM & Bomb Bag Sync tracking
+  crmContactId?: number;
+  crmSyncedAt?: string;
+  bombBagSubscriberId?: number;
+  bombBagSyncedAt?: string;
+  bombBagListId?: number;
+
   // Notes & tracking
   estimatedDealValue: number;
   notes?: string;
