@@ -4,7 +4,7 @@ import path from 'path';
 import { defineConfig } from 'vite';
 
 const workspaceRoot = process.env.PNPM_WORKSPACE_DIR || path.resolve(__dirname, '../..');
-const TARGET_DIST = path.join(workspaceRoot, 'wp-content/plugins/xophz-compass-freshmints/public/dist');
+const TARGET_DIST = path.join(workspaceRoot, 'wp-content/plugins/xophz-compass-fresh-mints/public/dist');
 
 export default defineConfig(() => {
   return {
