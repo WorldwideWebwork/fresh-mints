@@ -3,12 +3,13 @@
   import { leadStore } from '../../stores/lead-store.svelte';
   import { toast } from '../../stores/toast.svelte';
   import { CRMExportService } from '../../services/crm-export-service';
+  import { BombBagService } from '../../services/bomb-bag-service';
   import StatusIndicator from '../atoms/StatusIndicator.svelte';
   import IndustryBadge from '../atoms/IndustryBadge.svelte';
   import ContactBadgeList from './ContactBadgeList.svelte';
   import Button from '../atoms/Button.svelte';
   import Tooltip from '../atoms/Tooltip.svelte';
-  import { Search, Globe, PhoneCall, UserPlus, UserCheck, Send } from 'lucide-svelte';
+  import { Search, Globe, PhoneCall, UserPlus, UserCheck, Send, Mail, Sparkles } from 'lucide-svelte';
 
   interface Props {
     lead: Lead;
@@ -22,6 +23,7 @@
   const profMeta = $derived(PROFESSION_CONFIGS[lead.profession] || PROFESSION_CONFIGS.real_estate);
 
   let isSyncingCrm = $state(false);
+  let isSyncingBombBag = $state(false);
 
   function handleRowClick() {
     onselect?.();
@@ -66,6 +68,26 @@
       }
     } finally {
       isSyncingCrm = false;
+    }
+  }
+
+  function handleOpenBombBag(e: MouseEvent) {
+    e.stopPropagation();
+    BombBagService.openBombBagSubscriber(lead.bombBagSubscriberId);
+  }
+
+  async function handleQuickBombBagSync(e: MouseEvent) {
+    e.stopPropagation();
+    isSyncingBombBag = true;
+    try {
+      const res = await leadStore.syncLeadToBombBag(lead.id);
+      if (res.success) {
+        toast.success('Synced to Bomb Bag Marketing', res.message);
+      } else {
+        toast.error('Bomb Bag Sync Failed', res.message);
+      }
+    } finally {
+      isSyncingBombBag = false;
     }
   }
 </script>
@@ -216,6 +238,32 @@
             class="text-xs px-2 text-emerald-400 border-emerald-800/70 hover:bg-emerald-950/40"
           >
             <UserPlus class="w-3.5 h-3.5" />
+          </Button>
+        </Tooltip>
+      {/if}
+
+      <!-- 6. Bomb Bag Marketing Sync / View Subscriber -->
+      {#if lead.bombBagSubscriberId}
+        <Tooltip text="Enrolled in Bomb Bag Marketing (ID: #{lead.bombBagSubscriberId}) - Click to View" position="top">
+          <Button
+            variant="outline"
+            size="sm"
+            onclick={handleOpenBombBag}
+            class="text-xs px-2 text-purple-400 border-purple-800/80 bg-purple-950/40 hover:bg-purple-900/50"
+          >
+            <Mail class="w-3.5 h-3.5 text-purple-400" />
+          </Button>
+        </Tooltip>
+      {:else}
+        <Tooltip text="Sync to Bomb Bag Marketing & Journeys" position="top">
+          <Button
+            variant="outline"
+            size="sm"
+            onclick={handleQuickBombBagSync}
+            loading={isSyncingBombBag}
+            class="text-xs px-2 text-purple-400 border-purple-800/70 hover:bg-purple-950/40"
+          >
+            <Sparkles class="w-3.5 h-3.5 text-purple-400" />
           </Button>
         </Tooltip>
       {/if}

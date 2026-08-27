@@ -1,7 +1,13 @@
 <script lang="ts">
   import { leadStore } from '../../stores/lead-store.svelte';
   import { toast } from '../../stores/toast.svelte';
-  import { getDefaultWebsiteConfig, getPreviewLink } from '../../services/website-templates';
+  import {
+    getDefaultWebsiteConfig,
+    getPreviewLink,
+    getPathPreviewLink,
+    getSubdomainPreviewLink,
+    generateLeadPreviewSlug,
+  } from '../../services/website-templates';
   import { copyTextToClipboard } from '../../services/clipboard';
   import PracticeWebsiteTemplate from './PracticeWebsiteTemplate.svelte';
   import {
@@ -20,6 +26,8 @@
     Copy,
     Moon,
     Sun,
+    Globe,
+    Link,
   } from 'lucide-svelte';
 
   interface Props {
@@ -31,6 +39,7 @@
   let { slug = '', lead = null, onback }: Props = $props();
 
   let copied = $state(false);
+  let copyType = $state<'standard' | 'subdomain' | 'path'>('standard');
   let viewMode = $state<'desktop' | 'mobile'>('desktop');
   let selectedTheme = $state<'executive_dark' | 'clinical_light'>('executive_dark');
 
@@ -42,12 +51,17 @@
     const cleanSlug = slug.toLowerCase().replace(/^\/?preview\/?/, '').replace(/^\/+/, '');
 
     // 1. Check in-memory / IndexedDB leadStore
-    const foundInStore = leadStore.leads.find(
-      (l) =>
+    const foundInStore = leadStore.leads.find((l) => {
+      const configSlug = l.websiteConfig?.previewSlug?.toLowerCase();
+      const nameSlug = generateLeadPreviewSlug(l.fullName);
+      const simpleNameSlug = l.fullName.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
+      return (
         l.id === cleanSlug ||
-        l.websiteConfig?.previewSlug === cleanSlug ||
-        l.fullName.toLowerCase().replace(/[^a-z0-9]+/g, '-') === cleanSlug
-    );
+        configSlug === cleanSlug ||
+        nameSlug === cleanSlug ||
+        simpleNameSlug === cleanSlug
+      );
+    });
     if (foundInStore) return foundInStore;
 
     // 2. Check cached lead from browser session/localStorage (saved when preview link was generated)
@@ -93,7 +107,7 @@
 
       baseConfig = getDefaultWebsiteConfig(
         formattedName,
-        'dental',
+        'financial_advisor',
         'Phoenix',
         'AZ',
         'Accredited Graduate Academy'
@@ -127,11 +141,23 @@
     return getPreviewLink(activeLead || siteConfig.previewSlug);
   });
 
-  async function handleCopyShare() {
-    const success = await copyTextToClipboard(previewUrl);
+  const subdomainUrl = $derived.by(() => {
+    return getSubdomainPreviewLink(activeLead || siteConfig.previewSlug);
+  });
+
+  const pathUrl = $derived.by(() => {
+    return getPathPreviewLink(activeLead || siteConfig.previewSlug);
+  });
+
+  async function handleCopyShare(type: 'standard' | 'subdomain' | 'path' = 'standard') {
+    const targetLink = type === 'subdomain' ? subdomainUrl : (type === 'path' ? pathUrl : previewUrl);
+    const label = type === 'subdomain' ? 'Subdomain URL' : (type === 'path' ? 'Clean Path URL' : 'Preview URL');
+
+    const success = await copyTextToClipboard(targetLink);
     if (success) {
       copied = true;
-      toast.success('Live preview link copied to clipboard!');
+      copyType = type;
+      toast.success(`${label} copied to clipboard!`, targetLink);
       setTimeout(() => {
         copied = false;
       }, 2500);
@@ -235,19 +261,35 @@
         </div>
       </div>
 
-      <!-- Right: Action Buttons -->
-      <div class="flex items-center gap-2">
+      <!-- Right: Action Buttons with Subdomain, Path & Hash Copy -->
+      <div class="flex items-center gap-2 flex-wrap">
         <button
           type="button"
-          onclick={handleCopyShare}
-          class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 text-xs font-medium transition-colors cursor-pointer"
+          onclick={() => handleCopyShare('standard')}
+          title="Copy standard hash preview link (e.g. #/preview/{siteConfig.previewSlug})"
+          class="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 text-xs font-medium transition-colors cursor-pointer"
         >
-          {#if copied}
+          {#if copied && copyType === 'standard'}
             <Check class="w-3.5 h-3.5 text-emerald-400" />
-            <span class="text-emerald-400 font-semibold">Link Copied!</span>
+            <span class="text-emerald-400 font-semibold">Copied!</span>
           {:else}
             <Copy class="w-3.5 h-3.5" />
-            <span>Copy Pitch Link</span>
+            <span>Copy Slug Link</span>
+          {/if}
+        </button>
+
+        <button
+          type="button"
+          onclick={() => handleCopyShare('subdomain')}
+          title="Copy tenant subdomain link (e.g. http://{siteConfig.previewSlug}.mycompass/)"
+          class="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-cyan-400 border border-cyan-800/80 text-xs font-medium transition-colors cursor-pointer"
+        >
+          {#if copied && copyType === 'subdomain'}
+            <Check class="w-3.5 h-3.5 text-emerald-400" />
+            <span class="text-emerald-400 font-semibold">Copied!</span>
+          {:else}
+            <Globe class="w-3.5 h-3.5" />
+            <span>Subdomain Link</span>
           {/if}
         </button>
 
@@ -257,7 +299,7 @@
           class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-teal-600 hover:bg-teal-500 text-white text-xs font-semibold transition-colors cursor-pointer shadow-sm"
         >
           <ExternalLink class="w-3.5 h-3.5" />
-          <span>Open Direct Link</span>
+          <span>Launch Live</span>
         </button>
       </div>
     </div>

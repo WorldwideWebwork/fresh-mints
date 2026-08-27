@@ -3,6 +3,7 @@
   import { themeStore } from './lib/stores/theme.svelte';
   import { leadStore } from './lib/stores/lead-store.svelte';
   import type { Lead } from './lib/types/lead';
+  import { generateLeadPreviewSlug } from './lib/services/website-templates';
   import DashboardLayout from './lib/components/templates/DashboardLayout.svelte';
   import FilterBar from './lib/components/molecules/FilterBar.svelte';
   import Toast from './lib/components/molecules/Toast.svelte';
@@ -48,31 +49,69 @@
   let isNavigating = false;
   let hasMounted = false;
 
-  // Browser History & Route Parser (executed ONLY on popstate/hashchange and initial mount)
+  // Browser History, Subdomain & Route Parser (executed on popstate/hashchange, initial mount, and subdomain triggers)
   function parseUrlRoute() {
     if (typeof window === 'undefined') return;
     isNavigating = true;
 
     try {
       const hash = window.location.hash || '';
+      const pathname = window.location.pathname || '';
+      const hostname = window.location.hostname || '';
+      const wpPreviewSlug = (window as any).wpApiSettings?.previewSlug || '';
 
-      // 1. Standalone Practice Website Preview Route: #/preview/slug
-      if (hash.startsWith('#/preview/')) {
-        const slug = hash.replace('#/preview/', '').split('?')[0];
-        standalonePreviewSlug = slug;
-        const found = leadStore.leads.find(
-          (l) => (l.websiteConfig?.previewSlug || l.id) === slug
-        );
-        if (found) standalonePreviewLead = found;
-        return;
+      // 0. Detect Subdomain or WordPress-injected Preview Slug (e.g. sarah-jenkins.mycompass or /preview/sarah-jenkins)
+      let detectedSlug: string | null = null;
+
+      if (wpPreviewSlug && wpPreviewSlug !== 'fresh-mints') {
+        detectedSlug = wpPreviewSlug;
+      } else if (pathname.startsWith('/preview/')) {
+        detectedSlug = pathname.replace('/preview/', '').split('/')[0].split('?')[0];
+      } else {
+        const hostParts = hostname.replace(/:\d+$/, '').split('.');
+        if (hostParts.length >= 2) {
+          const sub = hostParts[0].toLowerCase();
+          const reserved = ['www', 'localhost', 'mycompass', 'app', 'mail', 'preview', 'freshmints', 'compass', 'api', 'admin'];
+          if (!reserved.includes(sub) && !/^\d+\.\d+\.\d+\.\d+$/.test(hostname)) {
+            detectedSlug = sub;
+          }
+        }
       }
-      if (hash.startsWith('#preview-')) {
-        const slug = hash.replace('#preview-', '').split('?')[0];
-        standalonePreviewSlug = slug;
-        const found = leadStore.leads.find(
-          (l) => (l.websiteConfig?.previewSlug || l.id) === slug
-        );
-        if (found) standalonePreviewLead = found;
+
+      // 1. Standalone Practice Website Preview Route: #/preview/slug, #preview-slug, or detected subdomain
+      if (hash.startsWith('#/preview/')) {
+        detectedSlug = hash.replace('#/preview/', '').split('?')[0];
+      } else if (hash.startsWith('#preview-')) {
+        detectedSlug = hash.replace('#preview-', '').split('?')[0];
+      }
+
+      if (detectedSlug) {
+        const cleanSlug = detectedSlug.toLowerCase().replace(/^\/?preview\/?/, '').replace(/^\/+/, '');
+        standalonePreviewSlug = cleanSlug;
+
+        // Search store for matching preview slug, full name kebab-case, or ID
+        const found = leadStore.leads.find((l) => {
+          const configSlug = l.websiteConfig?.previewSlug?.toLowerCase();
+          const nameSlug = l.fullName.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
+          return configSlug === cleanSlug || l.id === cleanSlug || nameSlug === cleanSlug;
+        });
+
+        if (found) {
+          standalonePreviewLead = found;
+        } else {
+          // Check browser storage cache
+          try {
+            const cached = sessionStorage.getItem(`fm_preview_${cleanSlug}`) || localStorage.getItem(`fm_preview_${cleanSlug}`);
+            if (cached) {
+              const parsed = JSON.parse(cached);
+              if (parsed && typeof parsed === 'object') {
+                standalonePreviewLead = parsed as Lead;
+              }
+            }
+          } catch (e) {
+            // Ignore cache error
+          }
+        }
         return;
       }
 
@@ -213,7 +252,7 @@
 
   function handleOpenFullPreview(lead: Lead) {
     standalonePreviewLead = lead;
-    standalonePreviewSlug = lead.websiteConfig?.previewSlug || lead.id;
+    standalonePreviewSlug = lead.websiteConfig?.previewSlug || generateLeadPreviewSlug(lead.fullName) || lead.id;
     syncStateToUrl(true);
   }
 

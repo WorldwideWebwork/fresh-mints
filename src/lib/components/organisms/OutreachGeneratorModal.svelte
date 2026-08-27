@@ -3,10 +3,11 @@
   import { leadStore } from '../../stores/lead-store.svelte';
   import { toast } from '../../stores/toast.svelte';
   import { OUTREACH_TEMPLATES, generateFallbackOutreach } from '../../services/outreach-generator';
+  import { BombBagService } from '../../services/bomb-bag-service';
   import Dialog from '../atoms/Dialog.svelte';
   import Button from '../atoms/Button.svelte';
   import Badge from '../atoms/Badge.svelte';
-  import { Send, Sparkles, Copy, Mail, MessageSquare, Check, RotateCw, PhoneCall, Kanban, FileText } from 'lucide-svelte';
+  import { Send, Sparkles, Copy, Mail, MessageSquare, Check, RotateCw, PhoneCall, Kanban, FileText, ExternalLink } from 'lucide-svelte';
 
   interface Props {
     open?: boolean;
@@ -20,6 +21,7 @@
   let selectedTemplateId = $state('industry_board_pass');
   let activeTab = $state<'email' | 'sms'>('email');
   let isGeneratingAI = $state(false);
+  let isDispatchingBombBag = $state(false);
   let emailSubject = $state('');
   let emailBody = $state('');
   let smsBody = $state('');
@@ -32,6 +34,29 @@
     open = false;
     onclose?.();
     toast.info('Loaded in Rep Hub', `${lead.fullName} ready for live dial`);
+  }
+
+  async function handleDispatchBombBag() {
+    if (!lead) return;
+    isDispatchingBombBag = true;
+    try {
+      const syncRes = await leadStore.syncLeadToBombBag(lead.id);
+      if (syncRes.success) {
+        await leadStore.recordOutreachLog(lead.id, {
+          type: 'email',
+          subject: emailSubject,
+          content: `Dispatched to Bomb Bag Marketing: ${emailBody.substring(0, 120)}...`,
+        });
+        toast.success('Dispatched to Bomb Bag', `Enrolled ${lead.fullName} into email journey.`);
+        BombBagService.openBombBagComposer(lead);
+        open = false;
+        onclose?.();
+      } else {
+        toast.error('Dispatch Failed', syncRes.message);
+      }
+    } finally {
+      isDispatchingBombBag = false;
+    }
   }
 
   function handleOpenPipeline() {
@@ -260,7 +285,7 @@
           </Button>
         </div>
 
-        <div class="flex items-center gap-2 justify-end">
+        <div class="flex items-center gap-2 justify-end flex-wrap">
           <Button
             variant="ghost"
             size="sm"
@@ -272,6 +297,18 @@
           >
             Cancel
           </Button>
+
+          <Button
+            variant="outline"
+            size="sm"
+            onclick={handleDispatchBombBag}
+            loading={isDispatchingBombBag}
+            class="gap-1.5 text-xs font-semibold text-purple-400 border-purple-800 bg-purple-950/30 hover:bg-purple-900/50"
+          >
+            <Sparkles class="w-3.5 h-3.5 text-purple-400" />
+            <span>Dispatch to Bomb Bag</span>
+          </Button>
+
           <Button variant="primary" size="sm" onclick={handleMarkSent} class="gap-1.5 text-xs font-bold">
             <Send class="w-3.5 h-3.5" />
             <span>Record Log & Mark Sent</span>

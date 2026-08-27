@@ -9,8 +9,9 @@ import {
   type SkipTraceResult,
 } from '../types/lead';
 import { CRMExportService } from '../services/crm-export-service';
+import { BombBagService, type BombBagSyncResult } from '../services/bomb-bag-service';
 import { IndexedDBStorage } from '../services/indexeddb-storage';
-import { getDefaultWebsiteConfig } from '../services/website-templates';
+import { getDefaultWebsiteConfig, generateLeadPreviewSlug } from '../services/website-templates';
 import { INITIAL_VERIFIED_LEADS } from '../services/initial-seeds';
 import { toast } from './toast.svelte';
 
@@ -278,9 +279,28 @@ class LeadStoreState {
       toast.dismiss(loadingToastId);
 
       if (fetched.length > 0) {
-        // Merge without duplicates
+        // Merge without duplicates and ensure clean name-based preview configurations
         const existingIds = new Set(this.leads.map((l) => l.licenseNumber));
-        const newItems = fetched.filter((l: Lead) => !existingIds.has(l.licenseNumber));
+        const newItems = fetched
+          .map((l: Lead) => {
+            if (
+              !l.websiteConfig ||
+              !l.websiteConfig.previewSlug ||
+              l.websiteConfig.previewSlug.startsWith('finra-') ||
+              l.websiteConfig.previewSlug.startsWith('nppes-')
+            ) {
+              l.websiteConfig = getDefaultWebsiteConfig(
+                l.fullName,
+                l.profession,
+                l.city,
+                l.state,
+                l.collegeOrSchool
+              );
+            }
+            return l;
+          })
+          .filter((l: Lead) => !existingIds.has(l.licenseNumber));
+
         this.leads = [...newItems, ...this.leads];
         if (newItems.length > 0) {
           this.selectedLeadId = newItems[0].id;
@@ -411,7 +431,9 @@ class LeadStoreState {
 
   ensureWebsiteConfig(id: string): WebsitePreviewConfig {
     const lead = this.leads.find((l) => l.id === id);
-    if (lead?.websiteConfig) return lead.websiteConfig;
+    if (lead?.websiteConfig && lead.websiteConfig.previewSlug && !lead.websiteConfig.previewSlug.startsWith('finra-') && !lead.websiteConfig.previewSlug.startsWith('nppes-')) {
+      return lead.websiteConfig;
+    }
 
     const config = getDefaultWebsiteConfig(
       lead?.fullName || 'Professional',
@@ -420,7 +442,7 @@ class LeadStoreState {
       lead?.state || 'CA',
       lead?.collegeOrSchool || 'Board'
     );
-    this.updateLead(id, { websiteConfig: config, outreachStatus: 'Site Built' });
+    this.updateLead(id, { websiteConfig: config, outreachStatus: lead?.outreachStatus === 'Uncontacted' ? 'Site Built' : (lead?.outreachStatus || 'Site Built') });
     return config;
   }
 
@@ -470,6 +492,42 @@ class LeadStoreState {
       } else {
         failed++;
       }
+    }
+    return { synced, failed };
+  }
+
+  async syncLeadToBombBag(id: string, listId?: number, tags: string[] = []): Promise<BombBagSyncResult> {
+    const lead = this.leads.find((l) => l.id === id);
+    if (!lead) return { success: false, message: 'Lead not found' };
+
+    const result = await BombBagService.syncToBombBag(lead, listId, tags);
+    if (result.success && result.subscriberId) {
+      await this.updateLead(id, {
+        bombBagSubscriberId: result.subscriberId,
+        bombBagSyncedAt: new Date().toISOString(),
+        bombBagListId: result.listId,
+      });
+    }
+    return result;
+  }
+
+  async syncAllFilteredToBombBag(listId?: number): Promise<{ synced: number; failed: number }> {
+    let synced = 0;
+    let failed = 0;
+    const leadsToSync = [...this.filteredLeads];
+
+    const batchRes = await BombBagService.syncBatchToBombBag(leadsToSync, listId);
+    if (batchRes.success && batchRes.results) {
+      for (const item of batchRes.results) {
+        await this.updateLead(item.leadId, {
+          bombBagSubscriberId: item.subscriberId,
+          bombBagSyncedAt: new Date().toISOString(),
+          bombBagListId: item.listId,
+        });
+        synced++;
+      }
+    } else {
+      failed = leadsToSync.length;
     }
     return { synced, failed };
   }

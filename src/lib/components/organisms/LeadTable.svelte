@@ -24,6 +24,7 @@
   let { onopenmodal }: Props = $props();
 
   let isSyncingAll = $state(false);
+  let isSyncingAllBombBag = $state(false);
   let currentPage = $state(1);
   let pageSize = $state(25);
   let tableRef: HTMLDivElement | null = $state(null);
@@ -80,6 +81,16 @@
       isSyncingAll = false;
     }
   }
+
+  async function handleSyncAllBombBag() {
+    isSyncingAllBombBag = true;
+    try {
+      const result = await leadStore.syncAllFilteredToBombBag();
+      toast.success(`Bomb Bag Sync Complete`, `Enrolled ${result.synced} leads in marketing journeys`);
+    } finally {
+      isSyncingAllBombBag = false;
+    }
+  }
 </script>
 
 <div class="space-y-4" bind:this={tableRef}>
@@ -105,6 +116,17 @@
       >
         <Download class="w-3.5 h-3.5" />
         <span>Export CSV</span>
+      </Button>
+
+      <Button
+        variant="outline"
+        size="sm"
+        onclick={handleSyncAllBombBag}
+        loading={isSyncingAllBombBag}
+        class="gap-1.5 text-xs font-semibold text-purple-400 border-purple-800 hover:bg-purple-950/40"
+      >
+        <Sparkles class="w-3.5 h-3.5 text-purple-400" />
+        <span>Sync All to Bomb Bag</span>
       </Button>
 
       <Button

@@ -253,9 +253,12 @@ export interface Lead {
   notes?: string;
   createdAt: string;
 
-  // CRM Sync tracking
+  // CRM & Bomb Bag Sync tracking
   crmContactId?: number;
   crmSyncedAt?: string;
+  bombBagSubscriberId?: number;
+  bombBagSyncedAt?: string;
+  bombBagListId?: number;
 }
 
 export interface ProfessionMetadata {

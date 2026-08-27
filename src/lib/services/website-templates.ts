@@ -130,6 +130,69 @@ export const THEME_PRESETS: Record<ProfessionCategory, WebsiteThemePreset> = {
   },
 };
 
+/**
+ * Generate a clean, human-readable kebab-case preview slug from a practitioner's name.
+ * Handles duplicate collision disambiguation via state or short license suffixes.
+ * e.g. "Sarah Jenkins" -> "sarah-jenkins"
+ * e.g. duplicate "Sarah Jenkins" in TX -> "sarah-jenkins-tx" or "sarah-jenkins-5079"
+ */
+export function generateLeadPreviewSlug(
+  fullName: string,
+  fallbackId: string = '',
+  state: string = '',
+  licenseOrNpi: string = '',
+  existingSlugs?: Set<string> | string[]
+): string {
+  if (!fullName || fullName.trim().length === 0) {
+    return fallbackId ? fallbackId.toLowerCase().replace(/[^a-z0-9]+/g, '-') : 'demo-practice';
+  }
+
+  // Remove common professional prefixes/suffixes for a cleaner custom domain/slug
+  const stripped = fullName
+    .replace(/^(dr\.?|mr\.?|mrs\.?|ms\.?|attorney|coach)\s+/i, '')
+    .replace(/,\s*(dds|dmd|md|do|rn|cpa|cfp|esq|dc|dvm|lpc|np|apn|fa).*$/i, '')
+    .trim();
+
+  let slug = stripped
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '') // remove diacritics
+    .replace(/[^a-z0-9]+/g, '-')     // kebab-case
+    .replace(/^-+|-+$/g, '');        // trim leading/trailing dashes
+
+  if (!slug || slug === 'finra' || slug.startsWith('nppes-') || slug.startsWith('finra-') || slug.startsWith('lead-')) {
+    return fallbackId ? fallbackId.toLowerCase().replace(/[^a-z0-9]+/g, '-') : 'practitioner-preview';
+  }
+
+  // Check collision against existing set of slugs
+  if (existingSlugs) {
+    const slugSet = existingSlugs instanceof Set ? existingSlugs : new Set(existingSlugs);
+    if (slugSet.has(slug)) {
+      // 1. Try appending state code (e.g. sarah-jenkins-tx)
+      if (state && state.trim().length > 0) {
+        const stateSlug = `${slug}-${state.toLowerCase().trim()}`;
+        if (!slugSet.has(stateSlug)) return stateSlug;
+      }
+
+      // 2. Try appending last 4 digits of license or NPI (e.g. sarah-jenkins-5079)
+      const numericDigits = (licenseOrNpi || fallbackId).replace(/[^0-9]/g, '');
+      if (numericDigits.length >= 4) {
+        const licenseSlug = `${slug}-${numericDigits.slice(-4)}`;
+        if (!slugSet.has(licenseSlug)) return licenseSlug;
+      }
+
+      // 3. Fallback incrementing counter (e.g. sarah-jenkins-2)
+      let counter = 2;
+      while (slugSet.has(`${slug}-${counter}`)) {
+        counter++;
+      }
+      return `${slug}-${counter}`;
+    }
+  }
+
+  return slug;
+}
+
 export function getDefaultWebsiteConfig(
   fullName: string,
   profession: ProfessionCategory,
@@ -138,7 +201,8 @@ export function getDefaultWebsiteConfig(
   school: string
 ): WebsitePreviewConfig {
   const preset = THEME_PRESETS[profession] || THEME_PRESETS.real_estate;
-  const cleanName = fullName.toLowerCase().replace(/[^a-z]/g, '');
+  const cleanSlug = generateLeadPreviewSlug(fullName);
+  const cleanSeed = cleanSlug.replace(/-/g, '');
   const profMeta = PROFESSION_CONFIGS[profession] || PROFESSION_CONFIGS.real_estate;
 
   return {
@@ -150,12 +214,12 @@ export function getDefaultWebsiteConfig(
     primaryColor: preset.primaryColor,
     accentColor: preset.accentColor,
     offerPrice: profMeta.averageWebsiteValue || 1650,
-    previewSlug: `${cleanName}-official`,
+    previewSlug: cleanSlug,
     callToAction: 'Schedule Free Consultation',
     templateTheme: 'executive_dark',
     demoPhotos: [
-      `https://picsum.photos/seed/${cleanName}1/800/600`,
-      `https://picsum.photos/seed/${cleanName}2/800/600`,
+      `https://picsum.photos/seed/${cleanSeed}1/800/600`,
+      `https://picsum.photos/seed/${cleanSeed}2/800/600`,
     ],
     services: [
       {
@@ -180,14 +244,24 @@ export function getDefaultWebsiteConfig(
   };
 }
 
-export function getPreviewLink(target: string | Partial<Lead> | { id: string; websiteConfig?: { previewSlug?: string } }): string {
+/**
+ * Extract clean slug string from target input (Lead object, partial lead, or slug string).
+ */
+export function resolveTargetSlug(target: string | Partial<Lead> | { id: string; fullName?: string; websiteConfig?: { previewSlug?: string } }): string {
   let slug = 'demo';
 
   if (typeof target === 'string') {
     slug = target;
   } else if (target && typeof target === 'object') {
-    slug = target.websiteConfig?.previewSlug || target.id || 'demo';
-    // Cache the lead in browser storage so that opening in a standalone new tab has instant access to full lead info
+    if (target.websiteConfig?.previewSlug && !target.websiteConfig.previewSlug.startsWith('finra-') && !target.websiteConfig.previewSlug.startsWith('nppes-')) {
+      slug = target.websiteConfig.previewSlug;
+    } else if (target.fullName) {
+      slug = generateLeadPreviewSlug(target.fullName, target.id || '');
+    } else {
+      slug = target.id || 'demo';
+    }
+
+    // Cache the lead in browser storage so standalone preview tabs load instantly
     if (typeof window !== 'undefined') {
       try {
         const cleanKey = `fm_preview_${slug.toLowerCase().replace(/^\/?preview\/?/, '').replace(/^\/+/, '')}`;
@@ -199,7 +273,15 @@ export function getPreviewLink(target: string | Partial<Lead> | { id: string; we
     }
   }
 
-  const cleanSlug = encodeURIComponent(slug.toLowerCase().replace(/^\/?preview\/?/, '').replace(/^\/+/, ''));
+  return slug.toLowerCase().replace(/^\/?preview\/?/, '').replace(/^\/+/, '');
+}
+
+/**
+ * Generates preview link formatted as hash route (default for single-page app compatibility).
+ * e.g. "http://mycompass/fresh-mints/#/preview/sarah-jenkins"
+ */
+export function getPreviewLink(target: string | Partial<Lead> | { id: string; fullName?: string; websiteConfig?: { previewSlug?: string } }): string {
+  const cleanSlug = encodeURIComponent(resolveTargetSlug(target));
 
   if (typeof window !== 'undefined' && window.location?.origin) {
     const basePath = window.location.pathname.replace(/\/+$/, '');
@@ -208,3 +290,42 @@ export function getPreviewLink(target: string | Partial<Lead> | { id: string; we
   }
   return `#/preview/${cleanSlug}`;
 }
+
+/**
+ * Generates direct clean path preview link (routed via WordPress rewrite rules).
+ * e.g. "http://mycompass/preview/sarah-jenkins"
+ */
+export function getPathPreviewLink(target: string | Partial<Lead> | { id: string; fullName?: string; websiteConfig?: { previewSlug?: string } }): string {
+  const cleanSlug = encodeURIComponent(resolveTargetSlug(target));
+
+  if (typeof window !== 'undefined' && window.location?.origin) {
+    return `${window.location.origin}/preview/${cleanSlug}`;
+  }
+  return `/preview/${cleanSlug}`;
+}
+
+/**
+ * Generates practitioner subdomain preview link.
+ * e.g. "http://sarah-jenkins.mycompass" or "https://sarah-jenkins.worldwidewebwork.com"
+ */
+export function getSubdomainPreviewLink(target: string | Partial<Lead> | { id: string; fullName?: string; websiteConfig?: { previewSlug?: string } }): string {
+  const cleanSlug = resolveTargetSlug(target);
+
+  if (typeof window !== 'undefined' && window.location?.hostname) {
+    const host = window.location.hostname;
+    const protocol = window.location.protocol || 'http:';
+    const port = window.location.port ? `:${window.location.port}` : '';
+
+    // If hostname has multiple segments (e.g. mycompass or worldwidewebwork.com)
+    const hostParts = host.split('.');
+    if (hostParts.length === 1) {
+      // Local single name host e.g. "mycompass" or "localhost"
+      return `${protocol}//${cleanSlug}.${host}${port}/`;
+    }
+    // Remove existing subdomains (e.g. "www", "preview", "freshmints")
+    const rootDomain = hostParts.slice(-2).join('.');
+    return `${protocol}//${cleanSlug}.${rootDomain}${port}/`;
+  }
+  return `http://${cleanSlug}.worldwidewebwork.com/`;
+}
+

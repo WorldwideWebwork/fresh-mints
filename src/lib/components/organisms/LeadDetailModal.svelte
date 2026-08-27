@@ -3,6 +3,8 @@
   import { leadStore } from '../../stores/lead-store.svelte';
   import { toast } from '../../stores/toast.svelte';
   import { CRMExportService } from '../../services/crm-export-service';
+  import { BombBagService } from '../../services/bomb-bag-service';
+  import { getPreviewLink, getSubdomainPreviewLink } from '../../services/website-templates';
   import { copyTextToClipboard } from '../../services/clipboard';
   import Dialog from '../atoms/Dialog.svelte';
   import Button from '../atoms/Button.svelte';
@@ -49,6 +51,7 @@
   let { open = $bindable(false), lead = $bindable(null), onclose, onopenmodal }: Props = $props();
 
   let isSyncingCrm = $state(false);
+  let isSyncingBombBag = $state(false);
   let isTracing = $state(false);
   let notesInput = $state('');
 
@@ -88,8 +91,9 @@
         const [path, query] = hash.split('?');
         const params = new URLSearchParams(query || '');
         params.set('lead', nextTarget.id);
-        params.set('modal', 'lead_detail');
-        history.replaceState(null, '', `${path || '#/leads'}?${params.toString()}`);
+        const newQuery = params.toString();
+        const targetHash = newQuery ? `${path}?${newQuery}` : path;
+        window.history.replaceState(null, '', targetHash);
       }
     }
   }
@@ -106,8 +110,9 @@
         const [path, query] = hash.split('?');
         const params = new URLSearchParams(query || '');
         params.set('lead', nextTarget.id);
-        params.set('modal', 'lead_detail');
-        history.replaceState(null, '', `${path || '#/leads'}?${params.toString()}`);
+        const newQuery = params.toString();
+        const targetHash = newQuery ? `${path}?${newQuery}` : path;
+        window.history.replaceState(null, '', targetHash);
       }
     }
   }
@@ -184,6 +189,31 @@
       }
     } finally {
       isSyncingCrm = false;
+    }
+  }
+
+  function handleOpenBombBag() {
+    if (!lead) return;
+    BombBagService.openBombBagSubscriber(lead.bombBagSubscriberId);
+  }
+
+  function handleComposeBombBag() {
+    if (!lead) return;
+    BombBagService.openBombBagComposer(lead);
+  }
+
+  async function handleSyncBombBag() {
+    if (!lead) return;
+    isSyncingBombBag = true;
+    try {
+      const res = await leadStore.syncLeadToBombBag(lead.id);
+      if (res.success) {
+        toast.success('Synced to Bomb Bag Marketing', res.message);
+      } else {
+        toast.error('Bomb Bag Sync Failed', res.message);
+      }
+    } finally {
+      isSyncingBombBag = false;
     }
   }
 
@@ -623,7 +653,86 @@
         </div>
       </div>
 
-      <!-- 3. Notes & Follow-up Section -->
+      <!-- 3. COMPASS Ecosystem & Marketing Sync (Questbook CRM + Bomb Bag + Subdomain) -->
+      <div class="p-4 rounded-xl bg-slate-900 border border-slate-800 space-y-3">
+        <div class="flex items-center justify-between text-xs font-bold text-slate-300 uppercase tracking-wider">
+          <div class="flex items-center gap-1.5">
+            <Sparkles class="w-3.5 h-3.5 text-cyan-400" />
+            <span>COMPASS Ecosystem & Marketing Journeys</span>
+          </div>
+          <span class="text-[11px] text-cyan-400 font-mono">Live Sync Active</span>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+          <!-- Questbook CRM Status -->
+          <div class="p-3 rounded-lg bg-slate-950/80 border border-slate-800 space-y-2">
+            <div class="flex items-center justify-between">
+              <span class="font-semibold text-slate-200 flex items-center gap-1.5">
+                <UserCheck class="w-3.5 h-3.5 text-cyan-400" />
+                <span>Questbook CRM</span>
+              </span>
+              {#if lead.crmContactId}
+                <Badge variant="success">Synced #{lead.crmContactId}</Badge>
+              {:else}
+                <Badge variant="secondary">Not Synced</Badge>
+              {/if}
+            </div>
+            <p class="text-slate-400 text-[11px]">
+              {lead.crmContactId ? `Lead contact is active in Questbook deal pipeline.` : `Sync lead directly into Questbook contacts and sales pipeline.`}
+            </p>
+            <div class="flex items-center gap-2 pt-1">
+              {#if lead.crmContactId}
+                <Button variant="outline" size="sm" onclick={handleOpenCRM} class="text-xs w-full justify-center text-cyan-400 border-cyan-800/80 bg-cyan-950/30">
+                  <span>Open Contact</span>
+                  <ExternalLink class="w-3 h-3 ml-1" />
+                </Button>
+              {:else}
+                <Button variant="outline" size="sm" onclick={handleSyncCRM} loading={isSyncingCrm} class="text-xs w-full justify-center text-emerald-400 border-emerald-800">
+                  <UserPlus class="w-3 h-3 mr-1" />
+                  <span>1-Click Sync CRM</span>
+                </Button>
+              {/if}
+            </div>
+          </div>
+
+          <!-- Bomb Bag Marketing Status -->
+          <div class="p-3 rounded-lg bg-slate-950/80 border border-slate-800 space-y-2">
+            <div class="flex items-center justify-between">
+              <span class="font-semibold text-slate-200 flex items-center gap-1.5">
+                <Mail class="w-3.5 h-3.5 text-purple-400" />
+                <span>Bomb Bag News Flash</span>
+              </span>
+              {#if lead.bombBagSubscriberId}
+                <Badge variant="info">Enrolled #{lead.bombBagSubscriberId}</Badge>
+              {:else}
+                <Badge variant="secondary">Unenrolled</Badge>
+              {/if}
+            </div>
+            <p class="text-slate-400 text-[11px]">
+              {lead.bombBagSubscriberId ? `Subscriber enrolled in Fresh Mints marketing journeys.` : `Enroll practitioner into automated cold outreach email journeys.`}
+            </p>
+            <div class="flex items-center gap-2 pt-1">
+              {#if lead.bombBagSubscriberId}
+                <Button variant="outline" size="sm" onclick={handleOpenBombBag} class="text-xs w-1/2 justify-center text-purple-400 border-purple-800 bg-purple-950/30">
+                  <span>Subscriber</span>
+                  <ExternalLink class="w-3 h-3 ml-1" />
+                </Button>
+                <Button variant="outline" size="sm" onclick={handleComposeBombBag} class="text-xs w-1/2 justify-center text-cyan-400 border-cyan-800 bg-cyan-950/30">
+                  <span>Compose</span>
+                  <Send class="w-3 h-3 ml-1" />
+                </Button>
+              {:else}
+                <Button variant="outline" size="sm" onclick={handleSyncBombBag} loading={isSyncingBombBag} class="text-xs w-full justify-center text-purple-400 border-purple-800">
+                  <Mail class="w-3 h-3 mr-1" />
+                  <span>1-Click Sync Bomb Bag</span>
+                </Button>
+              {/if}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 4. Notes & Follow-up Section -->
       <div class="p-4 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 space-y-2.5">
         <div class="flex items-center justify-between text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider">
           <div class="flex items-center gap-1.5">
@@ -643,7 +752,7 @@
         ></textarea>
       </div>
 
-      <!-- 4. Outreach History Log -->
+      <!-- 5. Outreach History Log -->
       <div class="p-4 rounded-xl bg-slate-50 dark:bg-slate-950/70 border border-slate-200 dark:border-slate-800 space-y-3">
         <div class="text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider flex items-center gap-1.5">
           <Clock class="w-3.5 h-3.5 text-purple-600 dark:text-purple-400" />
@@ -676,7 +785,7 @@
 
       <!-- Bottom External Connectors Bar -->
       <div class="pt-2 border-t border-slate-200 dark:border-slate-800 flex items-center justify-between gap-3 flex-wrap text-xs">
-        <div class="flex items-center gap-2">
+        <div class="flex items-center gap-2 flex-wrap">
           <Button
             variant="outline"
             size="sm"
@@ -684,7 +793,7 @@
             class="text-xs text-blue-600 dark:text-blue-400 border-blue-300 dark:border-blue-800 hover:bg-blue-50 dark:hover:bg-blue-950/40"
           >
             <Search class="w-3.5 h-3.5" />
-            <span>Search Google</span>
+            <span>Google</span>
             <ExternalLink class="w-3 h-3 text-blue-500 dark:text-blue-400 ml-0.5" />
           </Button>
 
@@ -708,7 +817,31 @@
               class="text-xs text-emerald-600 dark:text-emerald-400 border-emerald-800"
             >
               <UserPlus class="w-3.5 h-3.5" />
-              <span>Sync Questbook</span>
+              <span>Sync CRM</span>
+            </Button>
+          {/if}
+
+          {#if lead.bombBagSubscriberId}
+            <Button
+              variant="outline"
+              size="sm"
+              onclick={handleOpenBombBag}
+              class="text-xs text-purple-400 border-purple-800 bg-purple-950/40 hover:bg-purple-900/50"
+            >
+              <Mail class="w-3.5 h-3.5 text-purple-400" />
+              <span>Bomb Bag (#{lead.bombBagSubscriberId})</span>
+              <ExternalLink class="w-3 h-3 text-purple-400 ml-0.5" />
+            </Button>
+          {:else}
+            <Button
+              variant="outline"
+              size="sm"
+              onclick={handleSyncBombBag}
+              loading={isSyncingBombBag}
+              class="text-xs text-purple-400 border-purple-800 hover:bg-purple-950/40"
+            >
+              <Mail class="w-3.5 h-3.5" />
+              <span>Sync Bomb Bag</span>
             </Button>
           {/if}
         </div>
