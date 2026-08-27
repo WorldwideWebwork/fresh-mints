@@ -43,6 +43,68 @@ export const GLOBAL_PLAN_INCLUSIONS: GlobalPlanInclusion[] = [
   { title: 'Global Multi-Region Edge Network', description: 'High-speed edge routing across US, EU, and Asia-Pacific' },
 ];
 
+export interface MarketPriceComparison {
+  id: string;
+  category: string;
+  agencyCost2Yr: string;
+  diyCost2Yr: string;
+  compassPackageCost2Yr: string;
+  totalClientSavings: string;
+  dealHighlights: string[];
+}
+
+export const MARKET_PRICE_COMPARISONS: Record<string, MarketPriceComparison> = {
+  solo_starter: {
+    id: 'solo_starter',
+    category: 'Solo Practice / Wellness & Trades (Bronze Tier)',
+    agencyCost2Yr: '$4,500 - $6,500 ($3,500 build + $50-$125/mo hosting)',
+    diyCost2Yr: '$2,400+ ($30/mo builder + $72/mo 10x Google Workspace + 40 hrs lost time)',
+    compassPackageCost2Yr: '$1,650 Flat ($0 design fee, 24 mo cloud hosting & 10 emails)',
+    totalClientSavings: 'Save $2,850 - $4,850 in cash + 40 hours of setup labor',
+    dealHighlights: [
+      'Zero upfront website design fee',
+      '24 Months zero monthly overhead',
+      '10 Custom @domain email mailboxes included',
+      'Dedicated static IP & automated nightly backups',
+    ],
+  },
+  professional: {
+    id: 'professional',
+    category: 'Mid-Tier Dental, Chiro & Veterinary (Silver Tier)',
+    agencyCost2Yr: '$6,000 - $9,000 ($4,500 build + $75-$150/mo hosting)',
+    diyCost2Yr: '$3,200+ (Builder subscriptions + third-party booking plugins + email)',
+    compassPackageCost2Yr: '$2,650 Flat ($0 design fee, 24 mo cloud hosting & appointment portal)',
+    totalClientSavings: 'Save $3,350 - $6,350 vs agency quotes',
+    dealHighlights: [
+      'Interactive appointment & intake booking engine',
+      'Castle Walls WAF & honeypot spam protection',
+      'Zero monthly bills for 24 calendar months',
+      'Verified state board pass accreditation badge',
+    ],
+  },
+  enterprise_legal_cpa: {
+    id: 'enterprise_legal_cpa',
+    category: 'Attorneys, CPAs & Wealth Advisors (Gold Tier)',
+    agencyCost2Yr: '$8,500 - $14,000+ ($6,000+ custom legal build + $150/mo hosting)',
+    diyCost2Yr: '$4,500+ (High-risk compliance gaps, unencrypted forms, DIY labor)',
+    compassPackageCost2Yr: '$3,950 Flat ($0 design fee, 24 mo dedicated cloud hosting & portal)',
+    totalClientSavings: 'Save $4,550 - $10,050 vs agency retainers',
+    dealHighlights: [
+      'Fiduciary client discovery vault & intake system',
+      'Dedicated isolated IP & enterprise SSL encryption',
+      '24 Months zero monthly overhead',
+      'Full unencumbered domain lease-to-own equity',
+    ],
+  },
+};
+
+export const TURNKEY_SCOPE_GUARANTEE = {
+  title: 'Turnkey Scope & Value Guarantee',
+  tagline: 'Unmatched 2-Year Total Cost of Ownership (TCO)',
+  blurb: 'If any certified digital agency provides a custom live practice website, 10 domain email accounts, a dedicated static IP, and 24 months of fully managed cloud hosting for less than our flat package rate, we will credit the difference in full.',
+  whyOurDealIsBest: 'Our launch package completely eliminates the upfront $4,000 agency design fee and pauses all monthly hosting bills for your first 24 months. You receive a fully deployed practice website, 10 business email accounts, and enterprise server security for less than the cost of DIY software subscriptions alone.',
+};
+
 export interface W4HostingPlan {
   id: W4HostingTier;
   name: string;

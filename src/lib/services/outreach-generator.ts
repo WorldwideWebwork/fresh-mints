@@ -1,4 +1,12 @@
-import { type Lead, PROFESSION_CONFIGS, W4_HOSTING_PLANS, type ProfessionCategory } from '../types/lead';
+import {
+  type Lead,
+  PROFESSION_CONFIGS,
+  W4_HOSTING_PLANS,
+  MARKET_PRICE_COMPARISONS,
+  TURNKEY_SCOPE_GUARANTEE,
+  type ProfessionCategory,
+  type MarketPriceComparison,
+} from '../types/lead';
 import { getPreviewLink } from './website-templates';
 
 export interface OutreachTemplateOption {
