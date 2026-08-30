@@ -15,8 +15,9 @@
   let selectedProfession = $state<ProfessionCategory>('real_estate');
   let selectedState = $state('CA');
   let searchLimit = $state(25);
+  let selectedDateWindow = $state(leadStore.dateWindowFilter || '90');
   let isSearching = $state(false);
-  let searchResultInfo = $state<{ totalFound: number; source: string; groundingNotes: string } | null>(null);
+  let searchResultInfo = $state<{ totalFound: number; newAdded?: number; source: string; groundingNotes: string } | null>(null);
 
   const professionOptions = Object.values(PROFESSION_CONFIGS).map((p) => ({
     value: p.id,
@@ -24,6 +25,15 @@
   }));
 
   const stateOptions = US_STATES.map((s) => ({ value: s.code, label: s.fullName }));
+
+  const dateWindowOptions = [
+    { value: 'all', label: 'All Dates (Any License Age)' },
+    { value: '30', label: 'Past 30 Days (Ultra-Fresh)' },
+    { value: '60', label: 'Past 60 Days' },
+    { value: '90', label: 'Past 90 Days (Quarterly)' },
+    { value: '180', label: 'Past 6 Months' },
+    { value: '365', label: 'Past 1 Year' },
+  ];
 
   const industryList = Object.values(PROFESSION_CONFIGS).map((p) => ({
     id: p.id,
@@ -35,12 +45,22 @@
   async function handleExecuteSearch() {
     isSearching = true;
     try {
-      const res = await leadStore.fetchLiveOpenRegistryData(selectedProfession, selectedState, searchLimit);
+      const res = await leadStore.fetchLiveOpenRegistryData(selectedProfession, selectedState, searchLimit, selectedDateWindow);
       searchResultInfo = res;
     } finally {
       isSearching = false;
     }
   }
+
+  const isLiveApiSupported = $derived.by(() => {
+    const universallySupported = ['nursing', 'therapy', 'dental', 'chiropractic', 'medical', 'veterinary', 'financial_advisor'];
+    if (universallySupported.includes(selectedProfession)) return true;
+    
+    const nyOnlySupported = ['finance', 'architecture', 'beauty'];
+    if (nyOnlySupported.includes(selectedProfession) && selectedState === 'NY') return true;
+    
+    return false;
+  });
 </script>
 
 <div class="space-y-6">
@@ -104,7 +124,7 @@
       </div>
     </div>
 
-    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-2 border-t border-slate-100 dark:border-slate-800/60">
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 pt-2 border-t border-slate-100 dark:border-slate-800/60">
       <div>
         <label class="text-xs font-semibold text-slate-500 dark:text-slate-400 block mb-1">Target Sector Dropdown:</label>
         <div class="relative">
@@ -118,6 +138,11 @@
       <div>
         <label class="text-xs font-semibold text-slate-500 dark:text-slate-400 block mb-1">Target State / Board:</label>
         <Select bind:value={selectedState} options={stateOptions} class="text-xs" />
+      </div>
+
+      <div>
+        <label class="text-xs font-semibold text-slate-500 dark:text-slate-400 block mb-1">License Recency Window:</label>
+        <Select bind:value={selectedDateWindow} options={dateWindowOptions} class="text-xs" />
       </div>
 
       <div>
@@ -135,22 +160,46 @@
       </div>
     </div>
 
-    <div class="pt-3 border-t border-slate-200 dark:border-slate-800 flex items-center justify-between gap-4">
-      <div class="text-xs text-slate-500 dark:text-slate-400 flex items-center gap-1.5">
-        <ShieldCheck class="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
-        <span>Live verification with Google Search Grounding and direct CMS registry feeds.</span>
-      </div>
+    <div class="pt-3 border-t border-slate-200 dark:border-slate-800 flex flex-col gap-4">
+      <div class="flex items-center justify-between gap-4 w-full">
+        <div class="text-xs text-slate-500 dark:text-slate-400 flex items-center gap-1.5">
+          <ShieldCheck class="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
+          <span>Live verification with Google Search Grounding and direct CMS registry feeds.</span>
+        </div>
 
-      <Button
-        variant="primary"
-        size="md"
-        onclick={handleExecuteSearch}
-        loading={isSearching}
-        class="gap-2 font-bold px-6"
-      >
-        <Sparkles class="w-4 h-4 text-emerald-700 dark:text-emerald-300" />
-        <span>Run Live Registry Query</span>
-      </Button>
+        {#if isLiveApiSupported}
+          <Button
+            variant="primary"
+            size="md"
+            onclick={handleExecuteSearch}
+            loading={isSearching}
+            class="gap-2 font-bold px-6"
+          >
+            <Sparkles class="w-4 h-4 text-emerald-700 dark:text-emerald-300" />
+            <span>Run Live Registry Query</span>
+          </Button>
+        {:else}
+          <Button
+            variant="secondary"
+            size="md"
+            disabled={true}
+            class="gap-2 font-bold px-6 opacity-60 cursor-not-allowed"
+          >
+            <Database class="w-4 h-4" />
+            <span>Live Query Unavailable</span>
+          </Button>
+        {/if}
+      </div>
+      
+      {#if !isLiveApiSupported}
+        <div class="rounded-lg bg-orange-50 dark:bg-orange-950/30 border border-orange-200 dark:border-orange-900/50 p-3 text-xs text-orange-800 dark:text-orange-300 flex items-start gap-2">
+          <Database class="w-4 h-4 shrink-0 mt-0.5" />
+          <p>
+            <strong>Live API Not Available:</strong> There is currently no free, centralized public API available for 
+            the selected sector and state combination. Please use the <strong>CSV Importer</strong> to upload leads manually.
+          </p>
+        </div>
+      {/if}
     </div>
   </Card>
 
@@ -179,7 +228,18 @@
       </div>
       <div class="flex-grow space-y-1">
         <div class="text-sm font-bold text-emerald-700 dark:text-emerald-200">
-          Discovered {searchResultInfo.totalFound} new leads from {searchResultInfo.source}
+          {#if (searchResultInfo.newAdded ?? searchResultInfo.totalFound) > 0}
+            Discovered {searchResultInfo.totalFound} leads from {searchResultInfo.source}
+            {#if searchResultInfo.newAdded !== undefined && searchResultInfo.newAdded < searchResultInfo.totalFound}
+              <span class="text-xs font-normal text-slate-500 dark:text-slate-400 ml-1">
+                ({searchResultInfo.newAdded} newly added, {searchResultInfo.totalFound - searchResultInfo.newAdded} already saved)
+              </span>
+            {/if}
+          {:else if searchResultInfo.totalFound > 0}
+            All {searchResultInfo.totalFound} records from {searchResultInfo.source} are already in your pipeline
+          {:else}
+            0 records found from {searchResultInfo.source}
+          {/if}
         </div>
         <p class="text-xs text-slate-700 dark:text-slate-300 leading-relaxed font-mono">
           {searchResultInfo.groundingNotes}
@@ -188,7 +248,10 @@
       <Button
         variant="outline"
         size="sm"
-        onclick={() => leadStore.setActiveTab('leads')}
+        onclick={() => {
+          leadStore.setFilters({ profession: selectedProfession, state: selectedState });
+          leadStore.setActiveTab('leads');
+        }}
         class="gap-1.5 text-xs text-emerald-700 dark:text-emerald-300 border-emerald-800 flex-shrink-0"
       >
         <span>View in Table</span>

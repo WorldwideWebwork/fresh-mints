@@ -127,7 +127,7 @@ ${scriptData.scopeGuarantee.blurb}
         <div class="p-4 rounded-xl bg-slate-50 dark:bg-slate-950/70 border border-slate-200 dark:border-slate-800 space-y-2">
           <div class="flex items-center gap-2 text-xs font-bold text-amber-600 dark:text-amber-400 uppercase tracking-wider">
             <span class="w-2 h-2 rounded-full bg-amber-400"></span>
-            <span>Step 1: Board Pass Congratulatory Hook</span>
+            <span>Step 1: Opening Hook & Credential Verification</span>
           </div>
           <p class="text-sm text-slate-800 dark:text-slate-200 leading-relaxed font-sans italic bg-white dark:bg-slate-900/80 p-3 rounded-lg border border-slate-200 dark:border-slate-800/60">
             {scriptData.openingHook}

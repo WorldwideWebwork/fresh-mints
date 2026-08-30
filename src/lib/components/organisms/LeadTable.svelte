@@ -174,18 +174,34 @@
                   </div>
                   <h4 class="text-sm font-bold text-slate-800 dark:text-slate-200">No matching practitioner leads found</h4>
                   <p class="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
-                    Query the live federal & state registry or adjust your filter parameters above to discover newly licensed professionals.
+                    {#if leadStore.professionFilter !== 'all' || leadStore.stateFilter !== 'all' || leadStore.searchFilter || leadStore.outreachFilter !== 'all'}
+                      Filtered by <strong>{leadStore.professionFilter !== 'all' ? leadStore.professionFilter : 'current category'}</strong> {leadStore.stateFilter !== 'all' ? `(${leadStore.stateFilter})` : ''}. Reset your filters or run a registry query to discover records.
+                    {:else}
+                      Query the live federal & state registry or adjust your filter parameters above to discover newly licensed professionals.
+                    {/if}
                   </p>
-                  <Button
-                    variant="primary"
-                    size="sm"
-                    loading={leadStore.isSearchingRegistry}
-                    onclick={() => leadStore.fetchLiveOpenRegistryData()}
-                    class="gap-1.5 text-xs mt-2"
-                  >
-                    <Sparkles class="w-3.5 h-3.5 text-emerald-700 dark:text-emerald-300" />
-                    <span>{leadStore.isSearchingRegistry ? 'Querying...' : 'Run Live Discovery Query'}</span>
-                  </Button>
+                  <div class="flex items-center justify-center gap-2 pt-2 flex-wrap">
+                    {#if leadStore.professionFilter !== 'all' || leadStore.stateFilter !== 'all' || leadStore.searchFilter || leadStore.outreachFilter !== 'all'}
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onclick={() => leadStore.setFilters({ profession: 'all', state: 'all', search: '', outreachStatus: 'all' })}
+                        class="gap-1.5 text-xs"
+                      >
+                        <span>Clear All Filters ({leadStore.leads.length} Total)</span>
+                      </Button>
+                    {/if}
+                    <Button
+                      variant="primary"
+                      size="sm"
+                      loading={leadStore.isSearchingRegistry}
+                      onclick={() => leadStore.fetchLiveOpenRegistryData()}
+                      class="gap-1.5 text-xs"
+                    >
+                      <Sparkles class="w-3.5 h-3.5 text-emerald-700 dark:text-emerald-300" />
+                      <span>{leadStore.isSearchingRegistry ? 'Querying...' : 'Run Live Discovery Query'}</span>
+                    </Button>
+                  </div>
                 </div>
               </td>
             </tr>

@@ -27,6 +27,15 @@
     ...OUTREACH_STAGES.map((s) => ({ value: s, label: s })),
   ];
 
+  const dateWindowOptions = [
+    { value: 'all', label: 'All Dates (Any License Age)' },
+    { value: '30', label: 'Past 30 Days (Ultra-Fresh)' },
+    { value: '60', label: 'Past 60 Days' },
+    { value: '90', label: 'Past 90 Days (Quarterly)' },
+    { value: '180', label: 'Past 6 Months' },
+    { value: '365', label: 'Past 1 Year' },
+  ];
+
   const industryList: Array<{ id: ProfessionCategory | 'all'; label: string; shortLabel: string }> = [
     { id: 'all', label: 'All Industries (13 High-Value Sectors)', shortLabel: 'All Industries' },
     ...Object.values(PROFESSION_CONFIGS).map((p) => ({
@@ -49,7 +58,7 @@
     try {
       const targetProf = leadStore.professionFilter !== 'all' ? leadStore.professionFilter : undefined;
       const targetState = leadStore.stateFilter !== 'all' ? leadStore.stateFilter : undefined;
-      await leadStore.fetchLiveOpenRegistryData(targetProf, targetState);
+      await leadStore.fetchLiveOpenRegistryData(targetProf, targetState, undefined, leadStore.dateWindowFilter);
     } finally {
       isSearchingRegistry = false;
     }
@@ -89,7 +98,7 @@
     </div>
 
     <!-- Profession Dropdown with Active Icon -->
-    <div class="w-full lg:w-64 flex-shrink-0 relative">
+    <div class="w-full lg:w-60 flex-shrink-0 relative">
       <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none z-10">
         <IndustryIcon profession={leadStore.professionFilter} class="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
       </div>
@@ -101,15 +110,23 @@
     </div>
 
     <!-- State Dropdown -->
-    <div class="w-full lg:w-44 flex-shrink-0">
+    <div class="w-full lg:w-36 flex-shrink-0">
       <Select
         bind:value={leadStore.stateFilter}
         options={stateOptions}
       />
     </div>
 
+    <!-- Date Window Dropdown -->
+    <div class="w-full lg:w-44 flex-shrink-0">
+      <Select
+        bind:value={leadStore.dateWindowFilter}
+        options={dateWindowOptions}
+      />
+    </div>
+
     <!-- Outreach Dropdown -->
-    <div class="w-full lg:w-48 flex-shrink-0">
+    <div class="w-full lg:w-44 flex-shrink-0">
       <Select
         bind:value={leadStore.outreachFilter}
         options={outreachOptions}

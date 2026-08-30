@@ -8,6 +8,7 @@
   import {
     Sparkles,
     Database,
+    Compass,
     Table,
     Kanban,
     PhoneCall,
@@ -38,13 +39,23 @@
 
   let { children, onopenmodal, onopenconfirmclear }: Props = $props();
 
+  const appVersion =
+    (typeof window !== "undefined" && (window as any).wpApiSettings?.version) || "1.0.0";
+
   const navTabs = [
     {
       id: "search",
-      label: "Search & Discovery",
+      label: "Registry Search",
       icon: Database,
       badge: "Live",
       badgeType: "live"
+    },
+    {
+      id: "places",
+      label: "Google Places Radar",
+      icon: Compass,
+      badge: "Radar",
+      badgeType: "radar"
     },
     {
       id: "leads",
@@ -158,6 +169,12 @@
                 class="text-[9px] uppercase font-mono px-1.5 py-0 font-bold shrink-0 ml-1.5"
                 >Live</Badge
               >
+            {:else if tab.badgeType === "radar"}
+              <span
+                class="px-1.5 py-0.5 rounded-md text-[9px] font-bold font-mono uppercase bg-cyan-500/15 text-cyan-700 dark:text-cyan-300 border border-cyan-500/30 shrink-0 ml-1.5"
+              >
+                Radar
+              </span>
             {:else if tab.badgeType === "bounty"}
               <span
                 class="px-1.5 py-0.5 rounded-md text-[10px] font-bold font-mono bg-amber-500/15 text-amber-700 dark:text-amber-300 border border-amber-500/30 shrink-0 ml-1.5"
@@ -280,19 +297,30 @@
 
       <!-- Logged In User Profile & Logout -->
       {#if authStore.user}
-        <div class="rounded-2xl bg-[var(--fm-surface-sunken)] border border-[var(--fm-border-subtle)] p-3 space-y-2">
+        <div
+          class="rounded-2xl bg-[var(--fm-surface-sunken)] border border-[var(--fm-border-subtle)] p-3 space-y-2"
+        >
           <div class="flex items-center justify-between">
             <div class="flex items-center gap-2.5 min-w-0">
-              <div class="w-7 h-7 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center text-white text-xs font-bold shrink-0 shadow-xs">
-                {authStore.user.fullName?.charAt(0).toUpperCase() || 'U'}
+              <div
+                class="w-7 h-7 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center text-white text-xs font-bold shrink-0 shadow-xs"
+              >
+                {authStore.user.fullName?.charAt(0).toUpperCase() || "U"}
               </div>
               <div class="min-w-0">
-                <div class="text-xs font-bold text-[var(--fm-text)] truncate">{authStore.user.fullName}</div>
-                <div class="text-[10px] text-[var(--fm-text-muted)] font-mono truncate">@{authStore.user.username}</div>
+                <div class="text-xs font-bold text-[var(--fm-text)] truncate">
+                  {authStore.user.fullName}
+                </div>
+                <div class="text-[10px] text-[var(--fm-text-muted)] font-mono truncate">
+                  @{authStore.user.username}
+                </div>
               </div>
             </div>
-            <Badge variant={authStore.user.role === 'admin' ? 'info' : 'success'} class="text-[9px] uppercase font-mono">
-              {authStore.user.role === 'admin' ? 'Admin' : 'Sales Rep'}
+            <Badge
+              variant={authStore.user.role === "admin" ? "info" : "success"}
+              class="text-[9px] uppercase font-mono"
+            >
+              {authStore.user.role === "admin" ? "Admin" : "Sales Rep"}
             </Badge>
           </div>
 
@@ -402,7 +430,9 @@
 
             <!-- Header User Profile & Logout -->
             {#if authStore.user}
-              <div class="hidden lg:flex items-center gap-2 pl-2 border-l border-[var(--fm-border-subtle)]">
+              <div
+                class="hidden lg:flex items-center gap-2 pl-2 border-l border-[var(--fm-border-subtle)]"
+              >
                 <span class="text-xs text-[var(--fm-text-muted)]">
                   Rep: <strong class="text-[var(--fm-text)]">{authStore.user.fullName}</strong>
                 </span>
@@ -430,19 +460,26 @@
         <!-- Active Lead Info -->
         <div class="flex items-center gap-2.5 min-w-0">
           <div class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse shrink-0"></div>
-          <span class="text-[11px] font-bold uppercase tracking-wider text-[var(--fm-text-muted)] shrink-0">Active Lead:</span>
+          <span
+            class="text-[11px] font-bold uppercase tracking-wider text-[var(--fm-text-muted)] shrink-0"
+            >Active Lead:</span
+          >
           <button
             type="button"
-            onclick={() => onopenmodal?.('lead_detail', activeL)}
+            onclick={() => onopenmodal?.("lead_detail", activeL)}
             class="font-bold text-[var(--fm-text)] hover:text-emerald-600 dark:hover:text-emerald-400 truncate max-w-[200px] cursor-pointer hover:underline"
             title="Open Full Lead Dossier"
           >
             {activeL.fullName}
           </button>
-          <span class="text-[var(--fm-text-muted)] text-[11px] hidden sm:inline truncate max-w-[150px]">
+          <span
+            class="text-[var(--fm-text-muted)] text-[11px] hidden sm:inline truncate max-w-[150px]"
+          >
             &bull; {activeL.professionTitle}
           </span>
-          <span class="px-2 py-0.5 rounded-full text-[10px] font-mono font-bold bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 border border-emerald-500/30 shrink-0">
+          <span
+            class="px-2 py-0.5 rounded-full text-[10px] font-mono font-bold bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 border border-emerald-500/30 shrink-0"
+          >
             {activeL.outreachStatus}
           </span>
         </div>
@@ -451,7 +488,7 @@
         <div class="flex items-center gap-1.5 flex-wrap">
           <button
             type="button"
-            onclick={() => onopenmodal?.('lead_detail', activeL)}
+            onclick={() => onopenmodal?.("lead_detail", activeL)}
             class="px-2.5 py-1 rounded-lg text-[11px] font-semibold bg-[var(--fm-surface-sunken)] border border-[var(--fm-border-subtle)] text-[var(--fm-text)] hover:border-emerald-500/50 hover:text-emerald-600 dark:hover:text-emerald-400 transition-all cursor-pointer flex items-center gap-1"
           >
             <FileText class="w-3 h-3 text-emerald-600 dark:text-emerald-400" />
@@ -462,7 +499,7 @@
             type="button"
             onclick={() => {
               leadStore.setSelectedLeadId(activeL.id);
-              leadStore.setActiveTab('rephub');
+              leadStore.setActiveTab("rephub");
             }}
             class="px-2.5 py-1 rounded-lg text-[11px] font-semibold bg-emerald-500/10 border border-emerald-500/30 text-emerald-700 dark:text-emerald-300 hover:bg-emerald-500/20 transition-all cursor-pointer flex items-center gap-1"
           >
@@ -474,7 +511,7 @@
             type="button"
             onclick={() => {
               leadStore.setSelectedLeadId(activeL.id);
-              leadStore.setActiveTab('kanban');
+              leadStore.setActiveTab("kanban");
             }}
             class="px-2.5 py-1 rounded-lg text-[11px] font-semibold bg-purple-500/10 border border-purple-500/30 text-purple-700 dark:text-purple-300 hover:bg-purple-500/20 transition-all cursor-pointer flex items-center gap-1"
           >
@@ -484,7 +521,7 @@
 
           <button
             type="button"
-            onclick={() => onopenmodal?.('website_builder', activeL)}
+            onclick={() => onopenmodal?.("website_builder", activeL)}
             class="px-2.5 py-1 rounded-lg text-[11px] font-semibold bg-cyan-500/10 border border-cyan-500/30 text-cyan-700 dark:text-cyan-300 hover:bg-cyan-500/20 transition-all cursor-pointer flex items-center gap-1"
           >
             <Globe class="w-3 h-3 text-cyan-600 dark:text-cyan-400" />
@@ -493,7 +530,7 @@
 
           <button
             type="button"
-            onclick={() => onopenmodal?.('outreach_generator', activeL)}
+            onclick={() => onopenmodal?.("outreach_generator", activeL)}
             class="px-2.5 py-1 rounded-lg text-[11px] font-semibold bg-amber-500/10 border border-amber-500/30 text-amber-700 dark:text-amber-300 hover:bg-amber-500/20 transition-all cursor-pointer flex items-center gap-1"
           >
             <Send class="w-3 h-3 text-amber-600 dark:text-amber-400" />
@@ -530,10 +567,15 @@
                 class="font-semibold text-[var(--fm-text)] hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors underline decoration-emerald-500/30 hover:decoration-emerald-500"
                 >World Wide Web Work</a
               >
-              (W<sup>4</sup>). All rights reserved.</span
+              (w<sup>4</sup>). All rights reserved.</span
             >
             <span class="hidden md:inline text-[var(--fm-text-muted)]">&bull;</span>
             <span class="font-medium text-[var(--fm-text)]">w<sup>4</sup> Fresh Mints</span>
+            <span
+              class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-mono font-medium bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20"
+            >
+              v{appVersion}
+            </span>
           </div>
           <div class="text-[11px] text-[var(--fm-text-muted)]">
             Powered by Google Gemini, CMS Federal NPPES Registry &amp; w<sup>4</sup> High-Speed Cloud
@@ -583,10 +625,24 @@
         : 'text-slate-400 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200'}"
     >
       <Database class="w-4 h-4 shrink-0" />
-      <span class="text-[10px] mt-0.5 truncate text-center w-full">Discovery</span>
+      <span class="text-[10px] mt-0.5 truncate text-center w-full">Registry</span>
     </button>
 
-    <!-- 2. Leads Table -->
+    <!-- 2. Google Places Radar -->
+    <button
+      type="button"
+      id="mobile-nav-places"
+      onclick={() => leadStore.setActiveTab("places")}
+      class="flex-1 flex flex-col items-center justify-center py-1 px-0.5 rounded-xl transition-all cursor-pointer min-w-0 min-h-[44px] {leadStore.activeTab ===
+      'places'
+        ? 'text-cyan-600 dark:text-cyan-400 font-bold bg-cyan-50 dark:bg-slate-900/80'
+        : 'text-slate-400 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200'}"
+    >
+      <Compass class="w-4 h-4 shrink-0" />
+      <span class="text-[10px] mt-0.5 truncate text-center w-full">Radar</span>
+    </button>
+
+    <!-- 3. Leads Table -->
     <button
       type="button"
       id="mobile-nav-leads"

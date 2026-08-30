@@ -19,6 +19,7 @@
 
   // Organisms / Views
   import RegistrySearchView from './lib/components/organisms/RegistrySearchView.svelte';
+  import PlacesSearchView from './lib/components/organisms/PlacesSearchView.svelte';
   import LeadTable from './lib/components/organisms/LeadTable.svelte';
   import KanbanBoard from './lib/components/organisms/KanbanBoard.svelte';
   import RepHubView from './lib/components/organisms/RepHubView.svelte';
@@ -137,7 +138,7 @@
       const [pathSegment, querySegment] = cleanHash.split('?');
       const params = new URLSearchParams(querySegment || '');
 
-      const validTabs = ['search', 'leads', 'kanban', 'rephub', 'economics', 'analytics'];
+      const validTabs = ['search', 'places', 'leads', 'kanban', 'rephub', 'economics', 'analytics'];
       let targetTab = pathSegment;
       if (targetTab.startsWith('view/')) {
         targetTab = targetTab.replace('view/', '');
@@ -304,6 +305,8 @@
     <!-- View Switcher -->
     {#if leadStore.activeTab === 'search'}
       <RegistrySearchView />
+    {:else if leadStore.activeTab === 'places'}
+      <PlacesSearchView onopenmodal={openModal} onopenfullpreview={handleOpenFullPreview} />
     {:else if leadStore.activeTab === 'leads'}
       <LeadTable onopenmodal={openModal} />
     {:else if leadStore.activeTab === 'kanban'}

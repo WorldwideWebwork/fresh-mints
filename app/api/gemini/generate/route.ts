@@ -34,33 +34,39 @@ export async function POST(req: NextRequest) {
         clientType,
       } = payload;
 
-      const prompt = `You are a senior practice launch advisor at "My Compass Consulting", reaching out to a newly licensed practitioner.
+      const isInfraAngle = tone?.toLowerCase().includes("infrastructure") || tone?.toLowerCase().includes("consolidation") || tone?.toLowerCase().includes("existing");
+
+      const prompt = `You are a senior digital infrastructure advisor at "My Compass Consulting" and "WorldwideWebwork" (worldwidewebwork.com), reaching out to a licensed practitioner.
 Generate an industry-tailored cold email pitch and matching SMS text message for:
 - Professional Name: ${name}
 - Industry / Profession: ${profession} (${professionCategory || "General Practice"})
 - Location: ${city || "Metro Area"}, ${state}
-- License Registry Date: ${licenseDate || "Recently Issued Active Board Pass"}
+- License Registry Date: ${licenseDate || "Active Licensed Practice"}
 - Target Client/Patient Audience: ${clientType || "ideal local clients and patients"}
-- Specific Industry Pain Point: ${industryPainPoint || "Establishing immediate local trust and patient acquisition without huge tech overhead"}
-- Turnkey Compass Suite Tool: ${keyFeature || "Automated Consultation Intake & Client Booking Calendar"}
-- Live Site Preview URL: ${websiteUrl || "https://freshmints.ai.studio/preview/site-123"}
+- Specific Industry Pain Point: ${industryPainPoint || "High overhead from fragmented plugins, slow hosting, and disconnected client intake systems"}
+- Turnkey Compass Suite Tool: ${keyFeature || "Questbook CRM, Automated Client Booking Calendar, and High-Speed Sovereign Hosting"}
+- Live Site / Compass Preview URL: ${websiteUrl || "https://worldwidewebwork.com/preview/site-123"}
 - Chosen Tone / Strategic Angle: ${tone || "Warm, Celebratory & Authoritative"}
-- 2-Year Hosting Package Offer: Flat $${offerPrice || "1,650"} total (covers entire build, custom .com domain, and 24 FULL MONTHS of high-speed w4 cloud hosting & SSL encryption with $0 monthly hosting bills for 2 full years)
+- Value Offer: Flat $${offerPrice || "1,650"} total for 2-Year Managed W4 Cloud Infrastructure package on worldwidewebwork.com ($0 monthly hosting bills for 24 months, with the entire Compass Software Suite 100% free forever)
 - Post-Promotional Continuity: Transparent continuation at standard w4 base hosting rate of $${monthlyRate || "34.99"}/mo with NO lock-in contracts
 - Domain Equity Buyout Clause: Guaranteed unencumbered $999 lease-to-own domain transfer option
-- Agency / Sender Identity: "My Compass Consulting" (Practice Launch Solutions)
+- Agency / Platform Identity: "My Compass Consulting" / "WorldwideWebwork" (worldwidewebwork.com)
 
 Pitch Writing Mandates:
-1. Subject Line: High-converting, tailored to their exact profession and city/state milestone.
+1. Subject Line: High-converting, tailored to their exact profession and location.
 2. Email Body:
-   - Celebrate their newly active ${profession} credential.
+   ${isInfraAngle 
+     ? `- Emphasize backend infrastructure modernization and software consolidation on the WorldwideWebwork network without disrupting their current branding.
+   - Explain how the Compass Suite (Questbook CRM, Pegasus speed, Silver Arrow SEO) eliminates $300+/mo in fragmented plugin subscriptions.
+   - Clarify that the Compass Software Suite is 100% free forever, and the package covers 2 full years of dedicated w4 cloud infrastructure on worldwidewebwork.com.`
+     : `- Celebrate their active ${profession} credential.
    - Address their industry-specific client acquisition dynamics (${clientType}).
-   - Introduce the personalized practice web portal powered by Compass Software Suite and My Compass Consulting.
-   - Clearly present the 2-Year Hosting Package: $${offerPrice || "1,650"} flat covering 24 months of zero monthly hosting fees on w4 cloud infrastructure, custom domain registration, transparent rollover rate ($${monthlyRate || "34.99"}/mo), and the $999 domain buyout equity clause.
-   - Embed the live preview URL with clear call-to-action.
-   - Professional sign-off from "My Compass Consulting".
+   - Introduce the turnkey practice portal powered by the Compass Software Suite and WorldwideWebwork (worldwidewebwork.com).
+   - Clearly present the 2-Year Infrastructure Package ($0 monthly fees for 24 months).`}
+   - Embed the live preview URL with a clear call-to-action.
+   - Professional sign-off from "My Compass Consulting | worldwidewebwork.com".
 3. SMS Text Message:
-   - High-impact mobile message under 160 characters with recipient name, profession milestone, 2-yr hosting highlight, and preview link.
+   - High-impact mobile message under 160 characters with recipient name, key benefit (2 yrs w4 hosting / Compass Suite), and preview link.
 
 Return JSON strictly matching this structure:
 {

@@ -18,6 +18,7 @@
   let { open = $bindable(false), onopenconfirmclear, onclose }: Props = $props();
 
   let tempQuantity = $state(leadStore.fetchQuantity);
+  let tempDateWindow = $state(leadStore.dateWindowFilter);
   let tempWebhook = $state(leadStore.webhookUrl);
   let bombBagLists = $state<BombBagList[]>([]);
   let selectedBombBagList = $state<string>('');
@@ -26,6 +27,7 @@
   $effect(() => {
     if (open) {
       tempQuantity = leadStore.fetchQuantity;
+      tempDateWindow = leadStore.dateWindowFilter;
       tempWebhook = leadStore.webhookUrl;
       loadBombBagLists();
     }
@@ -46,6 +48,15 @@
     { value: '100', label: '100 Leads per query' },
   ];
 
+  const dateWindowOptions = [
+    { value: 'all', label: 'All Dates (Any License Age)' },
+    { value: '30', label: 'Past 30 Days (Ultra-Fresh)' },
+    { value: '60', label: 'Past 60 Days' },
+    { value: '90', label: 'Past 90 Days (Quarterly)' },
+    { value: '180', label: 'Past 6 Months' },
+    { value: '365', label: 'Past 1 Year' },
+  ];
+
   const listOptions = $derived.by(() => {
     const defaultOpt = [{ value: '', label: 'Master List: Fresh Mints: All Leads (Auto)' }];
     const fetchedOpts = bombBagLists.map((l) => ({
@@ -57,6 +68,7 @@
 
   function handleSave() {
     leadStore.setFetchQuantity(tempQuantity);
+    leadStore.setDateWindowFilter(tempDateWindow);
     if (typeof window !== 'undefined') {
       localStorage.setItem('licensify_crm_webhook', tempWebhook);
       localStorage.setItem('fm_default_bomb_bag_list', selectedBombBagList);
@@ -102,14 +114,25 @@
       />
     </div>
 
-    <!-- Default Fetch Size -->
-    <div>
-      <label class="text-xs font-semibold text-slate-700 dark:text-slate-300 block mb-1">Default Batch Discovery Limit:</label>
-      <Select
-        bind:value={tempQuantity as any}
-        options={quantityOptions}
-        class="text-xs"
-      />
+    <!-- Default Fetch Size & Recency Window Grid -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+      <div>
+        <label class="text-xs font-semibold text-slate-700 dark:text-slate-300 block mb-1">Default Batch Discovery Limit:</label>
+        <Select
+          bind:value={tempQuantity as any}
+          options={quantityOptions}
+          class="text-xs"
+        />
+      </div>
+
+      <div>
+        <label class="text-xs font-semibold text-slate-700 dark:text-slate-300 block mb-1">Default License Recency Window:</label>
+        <Select
+          bind:value={tempDateWindow}
+          options={dateWindowOptions}
+          class="text-xs"
+        />
+      </div>
     </div>
 
     <!-- External Webhook URL -->

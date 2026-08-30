@@ -128,21 +128,26 @@
     profMeta ? W4_HOSTING_PLANS[profMeta.hostingTier] || W4_HOSTING_PLANS.bronze : null
   );
 
-  // Sync activeLeadIndex when leadStore.selectedLeadId changes globally
+  // Derived queue counts for tab indicators
+  const dialableCount = $derived(
+    leadStore.leads.filter((l) => Boolean(l.skipTraceData?.verifiedPhone) && l.outreachStatus !== 'Client Won' && l.outreachStatus !== 'Declined').length
+  );
+  const uncontactedCount = $derived(
+    leadStore.leads.filter((l) => ['Uncontacted', 'Skip Traced'].includes(l.outreachStatus)).length
+  );
+  const discussionCount = $derived(
+    leadStore.leads.filter((l) => ['In Discussion', 'Outreach Sent'].includes(l.outreachStatus)).length
+  );
+  const highValueCount = $derived(
+    leadStore.leads.filter((l) => (l.estimatedDealValue || 0) >= 2500 && l.outreachStatus !== 'Client Won').length
+  );
+
+  // Sync activeLeadIndex when leadStore.selectedLeadId changes globally and matches activeQueue
   $effect(() => {
     if (leadStore.selectedLeadId) {
       const queueIdx = activeQueue.findIndex((l) => l.id === leadStore.selectedLeadId);
       if (queueIdx !== -1) {
         activeLeadIndex = queueIdx;
-      } else {
-        const leadExists = leadStore.leads.find((l) => l.id === leadStore.selectedLeadId);
-        if (leadExists) {
-          queueFilter = 'all';
-          const allIdx = leadStore.leads.findIndex((l) => l.id === leadStore.selectedLeadId);
-          if (allIdx !== -1) {
-            activeLeadIndex = allIdx;
-          }
-        }
       }
     }
   });
@@ -366,7 +371,7 @@
         class="px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors cursor-pointer {queueFilter === 'dialable' ? 'bg-teal-600 text-white shadow-xs' : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200'}"
       >
         <Phone class="w-3 h-3 inline mr-1" />
-        Ready to Dial (Phone Verified)
+        Ready to Dial ({dialableCount})
       </button>
 
       <button
@@ -374,7 +379,7 @@
         onclick={() => { queueFilter = 'uncontacted'; activeLeadIndex = 0; }}
         class="px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors cursor-pointer {queueFilter === 'uncontacted' ? 'bg-teal-600 text-white shadow-xs' : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200'}"
       >
-        Uncontacted Queue
+        Uncontacted ({uncontactedCount})
       </button>
 
       <button
@@ -382,7 +387,7 @@
         onclick={() => { queueFilter = 'discussion'; activeLeadIndex = 0; }}
         class="px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors cursor-pointer {queueFilter === 'discussion' ? 'bg-teal-600 text-white shadow-xs' : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200'}"
       >
-        In Discussion / Follow-ups
+        In Discussion ({discussionCount})
       </button>
 
       <button
@@ -390,7 +395,7 @@
         onclick={() => { queueFilter = 'high_value'; activeLeadIndex = 0; }}
         class="px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors cursor-pointer {queueFilter === 'high_value' ? 'bg-teal-600 text-white shadow-xs' : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200'}"
       >
-        High Value ($2.5k+)
+        High Value ({highValueCount})
       </button>
 
       <button
@@ -787,7 +792,7 @@
               {#if activeScriptTab === 'hook'}
                 <div class="space-y-1.5">
                   <span class="text-[10px] uppercase font-bold text-amber-600 dark:text-amber-400 not-italic block">
-                    Step 1: Board Pass Congratulatory Hook
+                    Step 1: Opening Hook & Credential Verification
                   </span>
                   <p>{scriptData.openingHook}</p>
                 </div>

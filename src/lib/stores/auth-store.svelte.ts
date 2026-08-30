@@ -73,6 +73,7 @@ class AuthStore {
     try {
       const res = await fetch(`${root}xophz-freshmints/v1/auth/login`, {
         method: 'POST',
+        credentials: 'include',
         headers: {
           'Content-Type': 'application/json',
           'X-WP-Nonce': wp?.nonce || '',
@@ -145,6 +146,7 @@ class AuthStore {
     try {
       await fetch(`${root}xophz-freshmints/v1/auth/logout`, {
         method: 'POST',
+        credentials: 'include',
         headers: {
           'Content-Type': 'application/json',
           'X-WP-Nonce': wp?.nonce || '',

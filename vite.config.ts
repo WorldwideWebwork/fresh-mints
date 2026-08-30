@@ -24,7 +24,10 @@ export default defineConfig(() => {
       strictPort: true,
       cors: true,
       allowedHosts: true,
-      hmr: process.env.DISABLE_HMR !== 'true',
+      fs: {
+        allow: ['../..'],
+      },
+      hmr: process.env.DISABLE_HMR !== 'true' ? { clientPort: 8091 } : false,
       watch: process.env.DISABLE_HMR === 'true' ? null : {},
     },
     build: {

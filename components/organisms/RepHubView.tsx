@@ -121,13 +121,18 @@ export const RepHubView: React.FC<RepHubViewProps> = ({
   const offerPrice = activeLead?.websiteConfig?.offerPrice || activeLead?.estimatedDealValue || 1650;
   const fallbackPitch = activeLead ? generateFallbackOutreach(activeLead, 'industry_board_pass', offerPrice) : null;
 
-  const scriptOpening = activeLead && activeProf && activePlan && activeIndustryProfile
-    ? `Hi ${activeLead.fullName}, congratulations on recently passing your state board licensing for ${activeProf.label} from ${activeLead.collegeOrSchool}! My name is [Rep Name] with My Compass Consulting. In your field, ${activeIndustryProfile.clientType} look online first. We already secured your practice domain and pre-built a turnkey portal with ${activeIndustryProfile.keySoftwareFeature}. We include your custom .com domain and 2 FULL YEARS of high-speed w4 cloud hosting for a flat $${activePlan.twoYearFlatPackagePrice.toLocaleString()} ($0 monthly bills for 24 months). Do you have 3 minutes to see the interactive preview we prepared?`
+  const isRecent = activeLead ? isRecentlyLicensed(activeLead.issueDate, activeLead.graduationYear) : true;
+  const source = activeLead ? formatSourceAttribution(activeLead) : null;
+
+  const scriptOpening = activeLead && activeProf && activePlan && activeIndustryProfile && source
+    ? isRecent
+      ? `Hey ${activeLead.fullName.split(' ')[0] || activeLead.fullName}, this is [Rep Name]. I know I'm catching you out of the blue, but do you have 20 seconds for me to tell you why I called? If it doesn't make sense, you can tell me to hang up. I saw you recently got licensed in ${activeLead.city ? `${activeLead.city}, ${activeLead.state}` : activeLead.state}. Most new ${activeProf.label} practitioners we speak with either get quoted $3,000+ by agencies or lose 40+ hours fighting with DIY site builders when they just need ${activeIndustryProfile.clientType} booking appointments. Our team put together a ready-to-launch website concept tailored for your practice with direct online booking already configured. Can I text you the private preview link to check out on your phone?`
+      : `Hey ${activeLead.fullName.split(' ')[0] || activeLead.fullName}, this is [Rep Name]. I know I'm catching you out of the blue, but do you have 20 seconds for me to tell you why I called? I was reviewing established ${activeProf.label} practices in ${activeLead.city || activeLead.state}. Most practitioners tell us their biggest headache is an outdated site that doesn't let ${activeIndustryProfile.clientType} book directly online. We put together a refreshed website concept for your practice with instant online scheduling already set up. Can I text you the private preview link to check out on your phone?`
     : '';
 
-  const objectionNoBudget = `I completely understand. That's actually why we do the 24-month flat rate. Other agencies charge $3,000 upfront plus $150/month in retainers. With our package, you pay once and have zero software or hosting overhead for 2 full years while you establish your patient/client roster.`;
-  const objectionSquarespace = `Squarespace and Wix are great DIY builders, but they look generic and take 40+ hours to configure with booking widgets, HIPAA-grade SSL, and mobile responsive forms. Our team of senior engineers delivers a custom, turnkey portal within 48 hours so you can focus 100% on client intake.`;
-  const domainClause = `We secure and license your clean .com domain during your 2-year package. If you ever want full DNS and registrar transfer into your private registrar account, you can execute our $999 domain equity buyout at any time.`;
+  const objectionNoBudget = `Completely get it, especially when starting out. That's actually why we do the zero-monthly-bill model ($1,650 flat for 2 full years of hosting and domain) so you don't have recurring software overhead while building your roster. I'll shoot the preview link over anyway so you have ideas for your brand down the road.`;
+  const objectionSquarespace = `Totally understand! DIY builders work, but they usually charge $30-$50 every month forever and eat up 40+ hours configuring booking and forms. Our package gives you a fully custom, ready-to-launch portal with 2 full years of hosting included for one flat fee with zero setup labor on your end.`;
+  const domainClause = `You get 100% full ownership and custody of your custom domain and practice content with zero vendor lock-in or surprise fees.`;
 
   const verifiedPhone = activeLead?.skipTraceData?.verifiedPhone;
   const hasPhone = Boolean(verifiedPhone && verifiedPhone !== 'Pending Discovery' && verifiedPhone !== 'Requires Skip-Trace');
