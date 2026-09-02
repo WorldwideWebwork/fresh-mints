@@ -1,7 +1,7 @@
 <script lang="ts">
   import type { SkipTraceResult } from '../../types/lead';
   import Badge from '../atoms/Badge.svelte';
-  import { Phone, Mail, Linkedin, MapPin } from 'lucide-svelte';
+  import { Phone, Mail, ExternalLink, MapPin } from 'lucide-svelte';
 
   interface Props {
     data?: SkipTraceResult;
@@ -21,7 +21,7 @@
   {#if data?.primaryEmail}
     <Badge variant="info" class="gap-1 max-w-[180px] truncate">
       <Mail class="w-3 h-3 text-sky-400 flex-shrink-0" />
-      <span class="truncate">{data.primaryEmail}</span>
+      <span>{data.primaryEmail}</span>
     </Badge>
   {/if}
 
@@ -34,7 +34,7 @@
       onclick={(e) => e.stopPropagation()}
     >
       <Badge variant="default" class="gap-1 hover:border-sky-500 transition-colors">
-        <Linkedin class="w-3 h-3 text-sky-400" />
+        <ExternalLink class="w-3 h-3 text-sky-400" />
         <span>Profile</span>
       </Badge>
     </a>
