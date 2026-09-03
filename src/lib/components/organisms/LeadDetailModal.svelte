@@ -19,7 +19,6 @@
     Phone,
     PhoneCall,
     Mail,
-    Linkedin,
     UserPlus,
     UserCheck,
     ExternalLink,
