@@ -517,6 +517,7 @@ class LeadStoreState {
         verifiedPhone: resolvedPhone,
         phoneType: 'Google Business Line',
         primaryEmail: '',
+        websiteUrl: place.website || '',
         currentAddress: place.formattedAddress,
         enrichmentNotes: `Google Places Verified (Rating: ${place.rating} stars across ${place.userRatingsTotal} reviews)`,
       } : undefined),
@@ -573,6 +574,7 @@ class LeadStoreState {
 
     for (const place of places) {
       if (!existingIds.has(place.licenseNumber)) {
+        const placeSkip = place.skipTraceData ? { ...place.skipTraceData, websiteUrl: place.website || place.skipTraceData.websiteUrl } : undefined;
         const lead: Lead = {
           id: place.id,
           fullName: place.fullName,
@@ -586,7 +588,7 @@ class LeadStoreState {
           graduationYear: place.graduationYear,
           licenseStatus: place.licenseStatus,
           skipTraceStatus: place.skipTraceStatus,
-          skipTraceData: place.skipTraceData,
+          skipTraceData: placeSkip,
           outreachStatus: 'Uncontacted',
           websiteConfig: place.websiteConfig || getDefaultWebsiteConfig(place.fullName, place.profession, place.city, place.state, place.collegeOrSchool),
           websiteAudit: {
@@ -669,10 +671,42 @@ class LeadStoreState {
         enrichmentNotes: 'Search Grounding completed.',
       };
 
+      const hasContact = Boolean(skipData.verifiedPhone || skipData.primaryEmail);
+
+      // Construct or sync websiteAudit if websiteUrl was found
+      let updatedAudit = lead.websiteAudit;
+      if (skipData.websiteUrl && (!updatedAudit || !updatedAudit.existingUrl)) {
+        updatedAudit = {
+          hasWebsite: true,
+          existingUrl: skipData.websiteUrl,
+          status: 'Has Existing Website',
+          summary: `Standalone website detected: ${skipData.websiteUrl}` + (skipData.primaryEmail ? ` (Scraped email: ${skipData.primaryEmail})` : ''),
+          pitchStrategy: 'Pitch SEO upgrade or turnkey modernization.',
+          socialProfilesFound: [],
+          extractedEmails: skipData.extractedEmails || (skipData.primaryEmail ? [skipData.primaryEmail] : []),
+          extractedPhones: skipData.extractedPhones || (skipData.verifiedPhone ? [skipData.verifiedPhone] : []),
+          qualifications: {
+            hasCustomDomain: true,
+            domainCheckSummary: `Domain found: ${skipData.websiteUrl}`,
+            hasDirectBookingPortal: false,
+            isOnlyDirectoryOrBoardListing: false,
+            digitalFootprintRating: 'Established Custom Site',
+          },
+          checkedAt: new Date().toISOString(),
+        };
+      } else if (updatedAudit && skipData.extractedEmails && skipData.extractedEmails.length > 0) {
+        updatedAudit = {
+          ...updatedAudit,
+          extractedEmails: Array.from(new Set([...(updatedAudit.extractedEmails || []), ...skipData.extractedEmails])),
+          extractedPhones: Array.from(new Set([...(updatedAudit.extractedPhones || []), ...(skipData.extractedPhones || [])])),
+        };
+      }
+
       await this.updateLead(id, {
-        skipTraceStatus: 'Traced',
+        skipTraceStatus: hasContact ? 'Traced' : 'Partial',
         skipTraceData: skipData,
-        outreachStatus: lead.outreachStatus === 'Uncontacted' ? 'Skip Traced' : lead.outreachStatus,
+        websiteAudit: updatedAudit,
+        outreachStatus: (hasContact && lead.outreachStatus === 'Uncontacted') ? 'Skip Traced' : lead.outreachStatus,
       });
 
       return skipData;
@@ -711,7 +745,43 @@ class LeadStoreState {
       const data = await res.json();
       const auditData: ExistingWebsiteAudit = data.data;
 
-      await this.updateLead(id, { websiteAudit: auditData });
+      // Synchronize scraped emails and website URL into lead skipTraceData
+      const currentSkip = lead.skipTraceData || {
+        tracedAt: new Date().toISOString(),
+        confidenceScore: auditData.hasWebsite ? 90 : 30,
+        verifiedPhone: '',
+        phoneType: 'Unverified',
+        dncStatus: 'Public Business Directory',
+        primaryEmail: '',
+        emailValidation: '',
+        currentAddress: `${lead.city}, ${lead.state}`,
+        enrichmentNotes: 'Website presence audit completed.',
+      };
+
+      const extractedEmails = auditData.extractedEmails || [];
+      const extractedPhones = auditData.extractedPhones || [];
+      const updatedPrimaryEmail = currentSkip.primaryEmail || (extractedEmails.length > 0 ? extractedEmails[0] : '');
+      const updatedPrimaryPhone = currentSkip.verifiedPhone || (extractedPhones.length > 0 ? extractedPhones[0] : '');
+
+      const updatedSkipTrace: SkipTraceResult = {
+        ...currentSkip,
+        websiteUrl: auditData.existingUrl || currentSkip.websiteUrl,
+        extractedEmails: Array.from(new Set([...(currentSkip.extractedEmails || []), ...extractedEmails])),
+        extractedPhones: Array.from(new Set([...(currentSkip.extractedPhones || []), ...extractedPhones])),
+        primaryEmail: updatedPrimaryEmail,
+        verifiedPhone: updatedPrimaryPhone,
+        emailValidation: updatedPrimaryEmail ? (currentSkip.emailValidation || 'Website Scraped & Verified') : currentSkip.emailValidation,
+      };
+
+      const hasContact = Boolean(updatedSkipTrace.verifiedPhone || updatedSkipTrace.primaryEmail);
+
+      await this.updateLead(id, {
+        websiteAudit: auditData,
+        skipTraceData: updatedSkipTrace,
+        skipTraceStatus: hasContact ? 'Traced' : lead.skipTraceStatus,
+        outreachStatus: (hasContact && lead.outreachStatus === 'Uncontacted') ? 'Skip Traced' : lead.outreachStatus,
+      });
+
       return auditData;
     } catch (err: any) {
       console.warn('Website check error:', err);

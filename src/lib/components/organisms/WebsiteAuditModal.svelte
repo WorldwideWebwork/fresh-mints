@@ -2,6 +2,7 @@
   import type { Lead, ExistingWebsiteAudit } from '../../types/lead';
   import { leadStore } from '../../stores/lead-store.svelte';
   import { toast } from '../../stores/toast.svelte';
+  import { copyTextToClipboard } from '../../services/clipboard';
   import Dialog from '../atoms/Dialog.svelte';
   import Button from '../atoms/Button.svelte';
   import Badge from '../atoms/Badge.svelte';
@@ -22,6 +23,9 @@
     ChevronDown,
     ChevronUp,
     ArrowRight,
+    Mail,
+    Phone,
+    Copy,
   } from 'lucide-svelte';
 
   interface Props {
@@ -53,7 +57,7 @@
     { title: 'Querying Google Search Index & State Board Registries', detail: 'Target: Name, license, city & state records' },
     { title: 'Checking Standalone Domain Names & DNS Records', detail: 'Evaluating .com / .org / custom branded practice TLDs' },
     { title: 'Filtering Static Aggregators vs Solo Practice Sites', detail: 'Separating official state registries & Yelp from standalone websites' },
-    { title: 'Synthesizing Strategic Outreach Pitch Angle', detail: 'Formulating highest-conversion turnkey package recommendation' },
+    { title: 'Crawling & Scraping Discovered Webpages for Contact Email & Phone', detail: 'Parsing mailto links, contact forms, and about pages' },
   ];
 
   async function handleRunAudit() {
@@ -69,7 +73,7 @@
     try {
       const res = await leadStore.checkLeadWebsiteLive(target.id);
       if (res) {
-        toast.success('Live audit completed!');
+        toast.success('Live audit & website scrape completed!');
       }
     } catch (e: any) {
       toast.error('Audit failed', e.message);
@@ -80,6 +84,37 @@
       isAuditing = false;
       activeStep = 0;
     }
+  }
+
+  async function handleCopyScraped(text: string, label: string) {
+    const success = await copyTextToClipboard(text);
+    if (success) toast.success(`${label} copied`);
+  }
+
+  async function handleSetAsPrimaryEmail(email: string) {
+    const target = activeLead || lead;
+    if (!target) return;
+    const currentSkip = target.skipTraceData || {
+      tracedAt: new Date().toISOString(),
+      confidenceScore: 90,
+      verifiedPhone: '',
+      phoneType: 'Unverified',
+      dncStatus: 'Public Business Directory',
+      primaryEmail: '',
+      emailValidation: 'Website Scraped & Verified',
+      currentAddress: `${target.city}, ${target.state}`,
+      enrichmentNotes: 'Scraped from website.',
+    };
+    await leadStore.updateLead(target.id, {
+      skipTraceData: {
+        ...currentSkip,
+        primaryEmail: email,
+        emailValidation: 'Website Scraped & Verified',
+        websiteUrl: audit?.existingUrl || currentSkip.websiteUrl,
+      },
+      skipTraceStatus: 'Traced',
+    });
+    toast.success('Primary Email Updated', `${email} set as primary skip-trace contact`);
   }
 
   function handleOpenPreview() {
@@ -228,6 +263,144 @@
               {/if}
             </div>
           </div>
+
+          <!-- Scraped Contact Intelligence Section -->
+          {#if (audit.extractedEmails && audit.extractedEmails.length > 0) || (audit.extractedPhones && audit.extractedPhones.length > 0) || (audit.emailPermutations && audit.emailPermutations.length > 0) || (audit.socialProfilesFound && audit.socialProfilesFound.length > 0)}
+            <div class="bg-slate-50 dark:bg-slate-950 border border-teal-800/60 rounded-xl p-4 space-y-3">
+              <div class="flex items-center justify-between">
+                <div class="flex items-center gap-2">
+                  <Mail class="w-4 h-4 text-teal-600 dark:text-teal-400" />
+                  <h4 class="text-xs font-bold uppercase tracking-wider text-teal-700 dark:text-teal-300">
+                    Scraped Contact Intelligence &amp; Domain Mail
+                  </h4>
+                </div>
+                <div class="flex items-center gap-1.5">
+                  {#if audit.mxValid}
+                    <Badge variant="success" class="text-[10px] bg-emerald-950/60 text-emerald-300 border-emerald-800">
+                      MX Active
+                    </Badge>
+                  {/if}
+                  {#if audit.schemaOrgData?.type}
+                    <Badge variant="outline" class="text-[10px] text-cyan-400 border-cyan-800">
+                      Schema: {audit.schemaOrgData.type}
+                    </Badge>
+                  {/if}
+                  <Badge variant="success" class="text-[10px]">HTML Scraped</Badge>
+                </div>
+              </div>
+
+              {#if audit.extractedEmails && audit.extractedEmails.length > 0}
+                <div class="space-y-1.5">
+                  <p class="text-[11px] font-semibold text-slate-500 dark:text-slate-400">Discovered Webpage Emails:</p>
+                  <div class="flex flex-wrap gap-2">
+                    {#each audit.extractedEmails as email}
+                      <div class="inline-flex items-center gap-1.5 bg-white dark:bg-slate-900 px-2.5 py-1 rounded-lg border border-slate-200 dark:border-slate-800 text-xs">
+                        <Mail class="w-3 h-3 text-teal-500 flex-shrink-0" />
+                        <span class="font-mono text-slate-800 dark:text-slate-200 font-medium">{email}</span>
+                        <button
+                          type="button"
+                          onclick={() => handleCopyScraped(email, 'Email')}
+                          class="p-0.5 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 cursor-pointer"
+                          title="Copy Email"
+                        >
+                          <Copy class="w-3 h-3" />
+                        </button>
+                        {#if activeLead?.skipTraceData?.primaryEmail !== email}
+                          <button
+                            type="button"
+                            onclick={() => handleSetAsPrimaryEmail(email)}
+                            class="text-[10px] text-teal-600 dark:text-teal-400 hover:underline ml-1 font-semibold cursor-pointer"
+                            title="Set as primary email in Skip Trace"
+                          >
+                            Set Primary
+                          </button>
+                        {/if}
+                      </div>
+                    {/each}
+                  </div>
+                </div>
+              {/if}
+
+              <!-- Suggested Domain Email Permutations -->
+              {#if audit.emailPermutations && audit.emailPermutations.length > 0}
+                <div class="space-y-1.5 pt-1">
+                  <div class="flex items-center justify-between">
+                    <p class="text-[11px] font-semibold text-slate-500 dark:text-slate-400">
+                      Suggested Domain Permutations {audit.mxValid ? '(DNS Mail Server Verified)' : ''}:
+                    </p>
+                  </div>
+                  <div class="flex flex-wrap gap-1.5">
+                    {#each audit.emailPermutations as perm}
+                      <div class="inline-flex items-center gap-1.5 bg-white dark:bg-slate-900/80 px-2 py-0.5 rounded border border-slate-200 dark:border-slate-800 text-[11px]">
+                        <span class="font-mono text-slate-700 dark:text-slate-300">{perm}</span>
+                        <button
+                          type="button"
+                          onclick={() => handleCopyScraped(perm, 'Permutation')}
+                          class="p-0.5 text-slate-400 hover:text-slate-200 cursor-pointer"
+                          title="Copy"
+                        >
+                          <Copy class="w-2.5 h-2.5" />
+                        </button>
+                        {#if activeLead?.skipTraceData?.primaryEmail !== perm}
+                          <button
+                            type="button"
+                            onclick={() => handleSetAsPrimaryEmail(perm)}
+                            class="text-[9px] text-cyan-600 dark:text-cyan-400 hover:underline font-semibold cursor-pointer"
+                            title="Use as primary contact"
+                          >
+                            Use
+                          </button>
+                        {/if}
+                      </div>
+                    {/each}
+                  </div>
+                </div>
+              {/if}
+
+              <!-- Discovered Phone Numbers -->
+              {#if audit.extractedPhones && audit.extractedPhones.length > 0}
+                <div class="space-y-1.5 pt-1">
+                  <p class="text-[11px] font-semibold text-slate-500 dark:text-slate-400">Discovered Phone Numbers:</p>
+                  <div class="flex flex-wrap gap-2">
+                    {#each audit.extractedPhones as phone}
+                      <div class="inline-flex items-center gap-1.5 bg-white dark:bg-slate-900 px-2.5 py-1 rounded-lg border border-slate-200 dark:border-slate-800 text-xs">
+                        <Phone class="w-3 h-3 text-emerald-500 flex-shrink-0" />
+                        <span class="font-mono text-slate-800 dark:text-slate-200 font-medium">{phone}</span>
+                        <button
+                          type="button"
+                          onclick={() => handleCopyScraped(phone, 'Phone')}
+                          class="p-0.5 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 cursor-pointer"
+                          title="Copy Phone"
+                        >
+                          <Copy class="w-3 h-3" />
+                        </button>
+                      </div>
+                    {/each}
+                  </div>
+                </div>
+              {/if}
+
+              <!-- Discovered Social Profiles -->
+              {#if audit.socialProfilesFound && audit.socialProfilesFound.filter(s => s.startsWith('http')).length > 0}
+                <div class="space-y-1.5 pt-1">
+                  <p class="text-[11px] font-semibold text-slate-500 dark:text-slate-400">Discovered Social Profiles:</p>
+                  <div class="flex flex-wrap gap-1.5">
+                    {#each audit.socialProfilesFound.filter(s => s.startsWith('http')) as profile}
+                      <a
+                        href={profile}
+                        target="_blank"
+                        rel="noreferrer"
+                        class="inline-flex items-center gap-1 text-[10px] font-medium text-cyan-400 bg-white dark:bg-slate-900 px-2 py-0.5 rounded border border-slate-200 dark:border-slate-800 hover:bg-slate-800 transition-colors"
+                      >
+                        <ExternalLink class="w-2.5 h-2.5" />
+                        <span>{profile.replace(/^https?:\/\/(?:www\.)?/, '').split('/')[0]}</span>
+                      </a>
+                    {/each}
+                  </div>
+                </div>
+              {/if}
+            </div>
+          {/if}
 
           <!-- Qualification Criteria Matrix -->
           <div class="bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl p-4 space-y-3">

@@ -623,6 +623,39 @@
                 {/if}
               </div>
 
+              <!-- Website URL -->
+              <div class="flex items-center justify-between py-1 border-b border-slate-200 dark:border-slate-800/60">
+                <span class="text-slate-500 dark:text-slate-400">Website:</span>
+                {#if lead.skipTraceData.websiteUrl || lead.websiteAudit?.existingUrl}
+                  {@const detectedWebUrl = lead.skipTraceData.websiteUrl || lead.websiteAudit?.existingUrl}
+                  <div class="flex items-center gap-1.5">
+                    <a
+                      href={detectedWebUrl.startsWith('http') ? detectedWebUrl : `https://${detectedWebUrl}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      class="font-medium text-cyan-600 dark:text-cyan-400 hover:underline flex items-center gap-1 truncate max-w-[170px]"
+                      title={detectedWebUrl}
+                    >
+                      <Globe class="w-3 h-3 flex-shrink-0" />
+                      <span class="truncate">{detectedWebUrl.replace(/^https?:\/\/(www\.)?/i, '').replace(/\/$/, '')}</span>
+                    </a>
+                    {#if lead.skipTraceData.mxValid || lead.websiteAudit?.mxValid}
+                      <span class="text-[9px] font-semibold text-emerald-500 bg-emerald-950/40 border border-emerald-800/60 px-1 rounded" title="DNS Mail Server Verified">MX</span>
+                    {/if}
+                    <button
+                      type="button"
+                      onclick={() => handleCopyText(detectedWebUrl, 'Website URL')}
+                      class="p-0.5 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 cursor-pointer"
+                      title="Copy Website URL"
+                    >
+                      <Copy class="w-3 h-3" />
+                    </button>
+                  </div>
+                {:else}
+                  <span class="text-slate-400 italic">No Standalone Site</span>
+                {/if}
+              </div>
+
               <!-- Address -->
               <div class="flex justify-between py-1 border-b border-slate-200 dark:border-slate-800/60">
                 <span class="text-slate-500 dark:text-slate-400">Address:</span>

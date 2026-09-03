@@ -387,6 +387,20 @@ export interface SkipTraceResult {
   primaryEmail: string;
   emailValidation: string;
   secondaryEmail?: string;
+  websiteUrl?: string;
+  extractedEmails?: string[];
+  extractedPhones?: string[];
+  emailPermutations?: string[];
+  mxValid?: boolean;
+  mxRecords?: string[];
+  schemaOrgData?: {
+    name?: string;
+    email?: string;
+    phone?: string;
+    address?: string;
+    type?: string;
+  };
+  socialProfiles?: string[];
   linkedInUrl?: string;
   instagramHandle?: string;
   currentAddress: string;
@@ -434,6 +448,18 @@ export interface ExistingWebsiteAudit {
   summary: string;
   pitchStrategy: string;
   socialProfilesFound?: string[];
+  extractedEmails?: string[];
+  extractedPhones?: string[];
+  emailPermutations?: string[];
+  mxValid?: boolean;
+  mxRecords?: string[];
+  schemaOrgData?: {
+    name?: string;
+    email?: string;
+    phone?: string;
+    address?: string;
+    type?: string;
+  };
   qualifications?: {
     hasCustomDomain: boolean;
     domainCheckSummary: string;

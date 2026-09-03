@@ -1,7 +1,7 @@
 <script lang="ts">
   import type { SkipTraceResult } from '../../types/lead';
   import Badge from '../atoms/Badge.svelte';
-  import { Phone, Mail, Linkedin, MapPin } from 'lucide-svelte';
+  import { Phone, Mail, Linkedin, Globe, MapPin } from 'lucide-svelte';
 
   interface Props {
     data?: SkipTraceResult;
@@ -25,6 +25,22 @@
     </Badge>
   {/if}
 
+  {#if data?.websiteUrl}
+    <a
+      href={data.websiteUrl.startsWith('http') ? data.websiteUrl : `https://${data.websiteUrl}`}
+      target="_blank"
+      rel="noopener noreferrer"
+      class="inline-flex"
+      onclick={(e) => e.stopPropagation()}
+      title={data.websiteUrl}
+    >
+      <Badge variant="default" class="gap-1 hover:border-emerald-500 text-emerald-600 dark:text-emerald-400 transition-colors max-w-[170px] truncate">
+        <Globe class="w-3 h-3 text-emerald-400 flex-shrink-0" />
+        <span class="truncate">{data.websiteUrl.replace(/^https?:\/\/(www\.)?/i, '').replace(/\/$/, '')}</span>
+      </Badge>
+    </a>
+  {/if}
+
   {#if data?.linkedInUrl}
     <a
       href={data.linkedInUrl.startsWith('http') ? data.linkedInUrl : `https://${data.linkedInUrl}`}
@@ -40,7 +56,7 @@
     </a>
   {/if}
 
-  {#if !data?.verifiedPhone && !data?.primaryEmail}
+  {#if !data?.verifiedPhone && !data?.primaryEmail && !data?.websiteUrl}
     <span class="text-xs text-slate-400 dark:text-slate-400 italic">No contact verified</span>
   {/if}
 </div>

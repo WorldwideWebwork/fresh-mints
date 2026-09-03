@@ -389,9 +389,38 @@ export class LeadStore {
 
       const hasContact = Boolean(traceData.verifiedPhone || traceData.primaryEmail);
 
+      let updatedAudit = lead.websiteAudit;
+      if (traceData.websiteUrl && (!updatedAudit || !updatedAudit.existingUrl)) {
+        updatedAudit = {
+          hasWebsite: true,
+          existingUrl: traceData.websiteUrl,
+          status: 'Has Existing Website',
+          summary: `Standalone website detected: ${traceData.websiteUrl}` + (traceData.primaryEmail ? ` (Scraped email: ${traceData.primaryEmail})` : ''),
+          pitchStrategy: 'Pitch SEO upgrade or turnkey modernization.',
+          socialProfilesFound: [],
+          extractedEmails: traceData.extractedEmails || (traceData.primaryEmail ? [traceData.primaryEmail] : []),
+          extractedPhones: traceData.extractedPhones || (traceData.verifiedPhone ? [traceData.verifiedPhone] : []),
+          qualifications: {
+            hasCustomDomain: true,
+            domainCheckSummary: `Domain found: ${traceData.websiteUrl}`,
+            hasDirectBookingPortal: false,
+            isOnlyDirectoryOrBoardListing: false,
+            digitalFootprintRating: 'Established Custom Site',
+          },
+          checkedAt: new Date().toISOString(),
+        };
+      } else if (updatedAudit && traceData.extractedEmails && traceData.extractedEmails.length > 0) {
+        updatedAudit = {
+          ...updatedAudit,
+          extractedEmails: Array.from(new Set([...(updatedAudit.extractedEmails || []), ...traceData.extractedEmails])),
+          extractedPhones: Array.from(new Set([...(updatedAudit.extractedPhones || []), ...(traceData.extractedPhones || [])])),
+        };
+      }
+
       this.updateLead(id, {
         skipTraceStatus: hasContact ? 'Traced' : 'Partial',
         skipTraceData: traceData,
+        websiteAudit: updatedAudit,
       });
 
       return true;
@@ -530,7 +559,41 @@ export class LeadStore {
         const json = await response.json();
         if (json.success && json.data) {
           const audit: ExistingWebsiteAudit = json.data;
-          this.updateLead(id, { websiteAudit: audit });
+
+          const currentSkip = lead.skipTraceData || {
+            tracedAt: new Date().toISOString().split('T')[0],
+            confidenceScore: audit.hasWebsite ? 90 : 30,
+            verifiedPhone: '',
+            phoneType: 'Unverified',
+            dncStatus: 'Public Business Directory',
+            primaryEmail: '',
+            emailValidation: '',
+            currentAddress: `${lead.city}, ${lead.state}`,
+            enrichmentNotes: 'Website presence audit completed.',
+          };
+
+          const extractedEmails = audit.extractedEmails || [];
+          const extractedPhones = audit.extractedPhones || [];
+          const updatedPrimaryEmail = currentSkip.primaryEmail || (extractedEmails.length > 0 ? extractedEmails[0] : '');
+          const updatedPrimaryPhone = currentSkip.verifiedPhone || (extractedPhones.length > 0 ? extractedPhones[0] : '');
+
+          const updatedSkipTrace: SkipTraceResult = {
+            ...currentSkip,
+            websiteUrl: audit.existingUrl || currentSkip.websiteUrl,
+            extractedEmails: Array.from(new Set([...(currentSkip.extractedEmails || []), ...extractedEmails])),
+            extractedPhones: Array.from(new Set([...(currentSkip.extractedPhones || []), ...extractedPhones])),
+            primaryEmail: updatedPrimaryEmail,
+            verifiedPhone: updatedPrimaryPhone,
+            emailValidation: updatedPrimaryEmail ? (currentSkip.emailValidation || 'Website Scraped & Verified') : currentSkip.emailValidation,
+          };
+
+          const hasContact = Boolean(updatedSkipTrace.verifiedPhone || updatedSkipTrace.primaryEmail);
+
+          this.updateLead(id, {
+            websiteAudit: audit,
+            skipTraceData: updatedSkipTrace,
+            skipTraceStatus: hasContact ? 'Traced' : lead.skipTraceStatus,
+          });
           return audit;
         }
       }
