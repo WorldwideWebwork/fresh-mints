@@ -1,3 +1,18 @@
+export type SaasPlanTier = 'free' | 'starter' | 'pro' | 'enterprise';
+
+export interface PlanLimits {
+  maxRules: number;
+  scansPerDay: number;
+  maxCrmLeads: number;
+}
+
+export const PLAN_LIMITS: Record<SaasPlanTier, PlanLimits> = {
+  free: { maxRules: 2, scansPerDay: 10, maxCrmLeads: 25 },
+  starter: { maxRules: 5, scansPerDay: 50, maxCrmLeads: 250 },
+  pro: { maxRules: 20, scansPerDay: 500, maxCrmLeads: 2500 },
+  enterprise: { maxRules: 100, scansPerDay: 5000, maxCrmLeads: 100000 },
+};
+
 export interface AuthUser {
   id: string;
   username: string;
@@ -7,6 +22,8 @@ export interface AuthUser {
   role: 'admin' | 'rep' | 'user';
   roles: string[];
   registeredAt?: number;
+  plan?: SaasPlanTier;
+  planLimits?: PlanLimits;
 }
 
 class AuthStore {
@@ -136,6 +153,71 @@ class AuthStore {
       this.isLoading = false;
       return false;
     }
+  }
+
+  async signup(
+    username: string,
+    email: string,
+    password: string,
+    plan: SaasPlanTier = 'starter'
+  ): Promise<boolean> {
+    this.isLoading = true;
+    this.errorMessage = null;
+
+    const trimmedUsername = username.trim();
+    const trimmedEmail = email.trim();
+    const hasValidUsername = trimmedUsername.length >= 3;
+    const hasValidEmail = trimmedEmail.includes('@') && trimmedEmail.includes('.');
+    const hasValidPassword = password.length >= 6;
+    const isInputValid = hasValidUsername && hasValidEmail && hasValidPassword;
+
+    if (!isInputValid) {
+      this.errorMessage = 'Please provide a valid username (min 3 chars), email, and password (min 6 chars).';
+      this.isLoading = false;
+      return false;
+    }
+
+    const isAdmin = trimmedUsername.toLowerCase().includes('admin');
+    const userRole = isAdmin ? 'admin' : 'user';
+    const initialPlan = PLAN_LIMITS[plan] ? plan : 'starter';
+
+    const newUser: AuthUser = {
+      id: `saas-${Date.now()}`,
+      username: trimmedUsername,
+      email: trimmedEmail,
+      fullName: trimmedUsername.charAt(0).toUpperCase() + trimmedUsername.slice(1),
+      role: userRole,
+      roles: ['saas_member'],
+      plan: initialPlan,
+      planLimits: PLAN_LIMITS[initialPlan],
+      registeredAt: Math.floor(Date.now() / 1000),
+    };
+
+    this.user = newUser;
+    this.isLoggedIn = true;
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('freshmints_auth_user', JSON.stringify(newUser));
+    }
+    this.isLoading = false;
+    return true;
+  }
+
+  updatePlan(newPlan: SaasPlanTier): boolean {
+    const hasUser = Boolean(this.user);
+    if (!hasUser) {
+      return false;
+    }
+    const currentUser = this.user!;
+    const targetLimits = PLAN_LIMITS[newPlan] || PLAN_LIMITS.free;
+    this.user = {
+      ...currentUser,
+      plan: newPlan,
+      planLimits: targetLimits,
+    };
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('freshmints_auth_user', JSON.stringify(this.user));
+    }
+    return true;
   }
 
   async logout(): Promise<void> {

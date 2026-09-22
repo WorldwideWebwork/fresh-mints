@@ -28,7 +28,8 @@
     FileText,
     LogOut,
     User,
-    ShieldCheck
+    ShieldCheck,
+    Radio
   } from "lucide-svelte";
 
   interface Props {
@@ -55,6 +56,13 @@
       label: "Google Places Radar",
       icon: Compass,
       badge: "Radar",
+      badgeType: "radar"
+    },
+    {
+      id: "social_radar",
+      label: "Social Intent Radar",
+      icon: Radio,
+      badge: "AI",
       badgeType: "radar"
     },
     {
@@ -322,6 +330,18 @@
             >
               {authStore.user.role === "admin" ? "Admin" : "Sales Rep"}
             </Badge>
+          </div>
+
+          <div class="flex items-center justify-between pt-1 border-t border-[var(--fm-border-subtle)] text-[10px]">
+            <span class="text-[var(--fm-text-muted)] font-medium">SaaS Tier:</span>
+            <button
+              type="button"
+              onclick={() => onopenmodal?.("upgrade_plan")}
+              class="font-bold text-emerald-600 dark:text-emerald-400 hover:underline cursor-pointer flex items-center gap-1"
+            >
+              <span class="uppercase font-mono">{authStore.user.plan || "Free"}</span>
+              <span>• Upgrade</span>
+            </button>
           </div>
 
           <button

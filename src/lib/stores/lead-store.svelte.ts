@@ -18,6 +18,8 @@ import { getDefaultWebsiteConfig, generateLeadPreviewSlug } from '../services/we
 import { INITIAL_VERIFIED_LEADS } from '../services/initial-seeds';
 import { authStore } from './auth-store.svelte';
 import { toast } from './toast.svelte';
+import { type SocialMonitorRule, type SocialLead } from '../services/social-feed/types';
+import { socialFeedRegistry } from '../services/social-feed/social-feed-registry';
 
 class LeadStoreState {
   leads = $state<Lead[]>([]);
@@ -32,6 +34,33 @@ class LeadStoreState {
   isSearchingPlaces = $state<boolean>(false);
   placesSearchResults = $state<GooglePlaceBusiness[]>([]);
   placesLastResponse = $state<GooglePlacesSearchResponse | null>(null);
+
+  socialRules = $state<SocialMonitorRule[]>([
+    {
+      id: 'rule-web-upgrade',
+      name: 'Website Redesign & Upgrades',
+      keywords: ['website', 'web design', 'landing page', 'agency', 'overhaul', 'switch hosting'],
+      negativeKeywords: ['job', 'internship', 'hiring developer'],
+      platforms: ['hacker_news', 'reddit'],
+      minIntentScore: 50,
+      isActive: true,
+      autoConvertToCrm: false,
+      createdAt: new Date().toISOString(),
+    },
+    {
+      id: 'rule-crm-tools',
+      name: 'CRM & Lead Automation',
+      keywords: ['crm', 'lead generation', 'followup', 'client portal', 'booking system'],
+      negativeKeywords: ['course', 'crypto'],
+      platforms: ['hacker_news', 'reddit'],
+      minIntentScore: 60,
+      isActive: true,
+      autoConvertToCrm: false,
+      createdAt: new Date().toISOString(),
+    },
+  ]);
+  socialLeads = $state<SocialLead[]>([]);
+  isScanningSocialFeeds = $state<boolean>(false);
 
   // Filters
   professionFilter = $state<ProfessionCategory | 'all'>('all');
@@ -62,6 +91,27 @@ class LeadStoreState {
         }
       } catch (tabErr) {
         console.warn('Could not load custom tabs', tabErr);
+      }
+      try {
+        const savedRules = localStorage.getItem('fresh_mints_social_rules');
+        if (savedRules) {
+          this.socialRules = JSON.parse(savedRules);
+        }
+      } catch (rulesErr) {
+        console.warn('Could not load social rules', rulesErr);
+      }
+      try {
+        const savedSocialLeads = localStorage.getItem('fresh_mints_social_leads');
+        if (savedSocialLeads) {
+          const parsed: SocialLead[] = JSON.parse(savedSocialLeads);
+          this.socialLeads = parsed.filter((item) => {
+            const isMockPlatform = (item.rawPost.platform as string) === 'mock';
+            const isMockUrl = item.rawPost.url.includes('_mock');
+            return !isMockPlatform && !isMockUrl;
+          });
+        }
+      } catch (socialErr) {
+        console.warn('Could not load social leads', socialErr);
       }
       try {
         const storedLeads = await IndexedDBStorage.getAllLeads();
@@ -516,7 +566,9 @@ class LeadStoreState {
         confidenceScore: 98,
         verifiedPhone: resolvedPhone,
         phoneType: 'Google Business Line',
+        dncStatus: 'Public Business Directory',
         primaryEmail: '',
+        emailValidation: 'Unverified',
         websiteUrl: place.website || '',
         currentAddress: place.formattedAddress,
         enrichmentNotes: `Google Places Verified (Rating: ${place.rating} stars across ${place.userRatingsTotal} reviews)`,
@@ -526,7 +578,7 @@ class LeadStoreState {
       websiteAudit: place.hasWebsite ? {
         hasWebsite: true,
         existingUrl: place.website,
-        status: 'Website Found',
+        status: 'Has Existing Website',
         summary: `Google verified domain: ${place.website}`,
         pitchStrategy: 'Pitch SEO upgrade or turnkey modernization.',
         socialProfilesFound: [],
@@ -541,7 +593,7 @@ class LeadStoreState {
       } : {
         hasWebsite: false,
         existingUrl: place.website || null,
-        status: place.websiteStatus === 'directory_only' ? 'Directory Only Stub' : 'No Website Found - High Opportunity',
+        status: place.websiteStatus === 'directory_only' ? 'Directory Listing Only' : 'No Website Found - High Opportunity',
         summary: place.websiteSummary,
         pitchStrategy: `Pitch turnkey practice package ($${place.estimatedDealValue.toLocaleString()} with 2 years hosting included).`,
         socialProfilesFound: place.website ? [place.website] : [],
@@ -904,6 +956,140 @@ class LeadStoreState {
       addedCount++;
     }
     return addedCount;
+  }
+
+  private saveSocialRulesToStorage() {
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('fresh_mints_social_rules', JSON.stringify(this.socialRules));
+    }
+  }
+
+  private saveSocialLeadsToStorage() {
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('fresh_mints_social_leads', JSON.stringify(this.socialLeads));
+    }
+  }
+
+  addSocialRule(rule: Omit<SocialMonitorRule, 'id' | 'createdAt'>) {
+    const newRule: SocialMonitorRule = {
+      ...rule,
+      id: `rule-${Date.now()}`,
+      createdAt: new Date().toISOString(),
+    };
+    this.socialRules.push(newRule);
+    this.saveSocialRulesToStorage();
+    toast.success('Social Rule Created', `Monitoring rule "${newRule.name}" is now active.`);
+  }
+
+  toggleSocialRule(id: string) {
+    this.socialRules = this.socialRules.map((r) => {
+      const isTarget = r.id === id;
+      return isTarget ? { ...r, isActive: !r.isActive } : r;
+    });
+    this.saveSocialRulesToStorage();
+  }
+
+  deleteSocialRule(id: string) {
+    this.socialRules = this.socialRules.filter((r) => r.id !== id);
+    this.saveSocialRulesToStorage();
+  }
+
+  async scanSocialFeeds(): Promise<number> {
+    this.isScanningSocialFeeds = true;
+    try {
+      const detected = await socialFeedRegistry.scanRules(this.socialRules);
+      const existingUrls = new Set(this.socialLeads.map((l) => l.rawPost.url));
+      const freshLeads = detected.filter((l) => !existingUrls.has(l.rawPost.url));
+      const hasFreshLeads = freshLeads.length > 0;
+
+      if (hasFreshLeads) {
+        this.socialLeads = [...freshLeads, ...this.socialLeads];
+        this.saveSocialLeadsToStorage();
+        toast.success(
+          'Social Intent Radar Updated',
+          `Discovered ${freshLeads.length} new high-intent social opportunities.`
+        );
+      } else {
+        toast.info(
+          'Scan Complete',
+          'No new matching posts found in this scan cycle.'
+        );
+      }
+      return freshLeads.length;
+    } catch {
+      toast.error('Social Scan Error', 'Failed to scan external social feeds.');
+      return 0;
+    } finally {
+      this.isScanningSocialFeeds = false;
+    }
+  }
+
+  async convertSocialLeadToCrmLead(socialLeadId: string): Promise<Lead | null> {
+    const targetSocialLead = this.socialLeads.find((l) => l.id === socialLeadId);
+    if (!targetSocialLead) {
+      return null;
+    }
+
+    const raw = targetSocialLead.rawPost;
+    const authorName = raw.author.replace(/^u\//, '');
+    const cleanName = authorName
+      .split(/[._-]/)
+      .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
+      .join(' ') || 'Social Prospect';
+
+    const newLead: Lead = {
+      id: `lead-soc-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
+      fullName: cleanName,
+      profession: 'trade',
+      professionTitle: 'Online Inbound Business',
+      state: 'CA',
+      city: 'Social Radar Inbound',
+      licenseNumber: `SOC-${raw.platform.toUpperCase().slice(0, 3)}-${Math.floor(100000 + Math.random() * 900000)}`,
+      issueDate: new Date().toISOString().split('T')[0],
+      collegeOrSchool: `${raw.platform.toUpperCase()} Discussion Lead`,
+      graduationYear: new Date().getFullYear(),
+      licenseStatus: 'Active / Good Standing',
+      skipTraceStatus: 'untraced',
+      outreachStatus: 'New',
+      estimatedDealValue: 1650,
+      leadSource: 'social_radar',
+      socialContext: {
+        platform: raw.platform,
+        postUrl: raw.url,
+        originalPostText: raw.content,
+        matchedKeyword: targetSocialLead.matchedKeyword,
+        intentScore: targetSocialLead.intentScore,
+        detectedPainPoint: targetSocialLead.detectedPainPoint,
+        suggestedPitch: targetSocialLead.suggestedPitch,
+      },
+      notes: `[Social Radar (${raw.platform})] ${raw.title}\nIntent Score: ${targetSocialLead.intentScore}%\nURL: ${raw.url}\n\nSuggested Pitch: ${targetSocialLead.suggestedPitch}`,
+      createdAt: new Date().toISOString(),
+      outreachLogs: [],
+    };
+
+    newLead.websiteConfig = getDefaultWebsiteConfig(newLead);
+
+    await this.addLead(newLead);
+
+    this.socialLeads = this.socialLeads.map((l) => {
+      const isTarget = l.id === socialLeadId;
+      return isTarget ? { ...l, status: 'converted', convertedLeadId: newLead.id } : l;
+    });
+    this.saveSocialLeadsToStorage();
+
+    toast.success(
+      'Minted to CRM Pipeline',
+      `${newLead.fullName} added to Minted Leads and CRM Kanban Board.`
+    );
+    return newLead;
+  }
+
+  dismissSocialLead(socialLeadId: string) {
+    this.socialLeads = this.socialLeads.map((l) => {
+      const isTarget = l.id === socialLeadId;
+      return isTarget ? { ...l, status: 'dismissed' } : l;
+    });
+    this.saveSocialLeadsToStorage();
   }
 }
 

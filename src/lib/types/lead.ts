@@ -479,6 +479,18 @@ export interface OutreachLogItem {
   toneUsed: string;
 }
 
+export type LeadSource = 'registry' | 'places' | 'social_radar' | 'manual' | 'csv';
+
+export interface SocialLeadContext {
+  platform: string;
+  postUrl: string;
+  originalPostText: string;
+  matchedKeyword?: string;
+  intentScore?: number;
+  detectedPainPoint?: string;
+  suggestedPitch?: string;
+}
+
 export interface Lead {
   id: string;
   fullName: string;
@@ -501,6 +513,10 @@ export interface Lead {
   websiteConfig?: WebsitePreviewConfig;
   websiteAudit?: ExistingWebsiteAudit;
   outreachLogs: OutreachLogItem[];
+
+  // Source & Social Intent Context
+  leadSource?: LeadSource;
+  socialContext?: SocialLeadContext;
 
   // Notes & tracking
   estimatedDealValue: number;

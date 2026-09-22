@@ -20,6 +20,7 @@
   // Organisms / Views
   import RegistrySearchView from './lib/components/organisms/RegistrySearchView.svelte';
   import PlacesSearchView from './lib/components/organisms/PlacesSearchView.svelte';
+  import SocialRadarView from './lib/components/organisms/SocialRadarView.svelte';
   import LeadTable from './lib/components/organisms/LeadTable.svelte';
   import KanbanBoard from './lib/components/organisms/KanbanBoard.svelte';
   import RepHubView from './lib/components/organisms/RepHubView.svelte';
@@ -35,6 +36,8 @@
   import ImportCSVModal from './lib/components/organisms/ImportCSVModal.svelte';
   import CustomTabModal from './lib/components/organisms/CustomTabModal.svelte';
   import SettingsModal from './lib/components/organisms/SettingsModal.svelte';
+  import UpgradePlanModal from './lib/components/organisms/UpgradePlanModal.svelte';
+  import SocialTokensModal from './lib/components/organisms/SocialTokensModal.svelte';
 
   // Standalone preview slug state
   let standalonePreviewSlug = $state<string | null>(null);
@@ -138,7 +141,7 @@
       const [pathSegment, querySegment] = cleanHash.split('?');
       const params = new URLSearchParams(querySegment || '');
 
-      const validTabs = ['search', 'places', 'leads', 'kanban', 'rephub', 'economics', 'analytics'];
+      const validTabs = ['search', 'places', 'social_radar', 'leads', 'kanban', 'rephub', 'economics', 'analytics'];
       let targetTab = pathSegment;
       if (targetTab.startsWith('view/')) {
         targetTab = targetTab.replace('view/', '');
@@ -307,6 +310,8 @@
       <RegistrySearchView />
     {:else if leadStore.activeTab === 'places'}
       <PlacesSearchView onopenmodal={openModal} onopenfullpreview={handleOpenFullPreview} />
+    {:else if leadStore.activeTab === 'social_radar'}
+      <SocialRadarView onopenmodal={openModal} />
     {:else if leadStore.activeTab === 'leads'}
       <LeadTable onopenmodal={openModal} />
     {:else if leadStore.activeTab === 'kanban'}
@@ -376,6 +381,16 @@
   open={modalState.name === 'settings'}
   onclose={closeModal}
   onopenconfirmclear={() => (isClearConfirmOpen = true)}
+/>
+
+<UpgradePlanModal
+  open={modalState.name === 'upgrade_plan'}
+  onclose={closeModal}
+/>
+
+<SocialTokensModal
+  open={modalState.name === 'social_tokens'}
+  onclose={closeModal}
 />
 
 <ConfirmDialog
