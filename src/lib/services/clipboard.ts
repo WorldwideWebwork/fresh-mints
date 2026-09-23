@@ -48,3 +48,31 @@ export async function copyTextToClipboard(text: string): Promise<boolean> {
     return false;
   }
 }
+
+export async function copyHtmlToClipboard(html: string, plainText: string): Promise<boolean> {
+  const isBrowser = typeof window !== 'undefined';
+  if (!isBrowser) {
+    return false;
+  }
+
+  const hasClipboardItem = typeof window.ClipboardItem !== 'undefined';
+  const hasClipboardWrite = Boolean(navigator?.clipboard && typeof navigator.clipboard.write === 'function');
+  const canWriteRichMime = hasClipboardItem && hasClipboardWrite;
+
+  if (canWriteRichMime) {
+    try {
+      const htmlBlob = new Blob([html], { type: 'text/html' });
+      const textBlob = new Blob([plainText], { type: 'text/plain' });
+      const item = new ClipboardItem({
+        'text/html': htmlBlob,
+        'text/plain': textBlob,
+      });
+      await navigator.clipboard.write([item]);
+      return true;
+    } catch {
+      return copyTextToClipboard(plainText);
+    }
+  }
+
+  return copyTextToClipboard(plainText);
+}

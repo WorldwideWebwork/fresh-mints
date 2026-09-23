@@ -7,7 +7,10 @@
   import Dialog from '../atoms/Dialog.svelte';
   import Button from '../atoms/Button.svelte';
   import Badge from '../atoms/Badge.svelte';
-  import { Send, Sparkles, Copy, Mail, MessageSquare, Check, RotateCw, PhoneCall, Kanban, FileText, ExternalLink } from 'lucide-svelte';
+  import VisualPitchCard from '../molecules/VisualPitchCard.svelte';
+  import { VisualPitchGenerator } from '../../services/visual-pitch-generator';
+  import { copyTextToClipboard, copyHtmlToClipboard } from '../../services/clipboard';
+  import { Send, Sparkles, Copy, Mail, MessageSquare, Check, RotateCw, PhoneCall, Kanban, FileText, ExternalLink, Globe } from 'lucide-svelte';
 
   interface Props {
     open?: boolean;
@@ -19,13 +22,17 @@
   let { open = $bindable(false), lead = null, onclose, onopenmodal }: Props = $props();
 
   let selectedTemplateId = $state('industry_board_pass');
-  let activeTab = $state<'email' | 'sms'>('email');
+  let activeTab = $state<'email' | 'sms' | 'visual'>('email');
   let isGeneratingAI = $state(false);
   let isDispatchingBombBag = $state(false);
   let emailSubject = $state('');
   let emailBody = $state('');
   let smsBody = $state('');
   let copied = $state(false);
+  let copiedHtml = $state(false);
+  let copiedMarkdown = $state(false);
+
+  const visualAsset = $derived(lead ? VisualPitchGenerator.generateAsset(lead) : null);
 
   function handleOpenRepHub() {
     if (!lead) return;
@@ -139,8 +146,6 @@
     }
   }
 
-  import { copyTextToClipboard } from '../../services/clipboard';
-
   async function handleCopy() {
     const text = activeTab === 'email' ? `Subject: ${emailSubject}\n\n${emailBody}` : smsBody;
     const success = await copyTextToClipboard(text);
@@ -153,12 +158,38 @@
     }
   }
 
+  async function handleCopyHtmlPitch() {
+    if (!visualAsset) return;
+    const success = await copyHtmlToClipboard(visualAsset.htmlContent, visualAsset.plainText);
+    if (success) {
+      copiedHtml = true;
+      toast.success('Rich HTML Pitch Card Copied', 'Paste into Gmail, Outlook, or Apple Mail to render the live preview card.');
+      setTimeout(() => {
+        copiedHtml = false;
+      }, 2000);
+    } else {
+      toast.error('Clipboard copy failed', 'Unable to access clipboard');
+    }
+  }
+
+  async function handleCopyMarkdownPitch() {
+    if (!visualAsset) return;
+    const success = await copyTextToClipboard(visualAsset.markdownContent);
+    if (success) {
+      copiedMarkdown = true;
+      toast.success('Markdown Card Copied', 'Ready for LinkedIn DMs, Reddit messages, or forums.');
+      setTimeout(() => {
+        copiedMarkdown = false;
+      }, 2000);
+    }
+  }
+
   async function handleMarkSent() {
     if (!lead) return;
-    const content = activeTab === 'email' ? emailBody : smsBody;
+    const content = activeTab === 'email' ? emailBody : activeTab === 'sms' ? smsBody : visualAsset?.markdownContent || 'Visual Pitch Card';
     await leadStore.recordOutreachLog(lead.id, {
-      type: activeTab,
-      subject: activeTab === 'email' ? emailSubject : undefined,
+      type: activeTab === 'visual' ? 'email' : activeTab,
+      subject: activeTab === 'email' ? emailSubject : activeTab === 'visual' ? `Website Preview Ready: ${lead.fullName}` : undefined,
       content,
       status: 'sent',
       toneUsed: selectedTemplateId,
@@ -169,7 +200,7 @@
   }
 </script>
 
-<Dialog bind:open {onclose} title="AI Outreach Pitch & Pitch Deck Generator" description="Generate personalized email and SMS pitches powered by Google Gemini and WP Connectors" maxWidth="max-w-3xl">
+<Dialog bind:open {onclose} title="AI Outreach Pitch & Pitch Deck Generator" description="Generate personalized email, SMS, and visual mockup pitch cards" maxWidth="max-w-4xl">
   {#if lead}
     <div class="space-y-5">
       <!-- Template Selector -->
@@ -215,18 +246,33 @@
             <MessageSquare class="w-3.5 h-3.5" />
             <span>SMS Pitch</span>
           </button>
+          <button
+            type="button"
+            class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer {activeTab === 'visual' ? 'bg-emerald-600 text-white shadow' : 'text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:text-slate-200'}"
+            onclick={() => (activeTab = 'visual')}
+          >
+            <Globe class="w-3.5 h-3.5" />
+            <span>Visual Pitch & Embed</span>
+          </button>
         </div>
 
-        <Button
-          variant="outline"
-          size="sm"
-          onclick={generateWithGeminiAI}
-          loading={isGeneratingAI}
-          class="gap-1.5 text-xs text-emerald-600 dark:text-emerald-400 border-emerald-800/80 hover:bg-emerald-50 dark:bg-emerald-950/40"
-        >
-          <Sparkles class="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
-          <span>Generate with Gemini 3.7</span>
-        </Button>
+        {#if activeTab !== 'visual'}
+          <Button
+            variant="outline"
+            size="sm"
+            onclick={generateWithGeminiAI}
+            loading={isGeneratingAI}
+            class="gap-1.5 text-xs text-emerald-600 dark:text-emerald-400 border-emerald-800/80 hover:bg-emerald-50 dark:bg-emerald-950/40"
+          >
+            <Sparkles class="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
+            <span>Generate with Gemini 3.7</span>
+          </Button>
+        {:else}
+          <div class="flex items-center gap-1.5 text-xs text-emerald-400 font-semibold">
+            <Sparkles class="w-3.5 h-3.5" />
+            <span>Pre-rendered Turnkey Sandbox</span>
+          </div>
+        {/if}
       </div>
 
       <!-- Content Area -->
@@ -250,7 +296,7 @@
             ></textarea>
           </div>
         </div>
-      {:else}
+      {:else if activeTab === 'sms'}
         <div>
           <label class="text-xs font-medium text-slate-500 dark:text-slate-400 block mb-1">SMS Message ({smsBody.length} chars):</label>
           <textarea
@@ -259,20 +305,76 @@
             class="w-full bg-slate-50 dark:bg-slate-950 text-slate-800 dark:text-slate-200 border border-slate-200 dark:border-slate-800 rounded-xl p-3.5 text-xs leading-relaxed font-sans focus:outline-none focus:border-emerald-500/80 custom-scrollbar"
           ></textarea>
         </div>
+      {:else}
+        <div class="space-y-3">
+          <VisualPitchCard {lead} onopenpreview={(l) => onopenmodal?.('website_builder', l)} />
+
+          <div class="p-3.5 rounded-2xl bg-emerald-950/20 border border-emerald-800/40 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
+            <div class="space-y-0.5">
+              <span class="font-bold text-emerald-400">1-Click Visual Outreach Embed</span>
+              <p class="text-[11px] text-slate-400">
+                Copies a self-contained, email-safe HTML table mockup into your clipboard with active preview links.
+              </p>
+            </div>
+            <div class="flex items-center gap-2 shrink-0">
+              <Button
+                variant="outline"
+                size="sm"
+                onclick={handleCopyMarkdownPitch}
+                class="gap-1.5 text-xs text-slate-300 border-slate-700"
+              >
+                {#if copiedMarkdown}
+                  <Check class="w-3.5 h-3.5 text-emerald-400" />
+                  <span>Markdown Copied</span>
+                {:else}
+                  <Copy class="w-3.5 h-3.5" />
+                  <span>Copy Markdown</span>
+                {/if}
+              </Button>
+
+              <Button
+                variant="primary"
+                size="sm"
+                onclick={handleCopyHtmlPitch}
+                class="gap-1.5 text-xs font-bold shadow-lg shadow-emerald-500/20"
+              >
+                {#if copiedHtml}
+                  <Check class="w-3.5 h-3.5" />
+                  <span>HTML Card Copied!</span>
+                {:else}
+                  <Sparkles class="w-3.5 h-3.5" />
+                  <span>Copy Rich HTML Email</span>
+                {/if}
+              </Button>
+            </div>
+          </div>
+        </div>
       {/if}
 
       <!-- Bottom Action Bar with Fluid Links -->
       <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-3 border-t border-slate-200 dark:border-slate-800">
         <div class="flex items-center gap-2 flex-wrap">
-          <Button variant="outline" size="sm" onclick={handleCopy} class="gap-1.5 text-xs">
-            {#if copied}
-              <Check class="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
-              <span>Copied!</span>
-            {:else}
-              <Copy class="w-3.5 h-3.5" />
-              <span>Copy to Clipboard</span>
-            {/if}
-          </Button>
+          {#if activeTab === 'visual'}
+            <Button variant="primary" size="sm" onclick={handleCopyHtmlPitch} class="gap-1.5 text-xs font-bold shadow-lg shadow-emerald-500/20">
+              {#if copiedHtml}
+                <Check class="w-3.5 h-3.5" />
+                <span>Rich HTML Copied!</span>
+              {:else}
+                <Sparkles class="w-3.5 h-3.5" />
+                <span>Copy Rich HTML Email</span>
+              {/if}
+            </Button>
+          {:else}
+            <Button variant="outline" size="sm" onclick={handleCopy} class="gap-1.5 text-xs">
+              {#if copied}
+                <Check class="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
+                <span>Copied!</span>
+              {:else}
+                <Copy class="w-3.5 h-3.5" />
+                <span>Copy to Clipboard</span>
+              {/if}
+            </Button>
+          {/if}
 
           <Button variant="outline" size="sm" onclick={handleOpenRepHub} class="gap-1.5 text-xs text-emerald-700 dark:text-emerald-300 border-emerald-800">
             <PhoneCall class="w-3.5 h-3.5" />
