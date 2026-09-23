@@ -205,7 +205,7 @@
     <div class="space-y-5">
       <!-- Template Selector -->
       <div>
-        <label class="text-xs font-semibold text-slate-700 dark:text-slate-300 block mb-2">Select Angle / Strategy:</label>
+        <span class="text-xs font-semibold text-slate-700 dark:text-slate-300 block mb-2">Select Angle / Strategy:</span>
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
           {#each OUTREACH_TEMPLATES as tmpl}
             <!-- svelte-ignore a11y_click_events_have_key_events -->
@@ -279,8 +279,9 @@
       {#if activeTab === 'email'}
         <div class="space-y-3">
           <div>
-            <label class="text-xs font-medium text-slate-500 dark:text-slate-400 block mb-1">Subject Line:</label>
+            <label for="outreach-email-subject" class="text-xs font-medium text-slate-500 dark:text-slate-400 block mb-1">Subject Line:</label>
             <input
+              id="outreach-email-subject"
               type="text"
               bind:value={emailSubject}
               class="w-full bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 border border-slate-200 dark:border-slate-800 rounded-xl px-3.5 py-2 text-xs font-semibold focus:outline-none focus:border-emerald-500/80"
@@ -288,8 +289,9 @@
           </div>
 
           <div>
-            <label class="text-xs font-medium text-slate-500 dark:text-slate-400 block mb-1">Email Body:</label>
+            <label for="outreach-email-body" class="text-xs font-medium text-slate-500 dark:text-slate-400 block mb-1">Email Body:</label>
             <textarea
+              id="outreach-email-body"
               bind:value={emailBody}
               rows={9}
               class="w-full bg-slate-50 dark:bg-slate-950 text-slate-800 dark:text-slate-200 border border-slate-200 dark:border-slate-800 rounded-xl p-3.5 text-xs leading-relaxed font-sans focus:outline-none focus:border-emerald-500/80 custom-scrollbar"
@@ -298,8 +300,9 @@
         </div>
       {:else if activeTab === 'sms'}
         <div>
-          <label class="text-xs font-medium text-slate-500 dark:text-slate-400 block mb-1">SMS Message ({smsBody.length} chars):</label>
+          <label for="outreach-sms-body" class="text-xs font-medium text-slate-500 dark:text-slate-400 block mb-1">SMS Message ({smsBody.length} chars):</label>
           <textarea
+            id="outreach-sms-body"
             bind:value={smsBody}
             rows={5}
             class="w-full bg-slate-50 dark:bg-slate-950 text-slate-800 dark:text-slate-200 border border-slate-200 dark:border-slate-800 rounded-xl p-3.5 text-xs leading-relaxed font-sans focus:outline-none focus:border-emerald-500/80 custom-scrollbar"
