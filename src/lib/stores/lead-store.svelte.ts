@@ -1084,7 +1084,13 @@ class LeadStoreState {
       outreachLogs: [],
     };
 
-    newLead.websiteConfig = getDefaultWebsiteConfig(newLead);
+    newLead.websiteConfig = getDefaultWebsiteConfig(
+      newLead.fullName,
+      newLead.profession,
+      newLead.city,
+      newLead.state,
+      newLead.collegeOrSchool
+    );
 
     await this.addLead(newLead);
 
