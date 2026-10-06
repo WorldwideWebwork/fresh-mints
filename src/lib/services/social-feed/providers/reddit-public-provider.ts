@@ -1,4 +1,4 @@
-import type { SocialFeedProvider, SocialMonitorRule, RawSocialPost } from '../types';
+import type { SocialFeedProvider, SocialMonitorRule, RawSocialPost, FeedFetchOutcome } from '../types';
 
 interface RedditChild {
   data: {
@@ -23,13 +23,13 @@ export class RedditPublicProvider implements SocialFeedProvider {
     return true;
   }
 
-  async fetchPosts(rule: SocialMonitorRule): Promise<RawSocialPost[]> {
+  async fetchPosts(rule: SocialMonitorRule): Promise<FeedFetchOutcome> {
     const isApplicable = rule.platforms.includes('reddit');
     const hasKeywords = rule.keywords.length > 0;
     const canRun = isApplicable && hasKeywords;
 
     if (!canRun) {
-      return [];
+      return { status: 'ok', posts: [] };
     }
 
     const query = encodeURIComponent(rule.keywords.join(' OR '));
@@ -48,13 +48,16 @@ export class RedditPublicProvider implements SocialFeedProvider {
 
       const isOk = response.ok;
       if (!isOk) {
-        return [];
+        return {
+          status: 'failed',
+          reason: `Reddit refused the request (HTTP ${response.status} ${response.statusText}).`,
+        };
       }
 
       const payload = await response.json();
       const children: RedditChild[] = payload?.data?.children || [];
 
-      return children.map((item) => {
+      const posts: RawSocialPost[] = children.map((item) => {
         const postData = item.data;
         const postTimestamp = new Date(postData.created_utc * 1000).toISOString();
         const postUrl = `https://www.reddit.com${postData.permalink}`;
@@ -73,8 +76,14 @@ export class RedditPublicProvider implements SocialFeedProvider {
           subredditOrChannel: `r/${postData.subreddit}`,
         };
       });
-    } catch {
-      return [];
+
+      return { status: 'ok', posts };
+    } catch (error: unknown) {
+      const detail = error instanceof Error ? error.message : 'unknown network error';
+      return {
+        status: 'blocked',
+        reason: `Reddit is unreachable from the browser (${detail}). www.reddit.com sends no Access-Control-Allow-Origin header, so this provider needs a server-side proxy.`,
+      };
     }
   }
 }

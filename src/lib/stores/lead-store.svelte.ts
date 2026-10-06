@@ -18,7 +18,7 @@ import { getDefaultWebsiteConfig, generateLeadPreviewSlug } from '../services/we
 import { INITIAL_VERIFIED_LEADS } from '../services/initial-seeds';
 import { authStore } from './auth-store.svelte';
 import { toast } from './toast.svelte';
-import { type SocialMonitorRule, type SocialLead } from '../services/social-feed/types';
+import { type SocialMonitorRule, type SocialLead, type FeedScanProblem } from '../services/social-feed/types';
 import { socialFeedRegistry } from '../services/social-feed/social-feed-registry';
 
 class LeadStoreState {
@@ -61,6 +61,7 @@ class LeadStoreState {
   ]);
   socialLeads = $state<SocialLead[]>([]);
   isScanningSocialFeeds = $state<boolean>(false);
+  socialScanProblems = $state<FeedScanProblem[]>([]);
 
   // Filters
   professionFilter = $state<ProfessionCategory | 'all'>('all');
@@ -997,14 +998,28 @@ class LeadStoreState {
   async scanSocialFeeds(): Promise<number> {
     this.isScanningSocialFeeds = true;
     try {
-      const detected = await socialFeedRegistry.scanRules(this.socialRules);
+      const { leads: detected, problems } = await socialFeedRegistry.scanRules(this.socialRules);
+      this.socialScanProblems = problems;
+
       const existingUrls = new Set(this.socialLeads.map((l) => l.rawPost.url));
       const freshLeads = detected.filter((l) => !existingUrls.has(l.rawPost.url));
       const hasFreshLeads = freshLeads.length > 0;
+      const hasProblems = problems.length > 0;
 
       if (hasFreshLeads) {
         this.socialLeads = [...freshLeads, ...this.socialLeads];
         this.saveSocialLeadsToStorage();
+      }
+
+      // A feed that never answered is not the same as a feed that answered with
+      // nothing. Never report the second when the first happened.
+      if (hasProblems) {
+        const affected = problems.map((p) => p.displayName).join(', ');
+        toast.error(
+          hasFreshLeads ? 'Scan Partially Completed' : 'Scan Could Not Reach Feeds',
+          `${affected} did not respond. ${problems[0].reason}`
+        );
+      } else if (hasFreshLeads) {
         toast.success(
           'Social Intent Radar Updated',
           `Discovered ${freshLeads.length} new high-intent social opportunities.`
@@ -1012,12 +1027,14 @@ class LeadStoreState {
       } else {
         toast.info(
           'Scan Complete',
-          'No new matching posts found in this scan cycle.'
+          'All feeds responded. No new matching posts found in this scan cycle.'
         );
       }
       return freshLeads.length;
-    } catch {
-      toast.error('Social Scan Error', 'Failed to scan external social feeds.');
+    } catch (error: unknown) {
+      const detail = error instanceof Error ? error.message : 'unknown error';
+      this.socialScanProblems = [];
+      toast.error('Social Scan Error', `Failed to scan external social feeds: ${detail}`);
       return 0;
     } finally {
       this.isScanningSocialFeeds = false;

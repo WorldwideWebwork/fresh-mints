@@ -21,7 +21,8 @@
     Tag,
     Trash2,
     Filter,
-    Key
+    Key,
+    AlertTriangle
   } from "lucide-svelte";
   import type { SocialLead, SocialPlatform } from "../../services/social-feed/types";
   import { SocialPostDispatcher } from "../../services/social-feed/social-post-dispatcher";
@@ -43,6 +44,7 @@
   const userPlanLimits = $derived(authStore.user?.planLimits || { maxRules: 2, scansPerDay: 10, maxCrmLeads: 25 });
   const activeRules = $derived(leadStore.socialRules.filter((r) => r.isActive));
   const visibleLeads = $derived(leadStore.socialLeads.filter((l) => l.status !== "dismissed"));
+  const scanProblems = $derived(leadStore.socialScanProblems);
 
   async function handleScan() {
     await leadStore.scanSocialFeeds();
@@ -207,6 +209,32 @@
       {/each}
     </div>
   </div>
+
+  {#if scanProblems.length > 0}
+    <div class="p-5 rounded-2xl bg-amber-500/5 border border-amber-500/30 space-y-3">
+      <div class="flex items-center gap-2">
+        <div class="w-8 h-8 rounded-xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-500 shrink-0">
+          <AlertTriangle class="w-4 h-4" />
+        </div>
+        <h3 class="text-sm font-bold text-[var(--fm-text)]">
+          {scanProblems.length === 1 ? '1 feed did not respond' : `${scanProblems.length} feeds did not respond`}
+        </h3>
+      </div>
+      <div class="space-y-2">
+        {#each scanProblems as problem (problem.platform)}
+          <div class="flex flex-col sm:flex-row sm:items-start gap-1.5 sm:gap-2">
+            <Badge variant="warning" class="uppercase font-mono text-[10px] shrink-0">
+              {problem.status}
+            </Badge>
+            <p class="text-xs text-[var(--fm-text-muted)] leading-relaxed">
+              <span class="font-semibold text-[var(--fm-text)]">{problem.displayName}:</span>
+              {problem.reason}
+            </p>
+          </div>
+        {/each}
+      </div>
+    </div>
+  {/if}
 
   {#if visibleLeads.length === 0}
     <div class="p-12 rounded-3xl bg-[var(--fm-surface)] border border-[var(--fm-border)] text-center space-y-4">

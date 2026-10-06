@@ -1,4 +1,4 @@
-import type { SocialFeedProvider, SocialMonitorRule, RawSocialPost } from '../types';
+import type { SocialFeedProvider, SocialMonitorRule, RawSocialPost, FeedFetchOutcome } from '../types';
 
 interface HnHit {
   objectID: string;
@@ -21,10 +21,10 @@ export class HackerNewsProvider implements SocialFeedProvider {
     return true;
   }
 
-  async fetchPosts(rule: SocialMonitorRule): Promise<RawSocialPost[]> {
+  async fetchPosts(rule: SocialMonitorRule): Promise<FeedFetchOutcome> {
     const isApplicable = rule.platforms.includes('hacker_news');
     if (!isApplicable || rule.keywords.length === 0) {
-      return [];
+      return { status: 'ok', posts: [] };
     }
 
     const query = encodeURIComponent(rule.keywords.join(' '));
@@ -34,13 +34,16 @@ export class HackerNewsProvider implements SocialFeedProvider {
       const response = await fetch(endpoint);
       const isResponseOk = response.ok;
       if (!isResponseOk) {
-        return [];
+        return {
+          status: 'failed',
+          reason: `Algolia HN search refused the request (HTTP ${response.status} ${response.statusText}).`,
+        };
       }
 
       const data = await response.json();
       const hits: HnHit[] = Array.isArray(data.hits) ? data.hits : [];
 
-      return hits.map((hit) => {
+      const posts: RawSocialPost[] = hits.map((hit) => {
         const itemTitle = hit.title || hit.story_title || 'Hacker News Discussion';
         const rawContent = hit.comment_text || hit.story_text || itemTitle;
         const cleanContent = rawContent.replace(/<[^>]*>?/gm, '');
@@ -59,8 +62,14 @@ export class HackerNewsProvider implements SocialFeedProvider {
           commentsCount: hit.num_comments || 0,
         };
       });
-    } catch {
-      return [];
+
+      return { status: 'ok', posts };
+    } catch (error: unknown) {
+      const detail = error instanceof Error ? error.message : 'unknown network error';
+      return {
+        status: 'blocked',
+        reason: `Algolia HN search is unreachable (${detail}).`,
+      };
     }
   }
 }

@@ -1,4 +1,11 @@
-import type { SocialFeedProvider, SocialPlatform, SocialMonitorRule, SocialLead, RawSocialPost } from './types';
+import type {
+  SocialFeedProvider,
+  SocialPlatform,
+  SocialMonitorRule,
+  SocialLead,
+  FeedScanProblem,
+  FeedScanResult,
+} from './types';
 import { HackerNewsProvider } from './providers/hacker-news-provider';
 import { RedditPublicProvider } from './providers/reddit-public-provider';
 import { SocialIntentAnalyzer } from './social-intent-analyzer';
@@ -30,34 +37,53 @@ export class SocialFeedRegistry {
     }));
   }
 
-  public async scanRules(rules: SocialMonitorRule[]): Promise<SocialLead[]> {
+  public async scanRules(rules: SocialMonitorRule[]): Promise<FeedScanResult> {
     const activeRules = rules.filter((r) => r.isActive);
     const results: SocialLead[] = [];
     const seenPostUrls = new Set<string>();
+    const problemsByPlatform = new Map<SocialPlatform, FeedScanProblem>();
 
     for (const rule of activeRules) {
       for (const platformId of rule.platforms) {
         const provider = this.providers.get(platformId);
         const canExecute = provider && provider.isConfigured();
 
-        if (canExecute) {
-          const rawPosts: RawSocialPost[] = await provider.fetchPosts(rule);
+        if (!canExecute) {
+          continue;
+        }
 
-          for (const post of rawPosts) {
-            const isDuplicate = seenPostUrls.has(post.url);
-            if (!isDuplicate) {
-              seenPostUrls.add(post.url);
-              const evaluated = SocialIntentAnalyzer.evaluatePost(post, rule);
-              if (evaluated) {
-                results.push(evaluated);
-              }
+        const outcome = await provider.fetchPosts(rule);
+        const didFetch = outcome.status === 'ok';
+
+        if (!didFetch) {
+          // One entry per platform: several rules can target the same feed and
+          // we do not want the same outage reported once per rule.
+          problemsByPlatform.set(platformId, {
+            platform: platformId,
+            displayName: provider.displayName,
+            status: outcome.status,
+            reason: outcome.reason,
+          });
+          continue;
+        }
+
+        for (const post of outcome.posts) {
+          const isDuplicate = seenPostUrls.has(post.url);
+          if (!isDuplicate) {
+            seenPostUrls.add(post.url);
+            const evaluated = SocialIntentAnalyzer.evaluatePost(post, rule);
+            if (evaluated) {
+              results.push(evaluated);
             }
           }
         }
       }
     }
 
-    return results.sort((a, b) => b.intentScore - a.intentScore);
+    return {
+      leads: results.sort((a, b) => b.intentScore - a.intentScore),
+      problems: Array.from(problemsByPlatform.values()),
+    };
   }
 }
 
