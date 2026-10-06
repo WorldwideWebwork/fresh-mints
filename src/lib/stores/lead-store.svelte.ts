@@ -1061,9 +1061,9 @@ class LeadStoreState {
       issueDate: new Date().toISOString().split('T')[0],
       collegeOrSchool: `${raw.platform.toUpperCase()} Discussion Lead`,
       graduationYear: new Date().getFullYear(),
-      licenseStatus: 'Active / Good Standing',
-      skipTraceStatus: 'untraced',
-      outreachStatus: 'New',
+      licenseStatus: 'Newly Issued',
+      skipTraceStatus: 'Not Traced',
+      outreachStatus: 'Uncontacted',
       estimatedDealValue: 1650,
       leadSource: 'social_radar',
       socialContext: {
