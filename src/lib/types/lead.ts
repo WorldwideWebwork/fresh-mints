@@ -413,6 +413,21 @@ export interface WebsiteServiceItem {
   iconName: string;
 }
 
+/**
+ * Canonical input for deriving a default website preview.
+ *
+ * Deliberately a structural subset of `Lead`, using the same field names, so a
+ * whole `Lead` (or any Lead-shaped record) can be passed straight through
+ * without destructuring at the call site. Keep these names in sync with `Lead`.
+ */
+export interface WebsiteConfigSeed {
+  fullName: string;
+  profession: ProfessionCategory;
+  city: string;
+  state: string;
+  collegeOrSchool: string;
+}
+
 export interface WebsitePreviewConfig {
   templateId:
     | 'realty_pro'

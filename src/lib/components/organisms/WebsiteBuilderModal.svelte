@@ -52,21 +52,15 @@
   const siteConfig = $derived.by<WebsitePreviewConfig>(() => {
     if (lead?.websiteConfig) return lead.websiteConfig;
     if (lead) {
-      return getDefaultWebsiteConfig(
-        lead.fullName,
-        lead.profession,
-        lead.city,
-        lead.state,
-        lead.collegeOrSchool
-      );
+      return getDefaultWebsiteConfig(lead);
     }
-    return getDefaultWebsiteConfig(
-      'Dr. David Sinclair',
-      'dental',
-      'Phoenix',
-      'AZ',
-      'College for Financial Planning'
-    );
+    return getDefaultWebsiteConfig({
+      fullName: 'Dr. David Sinclair',
+      profession: 'dental',
+      city: 'Phoenix',
+      state: 'AZ',
+      collegeOrSchool: 'College for Financial Planning',
+    });
   });
 
   const previewUrl = $derived.by(() => {

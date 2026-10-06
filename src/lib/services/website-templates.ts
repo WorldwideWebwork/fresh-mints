@@ -1,4 +1,10 @@
-import { type ProfessionCategory, type WebsitePreviewConfig, type Lead, PROFESSION_CONFIGS } from '../types/lead';
+import {
+  type ProfessionCategory,
+  type WebsitePreviewConfig,
+  type WebsiteConfigSeed,
+  type Lead,
+  PROFESSION_CONFIGS,
+} from '../types/lead';
 
 export interface WebsiteThemePreset {
   id: string;
@@ -193,13 +199,8 @@ export function generateLeadPreviewSlug(
   return slug;
 }
 
-export function getDefaultWebsiteConfig(
-  fullName: string,
-  profession: ProfessionCategory,
-  city: string,
-  state: string,
-  school: string
-): WebsitePreviewConfig {
+export function getDefaultWebsiteConfig(seed: WebsiteConfigSeed): WebsitePreviewConfig {
+  const { fullName, profession, city, state, collegeOrSchool } = seed;
   const preset = THEME_PRESETS[profession] || THEME_PRESETS.real_estate;
   const cleanSlug = generateLeadPreviewSlug(fullName);
   const cleanSeed = cleanSlug.replace(/-/g, '');
@@ -208,7 +209,7 @@ export function getDefaultWebsiteConfig(
   return {
     templateId: preset.id as any,
     heroHeadline: `${fullName} - Official ${preset.badgeText}`,
-    heroSubheadline: `Providing premier ${profession.replace('_', ' ')} services in ${city}, ${state}. Verified license graduate from ${school}.`,
+    heroSubheadline: `Providing premier ${profession.replace('_', ' ')} services in ${city}, ${state}. Verified license graduate from ${collegeOrSchool}.`,
     bioText: `Welcome to the official practice website of ${fullName}. Dedicated to serving clients in ${city} and surrounding communities with unmatched professionalism, transparency, and top-tier expertise.`,
     tagline: preset.name,
     primaryColor: preset.primaryColor,

@@ -282,7 +282,9 @@ class LeadStoreState {
       skipTraceStatus: lead.skipTraceStatus || 'Not Traced',
       skipTraceData: lead.skipTraceData,
       outreachStatus: lead.outreachStatus || 'Uncontacted',
-      websiteConfig: lead.websiteConfig || getDefaultWebsiteConfig(fullName, prof, city, state, school),
+      websiteConfig:
+        lead.websiteConfig ||
+        getDefaultWebsiteConfig({ fullName, profession: prof, city, state, collegeOrSchool: school }),
       websiteAudit: lead.websiteAudit,
       outreachLogs: lead.outreachLogs || [],
       estimatedDealValue: lead.estimatedDealValue || profMeta.averageWebsiteValue || 1650,
@@ -390,13 +392,7 @@ class LeadStoreState {
               l.websiteConfig.previewSlug.startsWith('finra-') ||
               l.websiteConfig.previewSlug.startsWith('nppes-')
             ) {
-              l.websiteConfig = getDefaultWebsiteConfig(
-                l.fullName,
-                l.profession,
-                l.city,
-                l.state,
-                l.collegeOrSchool
-              );
+              l.websiteConfig = getDefaultWebsiteConfig(l);
             }
             return l;
           })
@@ -575,7 +571,7 @@ class LeadStoreState {
         enrichmentNotes: `Google Places Verified (Rating: ${place.rating} stars across ${place.userRatingsTotal} reviews)`,
       } : undefined),
       outreachStatus: 'Uncontacted',
-      websiteConfig: place.websiteConfig || getDefaultWebsiteConfig(place.fullName, place.profession, place.city, place.state, place.collegeOrSchool),
+      websiteConfig: place.websiteConfig || getDefaultWebsiteConfig(place),
       websiteAudit: place.hasWebsite ? {
         hasWebsite: true,
         existingUrl: place.website,
@@ -643,7 +639,7 @@ class LeadStoreState {
           skipTraceStatus: place.skipTraceStatus,
           skipTraceData: placeSkip,
           outreachStatus: 'Uncontacted',
-          websiteConfig: place.websiteConfig || getDefaultWebsiteConfig(place.fullName, place.profession, place.city, place.state, place.collegeOrSchool),
+          websiteConfig: place.websiteConfig || getDefaultWebsiteConfig(place),
           websiteAudit: {
             hasWebsite: place.hasWebsite,
             existingUrl: place.website || null,
@@ -848,13 +844,13 @@ class LeadStoreState {
       return lead.websiteConfig;
     }
 
-    const config = getDefaultWebsiteConfig(
-      lead?.fullName || 'Professional',
-      lead?.profession || 'real_estate',
-      lead?.city || 'City',
-      lead?.state || 'CA',
-      lead?.collegeOrSchool || 'Board'
-    );
+    const config = getDefaultWebsiteConfig({
+      fullName: lead?.fullName || 'Professional',
+      profession: lead?.profession || 'real_estate',
+      city: lead?.city || 'City',
+      state: lead?.state || 'CA',
+      collegeOrSchool: lead?.collegeOrSchool || 'Board',
+    });
     this.updateLead(id, { websiteConfig: config, outreachStatus: lead?.outreachStatus === 'Uncontacted' ? 'Site Built' : (lead?.outreachStatus || 'Site Built') });
     return config;
   }
@@ -1084,13 +1080,7 @@ class LeadStoreState {
       outreachLogs: [],
     };
 
-    newLead.websiteConfig = getDefaultWebsiteConfig(
-      newLead.fullName,
-      newLead.profession,
-      newLead.city,
-      newLead.state,
-      newLead.collegeOrSchool
-    );
+    newLead.websiteConfig = getDefaultWebsiteConfig(newLead);
 
     await this.addLead(newLead);
 

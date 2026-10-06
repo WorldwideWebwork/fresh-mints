@@ -89,26 +89,20 @@
     if (activeLead?.websiteConfig) {
       baseConfig = activeLead.websiteConfig;
     } else if (activeLead) {
-      baseConfig = getDefaultWebsiteConfig(
-        activeLead.fullName,
-        activeLead.profession,
-        activeLead.city,
-        activeLead.state,
-        activeLead.collegeOrSchool
-      );
+      baseConfig = getDefaultWebsiteConfig(activeLead);
     } else {
       const cleanSlug = slug.replace(/-official$/i, '').replace(/[-_]+/g, ' ').trim();
       const formattedName = cleanSlug
         ? cleanSlug.split(' ').map((w) => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')
         : 'Professional Practice Specialist';
 
-      baseConfig = getDefaultWebsiteConfig(
-        formattedName,
-        'financial_advisor',
-        'Phoenix',
-        'AZ',
-        'Accredited Graduate Academy'
-      );
+      baseConfig = getDefaultWebsiteConfig({
+        fullName: formattedName,
+        profession: 'financial_advisor',
+        city: 'Phoenix',
+        state: 'AZ',
+        collegeOrSchool: 'Accredited Graduate Academy',
+      });
     }
 
     return {
