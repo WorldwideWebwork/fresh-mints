@@ -517,6 +517,11 @@ Only after Tasks 1–5 are merged. Nothing here is reachable: no `react`/`next` 
 - [ ] **Step 1: Prove the trees are disjoint before deleting**
 
 ```bash
+# NOTE: a bare grep is UNUSABLE here. types/, services/, lib/ and components/ exist as
+# directory names in BOTH trees, so this pattern returns ~35 false positives that are all
+# legitimate imports inside src/lib/. Resolve each specifier to the path it actually lands on
+# and assert none escapes src/, then prove the check works by injecting a deliberately
+# escaping import and confirming it is flagged.
 grep -rn "from '\.\./\(components\|services\|types\|hooks\|lib\)\|from '@/\(components\|services\|hooks\|lib\)" src/ ; echo "exit=$?"
 ```
 Expected: no matches (`exit=1`). `src/` must not import from the Next tree. **If anything matches, stop** and port that import before continuing.
