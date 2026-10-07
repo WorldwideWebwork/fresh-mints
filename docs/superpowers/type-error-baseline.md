@@ -6,7 +6,16 @@
 
 **svelte-check version**: 4.7.6
 
-**Summary**: `pnpm check` reports 27 errors and 24 warnings in 14 files.
+**Summary**: `pnpm check` reports 31 errors and 24 warnings in 8 files.
+
+**Correction (2026-10-07)**: this document originally recorded 27 errors. The measured
+count is 31. The four unrecorded errors are all lucide-svelte icon typing in
+AnalyticsView.svelte (lines 34, 42, 50, 58), of the form "Type 'typeof DollarSign' is not
+assignable to type 'Component<...>'". They are type-only and have no runtime effect.
+Neither AnalyticsView.svelte nor StatCard.svelte was edited by the consolidation plan; the
+errors surfaced when adding vitest re-resolved workspace peer dependencies, moving the vite
+snapshot's @types/node from 25.9.8 to 22.20.4. Tasks 1 through 6 each reported 27 before and
+after, which tracked this document rather than a fresh measurement.
 
 **Root cause**: `svelte-check` requires a separate `svelte.config.js` file to understand Svelte compiler configuration. Before creating it, every file reported "No Svelte configuration found in vite config" (42 copies of the error), masking 27 real type errors beneath the noise.
 
