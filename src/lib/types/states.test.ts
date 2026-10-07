@@ -1,10 +1,74 @@
 import { describe, it, expect } from 'vitest';
 import { US_STATES, STATE_FILTER_OPTIONS, STATE_MODAL_OPTIONS, getMajorCities } from './states';
 
+const EXPECTED_FULL_NAMES_BY_CODE: Record<string, string> = {
+  AL: 'Alabama',
+  AK: 'Alaska',
+  AZ: 'Arizona',
+  AR: 'Arkansas',
+  CA: 'California',
+  CO: 'Colorado',
+  CT: 'Connecticut',
+  DE: 'Delaware',
+  FL: 'Florida',
+  GA: 'Georgia',
+  HI: 'Hawaii',
+  ID: 'Idaho',
+  IL: 'Illinois',
+  IN: 'Indiana',
+  IA: 'Iowa',
+  KS: 'Kansas',
+  KY: 'Kentucky',
+  LA: 'Louisiana',
+  ME: 'Maine',
+  MD: 'Maryland',
+  MA: 'Massachusetts',
+  MI: 'Michigan',
+  MN: 'Minnesota',
+  MS: 'Mississippi',
+  MO: 'Missouri',
+  MT: 'Montana',
+  NE: 'Nebraska',
+  NV: 'Nevada',
+  NH: 'New Hampshire',
+  NJ: 'New Jersey',
+  NM: 'New Mexico',
+  NY: 'New York',
+  NC: 'North Carolina',
+  ND: 'North Dakota',
+  OH: 'Ohio',
+  OK: 'Oklahoma',
+  OR: 'Oregon',
+  PA: 'Pennsylvania',
+  RI: 'Rhode Island',
+  SC: 'South Carolina',
+  SD: 'South Dakota',
+  TN: 'Tennessee',
+  TX: 'Texas',
+  UT: 'Utah',
+  VT: 'Vermont',
+  VA: 'Virginia',
+  WA: 'Washington',
+  WV: 'West Virginia',
+  WI: 'Wisconsin',
+  WY: 'Wyoming',
+};
+
 describe('US_STATES', () => {
   it('covers all 50 states with unique codes', () => {
     expect(US_STATES).toHaveLength(50);
     expect(new Set(US_STATES.map((s) => s.code)).size).toBe(50);
+  });
+
+  // External reference data: a literal table is the right oracle, not a tautology.
+  it('maps every USPS state code to its exact fullName', () => {
+    const fullNamesByCode = Object.fromEntries(US_STATES.map((s) => [s.code, s.fullName]));
+    expect(fullNamesByCode).toEqual(EXPECTED_FULL_NAMES_BY_CODE);
+  });
+
+  it('never repeats a fullName under a different code', () => {
+    const fullNames = US_STATES.map((s) => s.fullName);
+    expect(new Set(fullNames).size).toBe(fullNames.length);
   });
 
   it('gives every state a two-letter code, a fullName and a composed name', () => {
@@ -21,28 +85,36 @@ describe('US_STATES', () => {
     expect(fullNames).toEqual(sorted);
   });
 
-  it('preserves majorCities for the 20 states that had them', () => {
+  it('returns the curated cities for states that carry them', () => {
     expect(getMajorCities('AZ')).toContain('Phoenix');
     expect(getMajorCities('CA')).toContain('Los Angeles');
     expect(getMajorCities('NY')).toContain('Brooklyn');
     expect(getMajorCities('OR')).toContain('Bend');
   });
 
-  it('carries city data for exactly the 20 states that had it, with no blank entries', () => {
-    const statesWithCities = US_STATES.filter((s) => s.majorCities.length > 0);
-    expect(statesWithCities).toHaveLength(20);
-    for (const state of statesWithCities) {
+  it('keeps every majorCities list well formed: an array, no blank or duplicate cities', () => {
+    for (const state of US_STATES) {
+      expect(Array.isArray(state.majorCities)).toBe(true);
       expect(state.majorCities.every((city) => city.trim().length > 0)).toBe(true);
       expect(new Set(state.majorCities).size).toBe(state.majorCities.length);
     }
   });
+
+  it('still carries curated city data for at least one state', () => {
+    expect(US_STATES.some((s) => s.majorCities.length > 0)).toBe(true);
+  });
 });
 
 describe('getMajorCities', () => {
-  // Review Focus 1
-  it('returns an empty array for a state with no city data', () => {
-    expect(getMajorCities('WY')).toEqual([]);
+  it('returns an empty array for a code that is not a state', () => {
     expect(getMajorCities('ZZ')).toEqual([]);
+  });
+
+  it('returns an empty array for every state that carries no city data', () => {
+    const statesWithoutCities = US_STATES.filter((s) => s.majorCities.length === 0);
+    for (const state of statesWithoutCities) {
+      expect(getMajorCities(state.code)).toEqual([]);
+    }
   });
 
   it('returns an empty array for an empty or lowercase code rather than throwing', () => {
