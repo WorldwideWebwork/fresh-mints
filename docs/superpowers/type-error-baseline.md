@@ -1,8 +1,14 @@
 # Type Error Baseline
 
-Recorded after fixing `vite.config.ts` and creating `svelte.config.js` to enable `svelte-check` to load the Vite configuration.
+**Recorded**: 2026-10-05
+
+**Reproduction command**: `pnpm --filter xophz-compass-fresh-mints check`
+
+**svelte-check version**: 4.7.6
 
 **Summary**: `pnpm check` reports 27 errors and 24 warnings in 14 files.
+
+**Root cause**: `svelte-check` requires a separate `svelte.config.js` file to understand Svelte compiler configuration. Before creating it, every file reported "No Svelte configuration found in vite config" (42 copies of the error), masking 27 real type errors beneath the noise.
 
 ## Errors by Root Cause
 
@@ -104,8 +110,7 @@ The following three errors will cause runtime crashes or wrong rendering if not 
 
 ---
 
-## Test Coverage
+## Recommendations for Later Tasks
 
-Later tasks should track that:
-- No *new* errors are introduced beyond this baseline of 27
-- The three runtime-crash class issues above are fixed before Task 1 completes
+- Track that no *new* errors are introduced beyond this baseline of 27
+- Consider prioritizing the three runtime-crash class issues above (PracticeWebsiteTemplate, ContactBadgeList, AuthLoginView) as they will fail at runtime, while other issues are strictness violations
