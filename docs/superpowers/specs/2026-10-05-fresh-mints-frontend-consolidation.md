@@ -177,6 +177,34 @@ file needs all 50 states × `fullName` × `majorCities`, plus `STATE_MODAL_OPTIO
 - **§1.A Hard Line Limits** — `lead-store.svelte.ts` is 1,113 lines and
   `class-freshmints-api.php` is 2,327 lines. Flagged; out of scope for this consolidation.
 
+### 4.4 Correction: the nursing and beauty price is a live cross-repository reconciliation
+
+§4.1 and §6 frame the `nursing` / `beauty` question as a choice between two constants: the live
+Svelte values (`bronze`, \$1,650) and the Next tree's values (`quantum`, \$1,250). The reasoning
+was that the Next tree never compiled, so its values were never exercised. That premise is
+wrong. **A third copy of the table is live in PHP, in a different repository, and it carries the
+\$1,250 figure:**
+
+| Location | `nursing` | `beauty` |
+|---|---|---|
+| `wp-content/plugins/xophz-compass-fresh-mints/includes/class-freshmints-api.php`, `get_estimated_deal_value()` (about line 1663) | 1250 | 1250 |
+| Svelte `src/lib/types/profession.ts` (`PROFESSION_CONFIGS`) | 1650 | 1650 |
+
+`get_estimated_deal_value()` stamps `estimatedDealValue` onto every lead the server produces from
+Places and registry searches. The consequence today, with no change to either tree:
+
+- A `nursing` or `beauty` lead created by the server carries 1250.
+- The same lead typed into the Add Lead modal carries 1650, taken from `PROFESSION_CONFIGS`.
+- The valuation explainer shows the server-sourced lead a "Differs from package" notice, because
+  1250 does not match the \$1,650 `bronze` package price.
+
+So this is not a choice between one live constant and one dead constant. It is a reconciliation
+across two repositories (this app and the `xophz-compass-fresh-mints` plugin), and whichever
+value is chosen must be applied in both places. For the other eleven professions the PHP table
+and `PROFESSION_CONFIGS` already agree (verified 2026-10-07); `nursing` and `beauty` are the only
+mismatches. The price itself remains the owner's decision; this document does not select one, and
+the PHP file was not edited.
+
 ---
 
 ## 5. Stray and stale artifacts
@@ -203,3 +231,5 @@ Next scaffolding.
 for `nursing` and `beauty`, is the correct pricing `quantum` / \$1,250 or `bronze` / \$1,650?
 The code cannot answer this; it is a business-data call. Everything else in the plan proceeds
 independently.
+See §4.4: the \$1,250 figure is not dead, it is live in the PHP plugin, so the answer must be
+applied in both repositories.

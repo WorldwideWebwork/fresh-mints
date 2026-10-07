@@ -1,5 +1,11 @@
 <script lang="ts">
-  import { type Lead, type OutreachStatus, OUTREACH_STAGES, PROFESSION_CONFIGS } from '../../types/lead';
+  import {
+    type Lead,
+    type OutreachStatus,
+    OUTREACH_STAGES,
+    PROFESSION_CONFIGS,
+    getProfessionConfig,
+  } from '../../types/lead';
   import { leadStore } from '../../stores/lead-store.svelte';
   import { toast } from '../../stores/toast.svelte';
   import { CRMExportService } from '../../services/crm-export-service';
@@ -58,6 +64,10 @@
 
   const profMeta = $derived(
     lead ? PROFESSION_CONFIGS[lead.profession] || PROFESSION_CONFIGS.real_estate : null
+  );
+
+  const dealValue = $derived(
+    lead ? lead.estimatedDealValue || getProfessionConfig(lead.profession).averageWebsiteValue : 0
   );
 
   const currentIdx = $derived(
@@ -150,7 +160,7 @@
     if (targetStage === 'Client Won') {
       toast.success(
         '🏆 Deal Closed Won!',
-        `$300.00 cash bounty locked for ${lead.fullName} ($${(lead.estimatedDealValue || 1650).toLocaleString()})`
+        `$300.00 cash bounty locked for ${lead.fullName} ($${dealValue.toLocaleString()})`
       );
     } else {
       toast.success('Pipeline Stage Updated', `${lead.fullName} moved to ${targetStage}`);
@@ -319,7 +329,7 @@
             <span>{lead.collegeOrSchool}</span>
             <span>&bull;</span>
             <span class="text-emerald-600 dark:text-emerald-400 font-bold font-mono">
-              ${(lead.estimatedDealValue || 1650).toLocaleString()} 2-Yr Package
+              ${dealValue.toLocaleString()} 2-Yr Package
             </span>
             <Button
               variant="ghost"
