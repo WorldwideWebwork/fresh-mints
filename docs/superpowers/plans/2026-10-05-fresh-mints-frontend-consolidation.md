@@ -134,7 +134,7 @@ The two `states.ts` files have incompatible shapes and each holds data the other
 - Produces:
   ```typescript
   export interface USState { code: string; name: string; fullName: string; majorCities: string[] }
-  export const US_STATES: USState[]            // all 50, ordered alphabetically by code
+  export const US_STATES: USState[]            // all 50, ordered alphabetically by fullName (consumers label by fullName)
   export const STATE_FILTER_OPTIONS: { value: string; label: string }[]  // 'all' + 50
   export const STATE_MODAL_OPTIONS: { value: string; label: string }[]   // 50, no 'all'
   export function getMajorCities(code: string): string[]
