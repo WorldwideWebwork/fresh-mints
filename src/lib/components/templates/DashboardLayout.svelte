@@ -5,6 +5,7 @@
   import { authStore } from "../../stores/auth-store.svelte";
   import Button from "../atoms/Button.svelte";
   import Badge from "../atoms/Badge.svelte";
+  import AddLeadModal from "../organisms/AddLeadModal.svelte";
   import {
     Sparkles,
     Database,
@@ -15,6 +16,7 @@
     Server,
     BarChart3,
     Upload,
+    UserPlus,
     Plus,
     Settings,
     Layers,
@@ -39,6 +41,8 @@
   }
 
   let { children, onopenmodal, onopenconfirmclear }: Props = $props();
+
+  let isAddLeadOpen = $state(false);
 
   const appVersion =
     (typeof window !== "undefined" && (window as any).wpApiSettings?.version) || "1.0.0";
@@ -405,6 +409,16 @@
           <!-- Action Tools -->
           <div class="flex items-center gap-2">
             <Button
+              variant="primary"
+              size="sm"
+              onclick={() => (isAddLeadOpen = true)}
+              class="hidden sm:inline-flex gap-1.5 text-xs"
+            >
+              <UserPlus class="w-3.5 h-3.5" />
+              <span>Add Lead</span>
+            </Button>
+
+            <Button
               variant="outline"
               size="sm"
               onclick={() => onopenmodal?.("import_csv")}
@@ -749,3 +763,5 @@
     </button>
   </nav>
 </div>
+
+<AddLeadModal bind:open={isAddLeadOpen} />
