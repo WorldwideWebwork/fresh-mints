@@ -11,6 +11,7 @@
   import Badge from '../atoms/Badge.svelte';
   import StatusIndicator from '../atoms/StatusIndicator.svelte';
   import IndustryBadge from '../atoms/IndustryBadge.svelte';
+  import ValuationExplainerModal from './ValuationExplainerModal.svelte';
   import {
     User,
     MapPin,
@@ -53,6 +54,7 @@
   let isSyncingBombBag = $state(false);
   let isTracing = $state(false);
   let notesInput = $state('');
+  let isValuationOpen = $state(false);
 
   const profMeta = $derived(
     lead ? PROFESSION_CONFIGS[lead.profession] || PROFESSION_CONFIGS.real_estate : null
@@ -319,6 +321,14 @@
             <span class="text-emerald-600 dark:text-emerald-400 font-bold font-mono">
               ${(lead.estimatedDealValue || 1650).toLocaleString()} 2-Yr Package
             </span>
+            <Button
+              variant="ghost"
+              size="sm"
+              onclick={() => (isValuationOpen = true)}
+              class="text-[11px] px-1.5 py-0.5"
+            >
+              Why this value?
+            </Button>
           </div>
         </div>
 
@@ -885,3 +895,5 @@
     </div>
   {/if}
 </Dialog>
+
+<ValuationExplainerModal bind:open={isValuationOpen} {lead} />
