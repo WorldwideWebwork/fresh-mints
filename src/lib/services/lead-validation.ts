@@ -15,7 +15,7 @@ const clean = (value: unknown): string => (typeof value === 'string' ? value.tri
 
 const toLicenseKey = (licenseNumber: string | undefined): string => clean(licenseNumber).toUpperCase();
 
-const isPositiveNumber = (value: unknown): value is number =>
+export const isPositiveNumber = (value: unknown): value is number =>
   typeof value === 'number' && Number.isFinite(value) && value > 0;
 
 const isKnownProfession = (key: string): boolean => Object.hasOwn(PROFESSION_CONFIGS, key);
