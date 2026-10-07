@@ -31,8 +31,10 @@ const isRealIsoDate = (value: string): boolean => {
   return isParseable && parsed.toISOString().startsWith(value);
 };
 
-const isDuplicateLicense = (licenseKey: string, existing: Lead[]): boolean =>
-  existing.some((lead) => toLicenseKey(lead.licenseNumber) === licenseKey);
+// Global on purpose, not scoped to a state: CSV import and Places search also
+// dedupe on licenseNumber alone, so manual entry follows the same rule.
+const findLeadByLicense = (licenseKey: string, existing: Lead[]): Lead | undefined =>
+  existing.find((lead) => toLicenseKey(lead.licenseNumber) === licenseKey);
 
 // Each check returns an error message, or undefined when the value is acceptable.
 const checkFullName = (fullName: string): string | undefined =>
@@ -52,10 +54,12 @@ const checkState = (state: string): string | undefined => {
 
 const checkLicenseNumber = (licenseNumber: string, existing: Lead[]): string | undefined => {
   if (!licenseNumber) return 'License number is required.';
-  if (isDuplicateLicense(toLicenseKey(licenseNumber), existing)) {
-    return 'A lead with this license number already exists.';
-  }
-  return undefined;
+  const clashingLead = findLeadByLicense(toLicenseKey(licenseNumber), existing);
+  if (!clashingLead) return undefined;
+
+  const clashingName = clean(clashingLead.fullName);
+  const baseMessage = 'A lead with this license number already exists';
+  return clashingName ? `${baseMessage}: ${clashingName}.` : `${baseMessage}.`;
 };
 
 const checkIssueDate = (issueDate: string): string | undefined => {

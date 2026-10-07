@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import type { Lead } from '../types/lead';
 import { getProfessionConfig } from '../types/profession';
+import { US_STATES } from '../types/states';
 import { validateNewLead } from './lead-validation';
 
 const valid = { fullName: 'Jane Doe', profession: 'nursing', state: 'CA', city: 'Fresno', licenseNumber: 'RN-99001' } as const;
@@ -69,11 +70,14 @@ describe('validateNewLead', () => {
       if (res.ok) expect(res.lead.estimatedDealValue).toBe(9000);
     });
 
-    it('replaces a non-positive deal value with the profession default', () => {
-      const res = validateNewLead({ ...valid, estimatedDealValue: 0 }, []);
-      expect(res.ok).toBe(true);
-      if (res.ok) expect(res.lead.estimatedDealValue).toBe(getProfessionConfig('nursing').averageWebsiteValue);
-    });
+    it.each([0, -50, NaN, Infinity, -Infinity])(
+      'replaces the unusable deal value %s with the profession default',
+      (estimatedDealValue) => {
+        const res = validateNewLead({ ...valid, estimatedDealValue }, []);
+        expect(res.ok).toBe(true);
+        if (res.ok) expect(res.lead.estimatedDealValue).toBe(getProfessionConfig('nursing').averageWebsiteValue);
+      },
+    );
   });
 
   describe('state', () => {
@@ -83,9 +87,10 @@ describe('validateNewLead', () => {
       if (res.ok) expect(res.lead.state).toBe('CA');
     });
 
-    it('accepts every state code in the canonical list, not just California', () => {
-      const res = validateNewLead({ ...valid, state: 'WY' }, []);
+    it.each(US_STATES.map((s) => s.code))('accepts the canonical state code %s', (code) => {
+      const res = validateNewLead({ ...valid, state: code }, []);
       expect(res.ok).toBe(true);
+      if (res.ok) expect(res.lead.state).toBe(code);
     });
   });
 
@@ -93,6 +98,29 @@ describe('validateNewLead', () => {
     it('ignores case and surrounding whitespace when comparing', () => {
       const existing = leadsWith([{ licenseNumber: ' rn-99001 ' }]);
       const res = validateNewLead({ ...valid }, existing);
+      expect(res.ok).toBe(false);
+      if (!res.ok) expect(res.errors.licenseNumber).toMatch(/already/i);
+    });
+
+    it('names the clashing lead so the user can find it', () => {
+      const existing = leadsWith([{ licenseNumber: 'RN-99001', fullName: 'Pat Example' }]);
+      const res = validateNewLead({ ...valid }, existing);
+      expect(res.ok).toBe(false);
+      if (!res.ok) expect(res.errors.licenseNumber).toContain('Pat Example');
+    });
+
+    it('still reports the clash when the clashing lead has no name', () => {
+      const existing = leadsWith([{ licenseNumber: 'RN-99001' }]);
+      const res = validateNewLead({ ...valid }, existing);
+      expect(res.ok).toBe(false);
+      if (!res.ok) expect(res.errors.licenseNumber).toMatch(/already exists\.$/);
+    });
+
+    // Deliberate: the license check is global, not scoped to a state. CSV import
+    // and the Places search dedupe on licenseNumber alone, so manual entry matches.
+    it('treats the same licenseNumber in a different state as a duplicate', () => {
+      const existing = leadsWith([{ licenseNumber: 'RN-99001', state: 'TX' }]);
+      const res = validateNewLead({ ...valid, state: 'CA' }, existing);
       expect(res.ok).toBe(false);
       if (!res.ok) expect(res.errors.licenseNumber).toMatch(/already/i);
     });
@@ -146,6 +174,12 @@ describe('validateNewLead', () => {
         expect(res.lead.city).toBe('Fresno');
         expect(res.lead.licenseNumber).toBe('RN-99001');
       }
+    });
+
+    it('keeps a trimmed collegeOrSchool when one is given', () => {
+      const res = validateNewLead({ ...valid, collegeOrSchool: '  Fresno State School of Nursing ' }, []);
+      expect(res.ok).toBe(true);
+      if (res.ok) expect(res.lead.collegeOrSchool).toBe('Fresno State School of Nursing');
     });
 
     it('leaves blank optional fields out rather than inventing values for them', () => {
