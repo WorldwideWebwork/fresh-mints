@@ -47,7 +47,10 @@
   });
 
   const validation = $derived(validateNewLead(toLeadInput(), leadStore.leads));
-  const visibleErrors = $derived(hasAttemptedSubmit && !validation.ok ? validation.errors : {});
+  // addLead prepends the new lead before its save resolves, so mid-save the live
+  // validation would flag the form's own license number as a duplicate.
+  const shouldShowErrors = $derived(hasAttemptedSubmit && !isSaving);
+  const visibleErrors = $derived(shouldShowErrors && !validation.ok ? validation.errors : {});
 
   const cityChoices = $derived(getMajorCities(form.state).map((city) => ({ value: city, label: city })));
   const hasCuratedCities = $derived(cityChoices.length > 0);
