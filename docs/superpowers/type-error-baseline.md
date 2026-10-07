@@ -6,7 +6,11 @@
 
 **svelte-check version**: 4.7.6
 
-**Summary**: `pnpm check` reports 31 errors and 24 warnings in 8 files.
+**Summary**: `pnpm check` reports 31 errors across 8 files, plus 24 warnings.
+
+Note the two different file counts, which are easy to conflate. 8 is the number of files
+carrying at least one ERROR. svelte-check's own FILES_WITH_PROBLEMS figure is 15, because it
+also counts files that carry only warnings.
 
 **Correction (2026-10-07)**: this document originally recorded 27 errors. The measured
 count is 31. The four unrecorded errors are all lucide-svelte icon typing in
@@ -14,10 +18,16 @@ AnalyticsView.svelte (lines 34, 42, 50, 58), of the form "Type 'typeof DollarSig
 assignable to type 'Component<...>'". They are type-only and have no runtime effect.
 Neither AnalyticsView.svelte nor StatCard.svelte was edited by the consolidation plan; the
 errors surfaced when adding vitest re-resolved workspace peer dependencies, moving the vite
-snapshot's @types/node from 25.9.8 to 22.20.4. Tasks 1 through 6 each reported 27 before and
-after, which tracked this document rather than a fresh measurement.
+snapshot's @types/node from 25.9.8 to 22.20.4. That dependency movement is consistent with an
+environment cause but is NOT demonstrated: no revert experiment was run, and nothing directly
+links that resolution change to lucide-svelte's Component typing. What is established is that
+the plan did not edit either file, and that commit 92954af also measures 31 under the current
+node_modules.
 
-**Root cause**: `svelte-check` requires a separate `svelte.config.js` file to understand Svelte compiler configuration. Before creating it, every file reported "No Svelte configuration found in vite config" (42 copies of the error), masking 27 real type errors beneath the noise.
+Tasks 1 through 6 each reported 27 before and after, which tracked this document rather than a
+fresh measurement.
+
+**Root cause**: `svelte-check` requires a separate `svelte.config.js` file to understand Svelte compiler configuration. Before creating it, every file reported "No Svelte configuration found in vite config" (42 copies of the error), masking 31 real type errors beneath the noise.
 
 ## Errors by Root Cause
 
@@ -109,6 +119,22 @@ Calls to `currentTheme` and `toggleTheme` on `ThemeStore`, neither of which exis
 
 ---
 
+### 8. AnalyticsView.svelte: lucide-svelte icon typing (4 errors)
+
+Lucide icon components passed to `StatCard` do not satisfy the Svelte 5 `Component` type.
+Type-only, with no runtime effect: the icons render correctly.
+
+This section was missing from the original baseline, which is why it recorded 27 instead of 31.
+
+**Fix**: widen the `StatCard` icon prop to the type lucide-svelte actually exports, rather than
+casting at each call site.
+
+**Error messages**:
+- "Type 'typeof DollarSign' is not assignable to type 'Component<{ class?: string | undefined; }, {}, string>'" (line 34)
+- Same shape for `Award` (line 42), `Send` (line 50) and `TrendingUp` (line 58)
+
+---
+
 ## Runtime-Crash Class Issues
 
 The following three errors will cause runtime crashes or wrong rendering if not fixed:
@@ -121,5 +147,5 @@ The following three errors will cause runtime crashes or wrong rendering if not 
 
 ## Recommendations for Later Tasks
 
-- Track that no *new* errors are introduced beyond this baseline of 27
+- Track that no *new* errors are introduced beyond this baseline of 31
 - Consider prioritizing the three runtime-crash class issues above (PracticeWebsiteTemplate, ContactBadgeList, AuthLoginView) as they will fail at runtime, while other issues are strictness violations
