@@ -7,7 +7,8 @@
     "dev": "vite --port 8091 --host 0.0.0.0",
     "build": "vite build",
     "preview": "vite preview",
-    "check": "svelte-check --tsconfig ./tsconfig.json"
+    "check": "svelte-check --tsconfig ./tsconfig.json",
+    "test": "vitest"
   },
   "dependencies": {
     "@google/genai": "^2.4.0",
@@ -27,6 +28,7 @@
     "autoprefixer": "^10.4.21",
     "postcss": "^8.5.3",
     "svelte-check": "^4.1.4",
-    "typescript": "~5.8.2"
+    "typescript": "~5.8.2",
+    "vitest": "^4.1.11"
   }
 }

@@ -8,7 +8,7 @@
   import IndustryIcon from '../atoms/IndustryIcon.svelte';
   import { Search, Sparkles, Filter, RefreshCw, X, Layers } from 'lucide-svelte';
 
-  import { STATE_DROPDOWN_OPTIONS } from '../../types/states';
+  import { STATE_FILTER_OPTIONS } from '../../types/states';
 
   let isSearchingRegistry = $state(false);
 
@@ -20,7 +20,7 @@
     })),
   ];
 
-  const stateOptions = STATE_DROPDOWN_OPTIONS;
+  const stateOptions = STATE_FILTER_OPTIONS;
 
   const outreachOptions = [
     { value: 'all', label: 'All Pipeline Stages' },
