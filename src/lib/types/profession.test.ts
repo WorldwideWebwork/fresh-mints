@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { PROFESSION_CONFIGS, getProfessionConfig } from './profession';
+import { PROFESSION_CONFIGS, getProfessionConfig, getLeadDealValue } from './profession';
 import { W4_HOSTING_PLANS } from './hosting';
 import type { ProfessionCategory } from './profession';
 
@@ -48,5 +48,32 @@ describe('getProfessionConfig', () => {
 
   it('is case sensitive, so a differently cased key falls back', () => {
     expect(getProfessionConfig('Nursing')).toBe(PROFESSION_CONFIGS.real_estate);
+  });
+});
+
+describe('getLeadDealValue', () => {
+  it('contributes 2650 and not 1650 for a dental lead with no deal value', () => {
+    const dentalLead = { profession: 'dental' };
+    expect(getLeadDealValue(dentalLead)).toBe(2650);
+  });
+
+  it('contributes 3950 for a legal lead with no deal value', () => {
+    const legalLead = { profession: 'legal' };
+    expect(getLeadDealValue(legalLead)).toBe(3950);
+  });
+
+  it('preserves an explicit positive deal value over profession config', () => {
+    const customLead = { profession: 'dental', estimatedDealValue: 5000 };
+    expect(getLeadDealValue(customLead)).toBe(5000);
+  });
+
+  it('falls back to real_estate averageWebsiteValue (1650) for unknown profession', () => {
+    const unknownLead = { profession: 'unknown_trade' };
+    expect(getLeadDealValue(unknownLead)).toBe(1650);
+  });
+
+  it('falls back to real_estate averageWebsiteValue (1650) when lead is null or empty', () => {
+    expect(getLeadDealValue(null)).toBe(1650);
+    expect(getLeadDealValue({})).toBe(1650);
   });
 });

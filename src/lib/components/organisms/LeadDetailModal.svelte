@@ -5,6 +5,7 @@
     OUTREACH_STAGES,
     PROFESSION_CONFIGS,
     getProfessionConfig,
+    getLeadDealValue,
   } from '../../types/lead';
   import { leadStore } from '../../stores/lead-store.svelte';
   import { toast } from '../../stores/toast.svelte';
@@ -67,7 +68,7 @@
   );
 
   const dealValue = $derived(
-    lead ? lead.estimatedDealValue || getProfessionConfig(lead.profession).averageWebsiteValue : 0
+    lead ? getLeadDealValue(lead) : 0
   );
 
   const currentIdx = $derived(

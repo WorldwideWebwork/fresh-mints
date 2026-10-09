@@ -6,6 +6,7 @@
     PROFESSION_CONFIGS,
     W4_HOSTING_PLANS,
   } from '../../types/lead';
+  import { getLeadDealValue } from '../../types/profession';
   import { leadStore } from '../../stores/lead-store.svelte';
   import { toast } from '../../stores/toast.svelte';
   import { generateColdCallScript, type ColdCallScriptData } from '../../services/outreach-generator';
@@ -339,7 +340,7 @@
         </div>
       </div>
       <div class="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-white font-mono">
-        ${activeQueue.reduce((sum, l) => sum + (l.estimatedDealValue || 1650), 0).toLocaleString()}
+        ${activeQueue.reduce((sum, l) => sum + getLeadDealValue(l), 0).toLocaleString()}
       </div>
       <div class="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
         ${(activeQueue.length * 300).toLocaleString()} Rep Bounty Pool

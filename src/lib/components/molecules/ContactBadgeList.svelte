@@ -1,7 +1,7 @@
 <script lang="ts">
   import type { SkipTraceResult } from "../../types/lead";
   import Badge from "../atoms/Badge.svelte";
-  import { Phone, Mail, ExternalLink, MapPin } from "lucide-svelte";
+  import { Phone, Mail, ExternalLink, MapPin, Globe } from "lucide-svelte";
 
   interface Props {
     data?: SkipTraceResult;

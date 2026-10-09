@@ -4,7 +4,7 @@ import type { LeadSource, SocialLeadContext } from './social';
 // Domain capsules split out of this file. Re-exported so existing imports of
 // '$lib/types/lead' (or its relative equivalents) keep resolving unchanged.
 export type { ProfessionCategory, ProfessionMetadata } from './profession';
-export { PROFESSION_CONFIGS, getProfessionConfig } from './profession';
+export { PROFESSION_CONFIGS, getProfessionConfig, getLeadDealValue } from './profession';
 export type { W4HostingTier, W4HostingPlan, GlobalPlanInclusion, MarketPriceComparison } from './hosting';
 export {
   W4_HOSTING_PLANS,

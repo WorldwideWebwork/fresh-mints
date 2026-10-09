@@ -11,6 +11,7 @@ import {
   type GooglePlacesSearchParams,
   type GooglePlacesSearchResponse,
 } from '../types/lead';
+import { getLeadDealValue } from '../types/profession';
 import { CRMExportService } from '../services/crm-export-service';
 import { BombBagService, type BombBagSyncResult } from '../services/bomb-bag-service';
 import { IndexedDBStorage } from '../services/indexeddb-storage';
@@ -186,10 +187,10 @@ class LeadStoreState {
     const pitchesSentCount = this.leads.filter((l) => ['Outreach Sent', 'In Discussion', 'Client Won'].includes(l.outreachStatus)).length;
     const clientsWonCount = this.leads.filter((l) => l.outreachStatus === 'Client Won').length;
 
-    const totalPipelineValue = this.leads.reduce((sum, l) => sum + (l.estimatedDealValue || 1650), 0);
+    const totalPipelineValue = this.leads.reduce((sum, l) => sum + getLeadDealValue(l), 0);
     const wonRevenue = this.leads
       .filter((l) => l.outreachStatus === 'Client Won')
-      .reduce((sum, l) => sum + (l.estimatedDealValue || 1650), 0);
+      .reduce((sum, l) => sum + getLeadDealValue(l), 0);
 
     const conversionRate = pitchesSentCount > 0 ? Math.round((clientsWonCount / pitchesSentCount) * 100) : 0;
 
@@ -260,34 +261,41 @@ class LeadStoreState {
   }
 
   async addLead(lead: Partial<Lead>): Promise<Lead> {
+    const trimmedName = lead.fullName?.trim() || '';
+    if (!trimmedName) {
+      throw new Error('Lead fullName is required');
+    }
+
     const prof = lead.profession || 'real_estate';
     const profMeta = PROFESSION_CONFIGS[prof] || PROFESSION_CONFIGS.real_estate;
-    const fullName = lead.fullName || 'New Practitioner';
-    const city = lead.city || 'Metro Area';
-    const state = lead.state || 'CA';
-    const school = lead.collegeOrSchool || `${state} Licensing Board`;
+    const city = lead.city?.trim() || '';
+    const state = lead.state?.trim() || '';
+    const school = lead.collegeOrSchool?.trim() || '';
+    const licenseNumber = lead.licenseNumber?.trim() || '';
 
     const newLead: Lead = {
       id: lead.id || `lead-${Date.now()}-${Math.random().toString(36).substr(2, 4)}`,
-      fullName,
+      fullName: trimmedName,
       profession: prof,
       professionTitle: lead.professionTitle || profMeta.defaultTitle,
       state,
       city,
-      licenseNumber: lead.licenseNumber || `LIC-${Math.floor(100000 + Math.random() * 900000)}`,
+      licenseNumber,
       issueDate: lead.issueDate || new Date().toISOString().split('T')[0],
       collegeOrSchool: school,
-      graduationYear: lead.graduationYear || 2026,
+      graduationYear: lead.graduationYear || new Date().getFullYear(),
       licenseStatus: lead.licenseStatus || 'Newly Issued',
       skipTraceStatus: lead.skipTraceStatus || 'Not Traced',
       skipTraceData: lead.skipTraceData,
       outreachStatus: lead.outreachStatus || 'Uncontacted',
       websiteConfig:
         lead.websiteConfig ||
-        getDefaultWebsiteConfig({ fullName, profession: prof, city, state, collegeOrSchool: school }),
+        getDefaultWebsiteConfig({ fullName: trimmedName, profession: prof, city, state, collegeOrSchool: school }),
       websiteAudit: lead.websiteAudit,
       outreachLogs: lead.outreachLogs || [],
-      estimatedDealValue: lead.estimatedDealValue || profMeta.averageWebsiteValue || 1650,
+      leadSource: lead.leadSource,
+      socialContext: lead.socialContext,
+      estimatedDealValue: getLeadDealValue(lead),
       notes: lead.notes,
       createdAt: lead.createdAt || new Date().toISOString(),
     };

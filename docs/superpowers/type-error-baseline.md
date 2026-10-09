@@ -59,30 +59,23 @@ Multiple issues:
 
 ---
 
-### 3. AuthLoginView.svelte: Missing ThemeStore methods (2 errors)
+### 3. AuthLoginView.svelte: Missing ThemeStore methods (2 errors) [RESOLVED]
 
-Calls to `currentTheme` and `toggleTheme` on `ThemeStore`, neither of which exist on the store.
+Calls to `currentTheme` and `toggleTheme` on `ThemeStore`, neither of which existed on the store.
 
-**Fix**: Implement missing methods on `ThemeStore` or update the view to use the correct API.
+**Fix**: Updated the view to call `themeStore.toggle()` and evaluate `themeStore.isDark`, aligning with the existing `ThemeStore` API and `DashboardLayout.svelte`.
 
-**Error messages**:
-- "Property 'toggleTheme' does not exist on type 'ThemeStore'" (line 110)
-- "Property 'currentTheme' does not exist on type 'ThemeStore'" (line 114)
-
-**Classification**: Runtime-crash class. This will fail at runtime when the login view tries to call these methods.
+**Status**: Resolved. Cleared 2 type errors.
 
 ---
 
-### 4. ContactBadgeList.svelte: Undefined component reference (1 error)
+### 4. ContactBadgeList.svelte: Undefined component reference (1 error) [RESOLVED]
 
 `Globe` component referenced without import, creating an undefined component at runtime.
 
-**Fix**: Add missing import for `Globe` component.
+**Fix**: Added `Globe` to the `lucide-svelte` icon import list.
 
-**Error message**:
-- "Cannot find name 'Globe'" (line 47)
-
-**Classification**: Runtime-crash class. The component will not render; template will fail with "component is not defined".
+**Status**: Resolved. Cleared 1 type error.
 
 ---
 

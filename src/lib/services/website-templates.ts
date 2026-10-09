@@ -206,15 +206,19 @@ export function getDefaultWebsiteConfig(seed: WebsiteConfigSeed): WebsitePreview
   const cleanSeed = cleanSlug.replace(/-/g, '');
   const profMeta = PROFESSION_CONFIGS[profession] || PROFESSION_CONFIGS.real_estate;
 
+  const locationPhrase = city && state ? `${city}, ${state}` : (city || state || 'your region');
+  const locationDescription = city ? `${city} and surrounding communities` : (state ? `${state} communities` : 'our community');
+  const schoolPhrase = collegeOrSchool ? ` Verified license graduate from ${collegeOrSchool}.` : '';
+
   return {
     templateId: preset.id as any,
     heroHeadline: `${fullName} - Official ${preset.badgeText}`,
-    heroSubheadline: `Providing premier ${profession.replace('_', ' ')} services in ${city}, ${state}. Verified license graduate from ${collegeOrSchool}.`,
-    bioText: `Welcome to the official practice website of ${fullName}. Dedicated to serving clients in ${city} and surrounding communities with unmatched professionalism, transparency, and top-tier expertise.`,
+    heroSubheadline: `Providing premier ${profession.replace('_', ' ')} services in ${locationPhrase}.${schoolPhrase}`,
+    bioText: `Welcome to the official practice website of ${fullName}. Dedicated to serving clients in ${locationDescription} with unmatched professionalism, transparency, and top-tier expertise.`,
     tagline: preset.name,
     primaryColor: preset.primaryColor,
     accentColor: preset.accentColor,
-    offerPrice: profMeta.averageWebsiteValue || 1650,
+    offerPrice: profMeta.averageWebsiteValue,
     previewSlug: cleanSlug,
     callToAction: 'Schedule Free Consultation',
     templateTheme: 'executive_dark',
@@ -226,7 +230,9 @@ export function getDefaultWebsiteConfig(seed: WebsiteConfigSeed): WebsitePreview
       {
         id: '1',
         title: 'Personalized Consultation',
-        description: `1-on-1 strategy session tailored specifically to your goals in ${city}.`,
+        description: city
+          ? `1-on-1 strategy session tailored specifically to your goals in ${city}.`
+          : '1-on-1 strategy session tailored specifically to your goals.',
         iconName: 'UserCheck',
       },
       {

@@ -107,11 +107,11 @@
   <div class="absolute top-5 right-5 z-20">
     <button
       type="button"
-      onclick={() => themeStore.toggleTheme()}
+      onclick={() => themeStore.toggle()}
       class="p-2.5 rounded-xl bg-[var(--fm-surface)] border border-[var(--fm-border)] text-[var(--fm-text-muted)] hover:text-[var(--fm-text)] shadow-xs transition-all cursor-pointer"
       title="Toggle Theme"
     >
-      {#if themeStore.currentTheme === "dark"}
+      {#if themeStore.isDark}
         <Sun class="w-4 h-4 text-amber-400" />
       {:else}
         <Moon class="w-4 h-4 text-indigo-600" />

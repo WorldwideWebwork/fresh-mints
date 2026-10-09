@@ -153,10 +153,13 @@ export class CRMExportService {
         rowMap[h] = values[index] ? values[index].trim() : '';
       });
 
-      const fullName = rowMap['full name'] || rowMap['fullname'] || rowMap['name'] || 'Imported Lead';
-      const state = rowMap['state'] || 'CA';
-      const city = rowMap['city'] || 'Metropolis';
-      const licenseNumber = rowMap['license number'] || rowMap['licensenumber'] || `LIC-${Math.floor(100000 + Math.random() * 900000)}`;
+      const fullName = rowMap['full name'] || rowMap['fullname'] || rowMap['name'] || '';
+      if (!fullName) {
+        continue;
+      }
+      const state = rowMap['state'] || '';
+      const city = rowMap['city'] || '';
+      const licenseNumber = rowMap['license number'] || rowMap['licensenumber'] || '';
 
       parsedLeads.push({
         id: `imported-${Date.now()}-${i}`,
@@ -167,7 +170,7 @@ export class CRMExportService {
         city,
         licenseNumber,
         issueDate: rowMap['issue date'] || new Date().toISOString().split('T')[0],
-        collegeOrSchool: rowMap['college / board school'] || rowMap['school'] || `${state} Licensing Board`,
+        collegeOrSchool: rowMap['college / board school'] || rowMap['school'] || '',
         graduationYear: 2026,
         licenseStatus: 'Newly Issued',
         skipTraceStatus: rowMap['verified phone'] || rowMap['primary email'] ? 'Traced' : 'Not Traced',

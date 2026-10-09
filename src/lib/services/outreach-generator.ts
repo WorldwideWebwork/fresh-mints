@@ -371,13 +371,14 @@ export function generateFallbackOutreach(
 
   const isRecent = isRecentlyLicensed(lead.issueDate, lead.graduationYear);
   const source = formatSourceAttribution(lead);
+  const city = lead.city?.trim() || lead.state?.trim() || 'your local area';
 
   if (templateId === 'infrastructure_compass_upgrade') {
     return {
-      subject: `Infrastructure & Software Upgrade for your ${lead.professionTitle} practice in ${lead.city}`,
+      subject: `Infrastructure & Software Upgrade for your ${lead.professionTitle} practice in ${city}`,
       emailBody: `Hi ${salutation},
 
-I was reviewing licensed ${lead.professionTitle} practices in ${lead.city} and noticed your digital presence.
+I was reviewing licensed ${lead.professionTitle} practices in ${city} and noticed your digital presence.
 
 Most established practitioners we speak with are paying $300 to $600/month across 5+ disconnected systems (CRM, slow shared hosting, SEO plugins, backup services, and scheduling tools) that constantly require maintenance and updates.
 
@@ -414,7 +415,7 @@ worldwidewebwork.com`,
 
 I was reviewing recent professional licensing updates for ${lead.state} and noticed your newly issued ${lead.professionTitle} license on ${source.sourceName}! Huge congratulations on reaching this career milestone.
 
-As you begin taking on ${industryProfile.clientType} in ${lead.city}, having a verified, authoritative web presence is essential from Day 1.
+As you begin taking on ${industryProfile.clientType} in ${city}, having a verified, authoritative web presence is essential from Day 1.
 
 My Compass Consulting took the liberty of creating a personalized website mockup tailored specifically for your practice, powered by the Compass Software Suite and WorldwideWebwork (worldwidewebwork.com):
 
@@ -441,12 +442,12 @@ worldwidewebwork.com`,
       };
     } else {
       return {
-        subject: `Digital infrastructure update for your ${lead.professionTitle} practice in ${lead.city}`,
+        subject: `Digital infrastructure update for your ${lead.professionTitle} practice in ${city}`,
         emailBody: `Hi ${salutation},
 
-I was reviewing licensed ${lead.professionTitle} practitioners in ${lead.city} on ${source.sourceName} and noticed your active professional credential.
+I was reviewing licensed ${lead.professionTitle} practitioners in ${city} on ${source.sourceName} and noticed your active professional credential.
 
-As you continue growing your ${industryProfile.clientType} client base in ${lead.city}, maintaining a modern, high-performance web presence with direct scheduling and verified credentials is key to staying competitive.
+As you continue growing your ${industryProfile.clientType} client base in ${city}, maintaining a modern, high-performance web presence with direct scheduling and verified credentials is key to staying competitive.
 
 My Compass Consulting took the liberty of engineering a custom website portal tailored specifically for your practice, powered by the Compass Software Suite and WorldwideWebwork (worldwidewebwork.com):
 
@@ -469,17 +470,17 @@ Warm regards,
 Practice Growth Specialist
 My Compass Consulting
 worldwidewebwork.com`,
-        smsBody: `Hi ${firstName}, My Compass Consulting engineered a practice portal preview for your ${lead.professionTitle} practice in ${lead.city} with 2 yrs w4 hosting: ${siteUrl}`,
+        smsBody: `Hi ${firstName}, My Compass Consulting engineered a practice portal preview for your ${lead.professionTitle} practice in ${city} with 2 yrs w4 hosting: ${siteUrl}`,
       };
     }
   }
 
   if (templateId === 'industry_client_magnet') {
     return {
-      subject: `Client acquisition portal for your ${lead.professionTitle} practice in ${lead.city}`,
+      subject: `Client acquisition portal for your ${lead.professionTitle} practice in ${city}`,
       emailBody: `Hi ${salutation},
 
-${isRecent ? `Now that your ${lead.professionTitle} license in ${lead.state} is active` : `For your established ${lead.professionTitle} practice in ${lead.city}`}, your biggest growth lever is capturing ${industryProfile.clientType} searching for trusted local practitioners.
+${isRecent ? `Now that your ${lead.professionTitle} license in ${lead.state} is active` : `For your established ${lead.professionTitle} practice in ${city}`}, your biggest growth lever is capturing ${industryProfile.clientType} searching for trusted local practitioners.
 
 ${industryProfile.primaryPainPoint}.
 
@@ -512,7 +513,7 @@ worldwidewebwork.com`,
       subject: `[Action Required] Practice domain secured for ${lead.fullName} (${lead.professionTitle})`,
       emailBody: `Hi ${salutation},
 
-${isRecent ? `First off, congratulations on receiving your official ${lead.professionTitle} license in ${lead.state}!` : `As an active ${lead.professionTitle} practitioner in ${lead.city}, securing your personal professional domain is essential to protect your reputation and brand.`}
+${isRecent ? `First off, congratulations on receiving your official ${lead.professionTitle} license in ${lead.state}!` : `As an active ${lead.professionTitle} practitioner in ${city}, securing your personal professional domain is essential to protect your reputation and brand.`}
 
 When state licensing boards publish practitioner rosters, third-party lead aggregators and competitors frequently buy up practitioner domain names to resell at inflated prices.
 
@@ -544,9 +545,9 @@ worldwidewebwork.com`,
     subject: `Executive practice consulting proposal: ${lead.fullName} (${lead.professionTitle})`,
     emailBody: `Dear ${salutation},
 
-${isRecent ? `Congratulations on your newly issued ${lead.professionTitle} license in ${lead.state}.` : `Regarding your active ${lead.professionTitle} practice in ${lead.city}, ${lead.state}.`}
+${isRecent ? `Congratulations on your newly issued ${lead.professionTitle} license in ${lead.state}.` : `Regarding your active ${lead.professionTitle} practice in ${city}, ${lead.state}.`}
 
-As you establish your practice footprint in ${lead.city}, your digital touchpoint is the primary asset prospective ${industryProfile.clientType} evaluate when making engagement decisions.
+As you establish your practice footprint in ${city}, your digital touchpoint is the primary asset prospective ${industryProfile.clientType} evaluate when making engagement decisions.
 
 My Compass Consulting is pleased to present a turnkey practice digital infrastructure proposal powered by the Compass Software Suite and WorldwideWebwork (worldwidewebwork.com):
 

@@ -1,5 +1,6 @@
 <script lang="ts">
   import { type Lead, OUTREACH_STAGES, type OutreachStatus } from '../../types/lead';
+  import { getLeadDealValue } from '../../types/profession';
   import { leadStore } from '../../stores/lead-store.svelte';
   import { toast } from '../../stores/toast.svelte';
   import LeadCard from '../molecules/LeadCard.svelte';
@@ -19,7 +20,7 @@
   }
 
   function getStageDealTotal(stage: OutreachStatus): number {
-    return getLeadsByStage(stage).reduce((sum, l) => sum + (l.estimatedDealValue || 1650), 0);
+    return getLeadsByStage(stage).reduce((sum, l) => sum + getLeadDealValue(l), 0);
   }
 
   function handleDrop(e: DragEvent, targetStage: OutreachStatus) {

@@ -157,3 +157,17 @@ export const getProfessionConfig = (key: string): ProfessionMetadata => {
   if (!isKnownProfession) return PROFESSION_CONFIGS[DEFAULT_PROFESSION];
   return PROFESSION_CONFIGS[key as ProfessionCategory];
 };
+
+/**
+ * Returns the lead's estimated deal value if set and positive;
+ * otherwise resolves to the profession's configured averageWebsiteValue.
+ */
+export const getLeadDealValue = (
+  lead?: { estimatedDealValue?: number; profession?: string } | null
+): number => {
+  const hasExplicitValue = typeof lead?.estimatedDealValue === 'number' && lead.estimatedDealValue > 0;
+  if (hasExplicitValue) {
+    return lead.estimatedDealValue as number;
+  }
+  return getProfessionConfig(lead?.profession || '').averageWebsiteValue;
+};
