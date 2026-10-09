@@ -1,20 +1,38 @@
-import type { SocialFeedProvider, SocialMonitorRule, RawSocialPost, FeedFetchOutcome } from '../types';
+import type { SocialFeedProvider, SocialMonitorRule, FeedFetchOutcome } from '../types';
+import { parseFeedFetchOutcome } from '../feed-outcome-guard';
 
-interface RedditChild {
-  data: {
-    id: string;
-    name: string;
-    author: string;
-    title: string;
-    selftext: string;
-    permalink: string;
-    created_utc: number;
-    score: number;
-    num_comments: number;
-    subreddit: string;
-  };
+const SOCIAL_FETCH_PATH = '/xophz-freshmints/v1/social/fetch';
+
+interface WpApiSettings {
+  root?: string;
+  nonce?: string;
 }
 
+/** Same resolution as `fetchLiveOpenRegistryData`: WordPress-injected settings, else same-origin defaults. */
+const resolveRestConfig = (): { endpoint: string; nonce: string } => {
+  const settings: WpApiSettings | undefined =
+    typeof window === 'undefined' ? undefined : (window as any).wpApiSettings;
+  const restRoot = settings?.root || '/wp-json/';
+  const nonce = settings?.nonce || '';
+  return { endpoint: `${restRoot.replace(/\/$/, '')}${SOCIAL_FETCH_PATH}`, nonce };
+};
+
+/** WordPress REST errors carry `{ code, message }`; pull the message out when it is there. */
+const readWordPressMessage = async (response: Response): Promise<string> => {
+  try {
+    const body: unknown = await response.json();
+    const message = (body as { message?: unknown } | null)?.message;
+    return typeof message === 'string' ? message : '';
+  } catch {
+    return '';
+  }
+};
+
+/**
+ * Reddit sends no CORS headers, so the browser cannot call it. The Fresh Mints
+ * plugin relays the search server-side; this provider talks to that relay and
+ * returns the relay's outcome after validating its shape.
+ */
 export class RedditPublicProvider implements SocialFeedProvider {
   id: 'reddit' = 'reddit';
   displayName = 'Reddit (Public JSON Feed)';
@@ -32,58 +50,48 @@ export class RedditPublicProvider implements SocialFeedProvider {
       return { status: 'ok', posts: [] };
     }
 
-    const query = encodeURIComponent(rule.keywords.join(' OR '));
-    const targetSub = rule.targetSubreddits && rule.targetSubreddits.length > 0
-      ? rule.targetSubreddits[0]
-      : 'smallbusiness+entrepreneur+webdev+sales';
+    const { endpoint, nonce } = resolveRestConfig();
+    const targetChannels = rule.targetSubreddits ?? [];
 
-    const endpoint = `https://www.reddit.com/r/${targetSub}/search.json?q=${query}&sort=new&restrict_sr=on&limit=15`;
-
+    let response: Response;
     try {
-      const response = await fetch(endpoint, {
+      response = await fetch(endpoint, {
+        method: 'POST',
         headers: {
-          'Accept': 'application/json',
+          'Content-Type': 'application/json',
+          'X-WP-Nonce': nonce,
         },
+        body: JSON.stringify({ platform: 'reddit', keywords: rule.keywords, targetChannels }),
       });
-
-      const isOk = response.ok;
-      if (!isOk) {
-        return {
-          status: 'failed',
-          reason: `Reddit refused the request (HTTP ${response.status} ${response.statusText}).`,
-        };
-      }
-
-      const payload = await response.json();
-      const children: RedditChild[] = payload?.data?.children || [];
-
-      const posts: RawSocialPost[] = children.map((item) => {
-        const postData = item.data;
-        const postTimestamp = new Date(postData.created_utc * 1000).toISOString();
-        const postUrl = `https://www.reddit.com${postData.permalink}`;
-
-        return {
-          id: `reddit-${postData.id}`,
-          platform: 'reddit',
-          externalId: postData.id,
-          author: `u/${postData.author}`,
-          title: postData.title,
-          content: postData.selftext || postData.title,
-          url: postUrl,
-          timestamp: postTimestamp,
-          score: postData.score || 1,
-          commentsCount: postData.num_comments || 0,
-          subredditOrChannel: `r/${postData.subreddit}`,
-        };
-      });
-
-      return { status: 'ok', posts };
     } catch (error: unknown) {
       const detail = error instanceof Error ? error.message : 'unknown network error';
       return {
         status: 'blocked',
-        reason: `Reddit is unreachable from the browser (${detail}). www.reddit.com sends no Access-Control-Allow-Origin header, so this provider needs a server-side proxy.`,
+        reason: `The Fresh Mints server could not be reached for the Reddit search (${detail}).`,
       };
     }
+
+    if (!response.ok) {
+      const serverMessage = await readWordPressMessage(response);
+      const suffix = serverMessage ? `: ${serverMessage}` : '.';
+      return {
+        status: 'failed',
+        reason: `The Reddit search route returned HTTP ${response.status}${suffix}`,
+      };
+    }
+
+    let payload: unknown;
+    try {
+      payload = await response.json();
+    } catch {
+      return { status: 'failed', reason: 'The Reddit search route returned a response that was not valid JSON.' };
+    }
+
+    const outcome = parseFeedFetchOutcome(payload);
+    if (!outcome) {
+      return { status: 'failed', reason: 'The Reddit search route returned a response in an unrecognized format.' };
+    }
+
+    return outcome;
   }
 }
