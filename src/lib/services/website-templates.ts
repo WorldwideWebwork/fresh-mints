@@ -5,6 +5,7 @@ import {
   type Lead,
   PROFESSION_CONFIGS,
 } from '../types/lead';
+import { cleanLocationPart, formatPracticeLocation } from './practice-location';
 
 export interface WebsiteThemePreset {
   id: string;
@@ -200,13 +201,15 @@ export function generateLeadPreviewSlug(
 }
 
 export function getDefaultWebsiteConfig(seed: WebsiteConfigSeed): WebsitePreviewConfig {
-  const { fullName, profession, city, state, collegeOrSchool } = seed;
+  const { fullName, profession, collegeOrSchool } = seed;
+  const city = cleanLocationPart(seed.city);
+  const state = cleanLocationPart(seed.state);
   const preset = THEME_PRESETS[profession] || THEME_PRESETS.real_estate;
   const cleanSlug = generateLeadPreviewSlug(fullName);
   const cleanSeed = cleanSlug.replace(/-/g, '');
   const profMeta = PROFESSION_CONFIGS[profession] || PROFESSION_CONFIGS.real_estate;
 
-  const locationPhrase = city && state ? `${city}, ${state}` : (city || state || 'your region');
+  const locationPhrase = formatPracticeLocation(city, state) || 'your region';
   const locationDescription = city ? `${city} and surrounding communities` : (state ? `${state} communities` : 'our community');
   const schoolPhrase = collegeOrSchool ? ` Verified license graduate from ${collegeOrSchool}.` : '';
 

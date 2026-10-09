@@ -7,6 +7,7 @@
     W4_HOSTING_PLANS,
   } from '../../types/lead';
   import { copyTextToClipboard } from '../../services/clipboard';
+  import { cleanLocationPart, formatPracticeLocation } from '../../services/practice-location';
   import { toast } from '../../stores/toast.svelte';
   import {
     Phone,
@@ -82,8 +83,17 @@
 
   const phone = $derived(lead?.skipTraceData?.verifiedPhone || '+1 (480) 255-7920');
   const email = $derived(lead?.skipTraceData?.primaryEmail || 'contact@practiceportal.pro');
-  const city = $derived(lead?.city || 'Phoenix');
-  const state = $derived(lead?.state || 'AZ');
+  const cityName = $derived(cleanLocationPart(lead?.city));
+  const stateCode = $derived(cleanLocationPart(lead?.state));
+  const practiceLocation = $derived(formatPracticeLocation(cityName, stateCode));
+  const inLocation = $derived(practiceLocation ? ` in ${practiceLocation}` : '');
+  const locationSuffix = $derived(practiceLocation ? ` • ${practiceLocation}` : '');
+  const stateSuffix = $derived(stateCode ? ` (${stateCode})` : '');
+  const verifiedPracticeLabel = $derived(
+    practiceLocation ? `Verified Practice (${practiceLocation})` : 'Verified Practice'
+  );
+  const cityOfficeLabel = $derived(cityName ? `${cityName} office` : 'office');
+  const officeInCityLabel = $derived(cityName ? `office in ${cityName}` : 'office');
   const school = $derived(lead?.collegeOrSchool || 'Accredited State Licensing Board');
   const licenseNumber = $derived(lead?.licenseNumber || 'AZ-749281');
   const graduationYear = $derived(lead?.graduationYear || 2024);
@@ -200,7 +210,7 @@
               {practitionerName}
             </div>
             <div class="text-xs text-slate-400 font-medium">
-              {siteConfig.tagline} &bull; {city}, {state}
+              {siteConfig.tagline}{locationSuffix}
             </div>
           </div>
         </div>
@@ -390,7 +400,7 @@
         </div>
         <div class="flex items-center gap-1.5">
           <Star class="w-4 h-4 text-amber-400 fill-amber-400" />
-          <span>Verified Practice ({city}, {state})</span>
+          <span>{verifiedPracticeLabel}</span>
         </div>
       </section>
 
@@ -405,7 +415,7 @@
               Specialized Services Tailored to You
             </h3>
             <p class="text-xs text-slate-400">
-              Providing modern, compassionate, and evidence-based solutions in {city}, {state}.
+              Providing modern, compassionate, and evidence-based solutions{inLocation}.
             </p>
           </div>
 
@@ -462,9 +472,11 @@
             </p>
 
             <div class="flex flex-wrap items-center gap-4 text-xs font-medium text-slate-400 pt-2">
-              <span class="flex items-center gap-1.5">
-                <MapPin class="w-3.5 h-3.5 text-slate-500" /> {city}, {state}
-              </span>
+              {#if practiceLocation}
+                <span class="flex items-center gap-1.5">
+                  <MapPin class="w-3.5 h-3.5 text-slate-500" /> {practiceLocation}
+                </span>
+              {/if}
               <span class="flex items-center gap-1.5">
                 <Building class="w-3.5 h-3.5 text-slate-500" /> {school}
               </span>
@@ -507,7 +519,7 @@
       <footer class="py-10 px-6 text-center text-white bg-slate-950 border-t border-slate-800 space-y-4">
         <h3 class="text-lg sm:text-xl font-extrabold">Ready to Consult with {practitionerName}?</h3>
         <p class="text-xs text-slate-400 max-w-md mx-auto">
-          Schedule an introductory session online or call our {city} office directly.
+          Schedule an introductory session online or call our {cityOfficeLabel} directly.
         </p>
 
         <div class="pt-2 flex flex-wrap items-center justify-center gap-3">
@@ -532,7 +544,7 @@
 
         <div class="pt-6 border-t border-slate-800/80 text-[11px] text-slate-500 flex flex-wrap items-center justify-between gap-2 max-w-5xl mx-auto">
           <span>&copy; {new Date().getFullYear()} {practitionerName}. All Rights Reserved.</span>
-          <span>Verified State License #{licenseNumber} &bull; {city}, {state}</span>
+          <span>Verified State License #{licenseNumber}{locationSuffix}</span>
         </div>
       </footer>
 
@@ -581,7 +593,7 @@
             style="background-color: {siteConfig.primaryColor};"
           >
             <Award class="w-3.5 h-3.5" />
-            State Licensed {profMeta.defaultTitle} ({state})
+            State Licensed {profMeta.defaultTitle}{stateSuffix}
           </span>
 
           <h1 class="text-2xl sm:text-4xl font-extrabold text-stone-900 tracking-tight leading-tight">
@@ -626,7 +638,7 @@
         </div>
         <div class="flex items-center gap-1.5">
           <Star class="w-4 h-4 text-amber-400 fill-amber-400" />
-          <span>Verified Practice ({city}, {state})</span>
+          <span>{verifiedPracticeLabel}</span>
         </div>
       </section>
 
@@ -635,7 +647,7 @@
         <div class="text-center space-y-1.5">
           <h2 class="text-xl font-bold text-stone-900">Professional Practice Services</h2>
           <p class="text-xs sm:text-sm text-slate-500">
-            Comprehensive care delivered locally in {city}, {state}
+            Comprehensive care delivered locally{inLocation}
           </p>
         </div>
 
@@ -683,7 +695,9 @@
             <h3 class="text-lg font-bold text-stone-900">About {practitionerName}</h3>
             <p class="text-xs sm:text-sm text-slate-600 leading-relaxed">{siteConfig.bioText}</p>
             <div class="flex flex-wrap items-center gap-5 text-xs font-medium text-slate-500 pt-2">
-              <span class="flex items-center gap-1.5"><MapPin class="w-3.5 h-3.5 text-slate-400" /> {city}, {state}</span>
+              {#if practiceLocation}
+                <span class="flex items-center gap-1.5"><MapPin class="w-3.5 h-3.5 text-slate-400" /> {practiceLocation}</span>
+              {/if}
               <span class="flex items-center gap-1.5"><Building class="w-3.5 h-3.5 text-slate-400" /> {school}</span>
               <span class="flex items-center gap-1.5"><Calendar class="w-3.5 h-3.5 text-slate-400" /> Class of {graduationYear}</span>
             </div>
@@ -742,7 +756,7 @@
           </div>
           <h4 class="font-bold text-sm text-stone-900">Appointment Request Received!</h4>
           <p class="text-xs text-slate-500 max-w-xs mx-auto">
-            Our office in {city} will confirm your schedule within 1 business day.
+            Our {officeInCityLabel} will confirm your schedule within 1 business day.
           </p>
         </div>
       {:else}
@@ -864,10 +878,12 @@
           <span class="text-slate-500 font-medium">Official License Number:</span>
           <span class="font-mono font-bold text-emerald-800">{licenseNumber}</span>
         </div>
-        <div class="flex justify-between py-1.5 border-b border-stone-200">
-          <span class="text-slate-500 font-medium">Regulatory Jurisdiction:</span>
-          <span class="font-medium text-stone-800">{city}, {state}</span>
-        </div>
+        {#if practiceLocation}
+          <div class="flex justify-between py-1.5 border-b border-stone-200">
+            <span class="text-slate-500 font-medium">Regulatory Jurisdiction:</span>
+            <span class="font-medium text-stone-800">{practiceLocation}</span>
+          </div>
+        {/if}
         <div class="flex justify-between py-1.5 border-b border-stone-200">
           <span class="text-slate-500 font-medium">Education / School:</span>
           <span class="font-medium text-stone-800">{school}</span>
