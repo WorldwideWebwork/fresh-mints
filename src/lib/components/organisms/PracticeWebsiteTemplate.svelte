@@ -8,6 +8,13 @@
   } from '../../types/lead';
   import { copyTextToClipboard } from '../../services/clipboard';
   import { cleanLocationPart, formatPracticeLocation } from '../../services/practice-location';
+  import {
+    buildCredentialRows,
+    cleanText,
+    describeCredentialsHeading,
+    formatLicenseFooter,
+    readPracticeCredentials,
+  } from '../../services/practice-credentials';
   import { toast } from '../../stores/toast.svelte';
   import {
     Phone,
@@ -81,8 +88,7 @@
   const profMeta = $derived(PROFESSION_CONFIGS[professionCategory] || PROFESSION_CONFIGS.real_estate);
   const hostingPlan = $derived(W4_HOSTING_PLANS[profMeta.hostingTier] || W4_HOSTING_PLANS.bronze);
 
-  const phone = $derived(lead?.skipTraceData?.verifiedPhone || '+1 (480) 255-7920');
-  const email = $derived(lead?.skipTraceData?.primaryEmail || 'contact@practiceportal.pro');
+  const phone = $derived(cleanText(lead?.skipTraceData?.verifiedPhone));
   const cityName = $derived(cleanLocationPart(lead?.city));
   const stateCode = $derived(cleanLocationPart(lead?.state));
   const practiceLocation = $derived(formatPracticeLocation(cityName, stateCode));
@@ -94,29 +100,15 @@
   );
   const cityOfficeLabel = $derived(cityName ? `${cityName} office` : 'office');
   const officeInCityLabel = $derived(cityName ? `office in ${cityName}` : 'office');
-  const school = $derived(lead?.collegeOrSchool || 'Accredited State Licensing Board');
-  const licenseNumber = $derived(lead?.licenseNumber || 'AZ-749281');
-  const graduationYear = $derived(lead?.graduationYear || 2024);
+  const credentials = $derived(readPracticeCredentials(lead));
+  const licenseNumber = $derived(credentials.licenseNumber);
+  const school = $derived(credentials.school);
+  const graduationYear = $derived(credentials.graduationYear);
+  const credentialRows = $derived(buildCredentialRows(credentials, practiceLocation));
+  const credentialsHeading = $derived(describeCredentialsHeading(credentialRows));
+  const licenseFooter = $derived(formatLicenseFooter(licenseNumber, practiceLocation));
 
   const isDarkTheme = $derived((siteConfig.templateTheme || 'executive_dark') === 'executive_dark');
-
-  const testimonials = [
-    {
-      quote: `Working with ${practitionerName} was an exceptional experience. Everything was seamless, professional, and transparent.`,
-      author: 'Marcus Vance',
-      role: 'Verified Local Client',
-    },
-    {
-      quote: `Prompt communication, outstanding expertise, and a dedicated patient-first approach. I highly recommend their practice!`,
-      author: 'Elena Rostova',
-      role: 'Community Member',
-    },
-    {
-      quote: `From initial consultation to execution, the care and attention to detail exceeded all our expectations.`,
-      author: 'David Chen',
-      role: 'Long-Term Client',
-    },
-  ];
 
   async function handleCopyAddressBarUrl() {
     if (!previewUrl) return;
@@ -218,8 +210,9 @@
         <nav class="hidden md:flex items-center gap-6 text-xs font-medium text-slate-300">
           <a href="#services" class="hover:text-white transition-colors">Services</a>
           <a href="#about" class="hover:text-white transition-colors">About</a>
-          <a href="#testimonials" class="hover:text-white transition-colors">Testimonials</a>
-          <span class="font-mono text-slate-400">Lic #{licenseNumber}</span>
+          {#if licenseNumber}
+            <span class="font-mono text-slate-400">Lic #{licenseNumber}</span>
+          {/if}
           <button
             type="button"
             onclick={() => (bookingModalOpen = true)}
@@ -278,17 +271,11 @@
                 class="px-4 py-2.5 rounded-xl font-semibold text-slate-200 bg-slate-800/80 hover:bg-slate-700 border border-slate-700 flex items-center gap-1.5 text-xs sm:text-sm transition-colors cursor-pointer"
               >
                 <ShieldCheck class="w-4 h-4 text-emerald-400" />
-                <span>Verified Credentials</span>
+                <span>{credentialsHeading.buttonLabel}</span>
               </button>
             </div>
 
-            <div class="grid grid-cols-3 gap-3 pt-4 border-t border-slate-800 max-w-md text-xs">
-              <div>
-                <div class="text-xl font-bold text-white">4.9/5.0</div>
-                <div class="text-[11px] text-slate-400 flex items-center gap-1">
-                  <Star class="w-3 h-3 text-amber-400 fill-amber-400" /> Verified Reviews
-                </div>
-              </div>
+            <div class="grid grid-cols-2 gap-3 pt-4 border-t border-slate-800 max-w-md text-xs">
               <div>
                 <div class="text-xl font-bold text-white">100%</div>
                 <div class="text-[11px] text-slate-400">Digital Onboarding</div>
@@ -329,7 +316,7 @@
                       type="text"
                       required
                       bind:value={heroBookingData.name}
-                      placeholder="e.g. Sarah Jenkins"
+                      placeholder="Your full name"
                       class="w-full px-3 py-2 rounded-lg bg-slate-800 border border-slate-700 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-teal-500"
                     />
                   </div>
@@ -342,7 +329,7 @@
                         type="tel"
                         required
                         bind:value={heroBookingData.phone}
-                        placeholder="(480) 555-0199"
+                        placeholder="Your phone number"
                         class="w-full px-3 py-2 rounded-lg bg-slate-800 border border-slate-700 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-teal-500"
                       />
                     </div>
@@ -353,7 +340,7 @@
                         type="email"
                         required
                         bind:value={heroBookingData.email}
-                        placeholder="name@email.com"
+                        placeholder="Your email address"
                         class="w-full px-3 py-2 rounded-lg bg-slate-800 border border-slate-700 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-teal-500"
                       />
                     </div>
@@ -390,14 +377,18 @@
 
       <!-- Trust Bar -->
       <section class="bg-slate-950 border-y border-slate-800/80 text-white py-3.5 px-6 text-xs flex flex-wrap items-center justify-around gap-4 text-center">
-        <div class="flex items-center gap-1.5">
-          <ShieldCheck class="w-4 h-4 text-emerald-400" />
-          <span>State License #{licenseNumber}</span>
-        </div>
-        <div class="flex items-center gap-1.5">
-          <UserCheck class="w-4 h-4 text-teal-400" />
-          <span>{school}</span>
-        </div>
+        {#if licenseNumber}
+          <div class="flex items-center gap-1.5">
+            <ShieldCheck class="w-4 h-4 text-emerald-400" />
+            <span>State License #{licenseNumber}</span>
+          </div>
+        {/if}
+        {#if school}
+          <div class="flex items-center gap-1.5">
+            <UserCheck class="w-4 h-4 text-teal-400" />
+            <span>{school}</span>
+          </div>
+        {/if}
         <div class="flex items-center gap-1.5">
           <Star class="w-4 h-4 text-amber-400 fill-amber-400" />
           <span>{verifiedPracticeLabel}</span>
@@ -477,40 +468,17 @@
                   <MapPin class="w-3.5 h-3.5 text-slate-500" /> {practiceLocation}
                 </span>
               {/if}
-              <span class="flex items-center gap-1.5">
-                <Building class="w-3.5 h-3.5 text-slate-500" /> {school}
-              </span>
-              <span class="flex items-center gap-1.5">
-                <Calendar class="w-3.5 h-3.5 text-slate-500" /> Class of {graduationYear}
-              </span>
+              {#if school}
+                <span class="flex items-center gap-1.5">
+                  <Building class="w-3.5 h-3.5 text-slate-500" /> {school}
+                </span>
+              {/if}
+              {#if graduationYear}
+                <span class="flex items-center gap-1.5">
+                  <Calendar class="w-3.5 h-3.5 text-slate-500" /> Class of {graduationYear}
+                </span>
+              {/if}
             </div>
-          </div>
-        </div>
-      </section>
-
-      <!-- Testimonials Section -->
-      <section id="testimonials" class="py-12 sm:py-16 px-6 bg-slate-900 border-t border-slate-800/80">
-        <div class="max-w-5xl mx-auto space-y-6">
-          <div class="text-center space-y-1">
-            <h3 class="text-lg font-bold text-white">Client Feedback &amp; Experiences</h3>
-            <p class="text-xs text-slate-400">Verified reviews from community consultations</p>
-          </div>
-
-          <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            {#each testimonials as item}
-              <div class="border border-slate-800 rounded-xl p-5 bg-slate-950/70 space-y-3 text-left">
-                <div class="flex items-center gap-1 text-amber-400">
-                  {#each [1, 2, 3, 4, 5] as _}
-                    <Star class="w-3.5 h-3.5 fill-amber-400" />
-                  {/each}
-                </div>
-                <p class="text-xs text-slate-300 italic leading-relaxed">"{item.quote}"</p>
-                <div class="pt-2 border-t border-slate-800">
-                  <div class="font-bold text-xs text-white">{item.author}</div>
-                  <div class="text-[10px] text-slate-400">{item.role}</div>
-                </div>
-              </div>
-            {/each}
           </div>
         </div>
       </section>
@@ -519,7 +487,7 @@
       <footer class="py-10 px-6 text-center text-white bg-slate-950 border-t border-slate-800 space-y-4">
         <h3 class="text-lg sm:text-xl font-extrabold">Ready to Consult with {practitionerName}?</h3>
         <p class="text-xs text-slate-400 max-w-md mx-auto">
-          Schedule an introductory session online or call our {cityOfficeLabel} directly.
+          Schedule an introductory session online{#if phone} or call our {cityOfficeLabel} directly{/if}.
         </p>
 
         <div class="pt-2 flex flex-wrap items-center justify-center gap-3">
@@ -544,7 +512,9 @@
 
         <div class="pt-6 border-t border-slate-800/80 text-[11px] text-slate-500 flex flex-wrap items-center justify-between gap-2 max-w-5xl mx-auto">
           <span>&copy; {new Date().getFullYear()} {practitionerName}. All Rights Reserved.</span>
-          <span>Verified State License #{licenseNumber}{locationSuffix}</span>
+          {#if licenseFooter}
+            <span>{licenseFooter}</span>
+          {/if}
         </div>
       </footer>
 
@@ -573,7 +543,9 @@
         <nav class="hidden md:flex items-center gap-6 text-xs font-medium text-slate-600">
           <a href="#services" class="hover:text-stone-900 transition-colors">Services</a>
           <a href="#about" class="hover:text-stone-900 transition-colors">About</a>
-          <span class="font-mono text-slate-400">Lic #{licenseNumber}</span>
+          {#if licenseNumber}
+            <span class="font-mono text-slate-400">Lic #{licenseNumber}</span>
+          {/if}
           <button
             type="button"
             onclick={() => (bookingModalOpen = true)}
@@ -620,7 +592,7 @@
               class="px-5 py-3 rounded-xl bg-white border border-stone-300 text-stone-700 hover:bg-stone-50 font-semibold text-xs sm:text-sm shadow-xs transition-colors cursor-pointer flex items-center gap-1.5"
             >
               <ShieldCheck class="w-4 h-4 text-emerald-600" />
-              <span>View Verified Credentials</span>
+              <span>View {credentialsHeading.buttonLabel}</span>
             </button>
           </div>
         </div>
@@ -628,14 +600,18 @@
 
       <!-- Light Trust Bar -->
       <section class="bg-slate-900 text-white py-3.5 px-6 text-xs flex flex-wrap items-center justify-around gap-4 text-center">
-        <div class="flex items-center gap-1.5">
-          <ShieldCheck class="w-4 h-4 text-emerald-400" />
-          <span>State License #{licenseNumber}</span>
-        </div>
-        <div class="flex items-center gap-1.5">
-          <UserCheck class="w-4 h-4 text-teal-400" />
-          <span>{school}</span>
-        </div>
+        {#if licenseNumber}
+          <div class="flex items-center gap-1.5">
+            <ShieldCheck class="w-4 h-4 text-emerald-400" />
+            <span>State License #{licenseNumber}</span>
+          </div>
+        {/if}
+        {#if school}
+          <div class="flex items-center gap-1.5">
+            <UserCheck class="w-4 h-4 text-teal-400" />
+            <span>{school}</span>
+          </div>
+        {/if}
         <div class="flex items-center gap-1.5">
           <Star class="w-4 h-4 text-amber-400 fill-amber-400" />
           <span>{verifiedPracticeLabel}</span>
@@ -698,8 +674,12 @@
               {#if practiceLocation}
                 <span class="flex items-center gap-1.5"><MapPin class="w-3.5 h-3.5 text-slate-400" /> {practiceLocation}</span>
               {/if}
-              <span class="flex items-center gap-1.5"><Building class="w-3.5 h-3.5 text-slate-400" /> {school}</span>
-              <span class="flex items-center gap-1.5"><Calendar class="w-3.5 h-3.5 text-slate-400" /> Class of {graduationYear}</span>
+              {#if school}
+                <span class="flex items-center gap-1.5"><Building class="w-3.5 h-3.5 text-slate-400" /> {school}</span>
+              {/if}
+              {#if graduationYear}
+                <span class="flex items-center gap-1.5"><Calendar class="w-3.5 h-3.5 text-slate-400" /> Class of {graduationYear}</span>
+              {/if}
             </div>
           </div>
         </div>
@@ -717,7 +697,7 @@
           {siteConfig.callToAction}
         </button>
         <div class="pt-6 border-t border-slate-800 text-[11px] text-slate-500">
-          &copy; {new Date().getFullYear()} {practitionerName} &bull; State License #{licenseNumber}
+          &copy; {new Date().getFullYear()} {practitionerName}{#if licenseNumber} &bull; State License #{licenseNumber}{/if}
         </div>
       </footer>
     {/if}
@@ -768,7 +748,7 @@
               type="text"
               required
               bind:value={bookingData.name}
-              placeholder="e.g. Sarah Jenkins"
+              placeholder="Your full name"
               class="w-full px-3 py-2 rounded-lg border border-stone-300 text-stone-900 focus:outline-none focus:ring-2 focus:ring-teal-500 text-xs"
             />
           </div>
@@ -781,7 +761,7 @@
                 type="tel"
                 required
                 bind:value={bookingData.phone}
-                placeholder="(480) 555-0199"
+                placeholder="Your phone number"
                 class="w-full px-3 py-2 rounded-lg border border-stone-300 text-stone-900 focus:outline-none focus:ring-2 focus:ring-teal-500 text-xs"
               />
             </div>
@@ -792,7 +772,7 @@
                 type="email"
                 required
                 bind:value={bookingData.email}
-                placeholder="name@email.com"
+                placeholder="Your email address"
                 class="w-full px-3 py-2 rounded-lg border border-stone-300 text-stone-900 focus:outline-none focus:ring-2 focus:ring-teal-500 text-xs"
               />
             </div>
@@ -864,8 +844,8 @@
           <ShieldCheck class="w-6 h-6" />
         </div>
         <div>
-          <h3 class="text-base font-bold text-stone-900">Verified Board Credentials</h3>
-          <p class="text-xs text-slate-500">Official state regulatory registry records</p>
+          <h3 class="text-base font-bold text-stone-900">{credentialsHeading.title}</h3>
+          <p class="text-xs text-slate-500">{credentialsHeading.subtitle}</p>
         </div>
       </div>
 
@@ -874,30 +854,16 @@
           <span class="text-slate-500 font-medium">Practitioner:</span>
           <span class="font-bold text-stone-900">{practitionerName}</span>
         </div>
-        <div class="flex justify-between py-1.5 border-b border-stone-200">
-          <span class="text-slate-500 font-medium">Official License Number:</span>
-          <span class="font-mono font-bold text-emerald-800">{licenseNumber}</span>
-        </div>
-        {#if practiceLocation}
-          <div class="flex justify-between py-1.5 border-b border-stone-200">
-            <span class="text-slate-500 font-medium">Regulatory Jurisdiction:</span>
-            <span class="font-medium text-stone-800">{practiceLocation}</span>
+        {#each credentialRows as row (row.label)}
+          <div class="flex justify-between py-1.5 border-b border-stone-200 last:border-b-0">
+            <span class="text-slate-500 font-medium">{row.label}:</span>
+            {#if row.isPlaceholder}
+              <span class="italic text-slate-500">{row.value}</span>
+            {:else}
+              <span class="font-semibold text-stone-900">{row.value}</span>
+            {/if}
           </div>
-        {/if}
-        <div class="flex justify-between py-1.5 border-b border-stone-200">
-          <span class="text-slate-500 font-medium">Education / School:</span>
-          <span class="font-medium text-stone-800">{school}</span>
-        </div>
-        <div class="flex justify-between py-1.5 border-b border-stone-200">
-          <span class="text-slate-500 font-medium">Graduation Year:</span>
-          <span class="font-medium text-stone-800">{graduationYear}</span>
-        </div>
-        <div class="flex justify-between py-1.5">
-          <span class="text-slate-500 font-medium">Registry Status:</span>
-          <span class="text-emerald-700 font-bold flex items-center gap-1">
-            <CheckCircle class="w-3.5 h-3.5 text-emerald-600" /> Active &amp; Verified in Good Standing
-          </span>
-        </div>
+        {/each}
       </div>
 
       <div class="mt-4 pt-3 flex justify-end">
