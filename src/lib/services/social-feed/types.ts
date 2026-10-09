@@ -1,4 +1,4 @@
-export type SocialPlatform = 'hacker_news' | 'reddit' | 'bluesky' | 'x';
+export type SocialPlatform = 'hacker_news' | 'reddit' | 'youtube' | 'stack_exchange' | 'bluesky' | 'x';
 
 export type SocialLeadStatus = 'radar' | 'converted' | 'dismissed';
 

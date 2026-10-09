@@ -8,6 +8,7 @@ import type {
 } from './types';
 import { HackerNewsProvider } from './providers/hacker-news-provider';
 import { RedditPublicProvider } from './providers/reddit-public-provider';
+import { createServerFeedProvider } from './providers/server-feed-provider';
 import { SocialIntentAnalyzer } from './social-intent-analyzer';
 
 export class SocialFeedRegistry {
@@ -17,6 +18,8 @@ export class SocialFeedRegistry {
   private constructor() {
     this.registerProvider(new HackerNewsProvider());
     this.registerProvider(new RedditPublicProvider());
+    this.registerProvider(createServerFeedProvider('stack_exchange', 'Stack Exchange: Personal Finance & Money'));
+    this.registerProvider(createServerFeedProvider('youtube', 'YouTube Comments'));
   }
 
   public static getInstance(): SocialFeedRegistry {
