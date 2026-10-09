@@ -36,11 +36,14 @@
 
   let { onopenmodal }: Props = $props();
 
+  // Reddit is disabled pending approval, so a new rule does not start with it (every scan would report a failure).
+  const DEFAULT_RULE_PLATFORMS: SocialPlatform[] = ["hacker_news"];
+
   let isRuleModalOpen = $state(false);
   let newRuleName = $state("");
   let newRuleKeywords = $state("");
   let newRuleNegative = $state("");
-  let selectedPlatforms = $state<SocialPlatform[]>(["hacker_news", "reddit"]);
+  let selectedPlatforms = $state<SocialPlatform[]>([...DEFAULT_RULE_PLATFORMS]);
 
   const userPlan = $derived(authStore.user?.plan || "free");
   const userPlanLimits = $derived(authStore.user?.planLimits || { maxRules: 2, scansPerDay: 10, maxCrmLeads: 25 });
@@ -102,7 +105,7 @@
       name: trimmedName,
       keywords,
       negativeKeywords,
-      platforms: selectedPlatforms.length > 0 ? selectedPlatforms : ["hacker_news", "reddit"],
+      platforms: selectedPlatforms.length > 0 ? selectedPlatforms : [...DEFAULT_RULE_PLATFORMS],
       minIntentScore: 50,
       isActive: true,
       autoConvertToCrm: false,

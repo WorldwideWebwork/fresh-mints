@@ -29,7 +29,6 @@ const ANNUITY_MATH_NEGATIVE_KEYWORDS = [
   'present value',
   'future value',
   'duration',
-  'excel',
   'homework',
   'amortization',
 ];

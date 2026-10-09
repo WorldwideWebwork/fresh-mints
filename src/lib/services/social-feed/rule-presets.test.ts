@@ -47,7 +47,6 @@ describe('ANNUITY_EDUCATION_PRESET relevance filtering', () => {
     'present value',
     'future value',
     'duration',
-    'excel',
     'homework',
     'amortization',
   ];
@@ -92,6 +91,16 @@ describe('ANNUITY_EDUCATION_PRESET relevance filtering', () => {
     );
 
     expect(SocialIntentAnalyzer.evaluatePost(post, presetRule)).toBeNull();
+  });
+
+  it('keeps a post that calls an advisor excellent, since negatives match by substring', () => {
+    const post = stackPost(
+      'Should I put part of my TSP into an annuity?',
+      'My advisor has an excellent record and I am weighing a fixed indexed annuity for retirement income.',
+    );
+
+    expect(ANNUITY_EDUCATION_PRESET.negativeKeywords).not.toContain('excel');
+    expect(SocialIntentAnalyzer.evaluatePost(post, presetRule)).not.toBeNull();
   });
 
   it('still surfaces a person deciding about retirement income', () => {
