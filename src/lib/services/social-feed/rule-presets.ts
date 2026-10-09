@@ -18,6 +18,22 @@ const ANNUITY_EDUCATION_TEMPLATE = [
   'Which type fits depends on when income is needed and whether any remaining balance should pass to beneficiaries.',
 ].join(' ');
 
+/**
+ * On Stack Exchange "annuity" is mostly a finance-math term, so these drop textbook and
+ * spreadsheet questions and leave people deciding about retirement income.
+ */
+const ANNUITY_MATH_NEGATIVE_KEYWORDS = [
+  'formula',
+  'calculate',
+  'calculation',
+  'present value',
+  'future value',
+  'duration',
+  'excel',
+  'homework',
+  'amortization',
+];
+
 export const ANNUITY_EDUCATION_PRESET: SocialRulePreset = {
   name: 'Annuity questions (education only)',
   keywords: [
@@ -29,9 +45,9 @@ export const ANNUITY_EDUCATION_PRESET: SocialRulePreset = {
     '401k rollover',
     'TSP rollover',
   ],
-  negativeKeywords: [],
-  platforms: ['reddit'],
-  targetSubreddits: ['retirement', 'personalfinance', 'fednews', 'ThriftSavingsPlan'],
+  negativeKeywords: [...ANNUITY_MATH_NEGATIVE_KEYWORDS],
+  platforms: ['stack_exchange', 'youtube'],
+  targetSubreddits: [],
   minIntentScore: 50,
   isActive: true,
   autoConvertToCrm: false,

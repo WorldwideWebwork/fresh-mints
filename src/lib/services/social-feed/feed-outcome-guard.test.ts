@@ -79,6 +79,29 @@ describe('parseFeedFetchOutcome', () => {
     expect(parseFeedFetchOutcome({ status: 'ok', posts: [wrongPlatform] })).toBeNull();
   });
 
+  it('accepts youtube and stack_exchange posts when that platform is expected', () => {
+    const youtubePost = { ...validPost, id: 'yt-1', platform: 'youtube' };
+    const stackPost = { ...validPost, id: 'se-1', platform: 'stack_exchange' };
+
+    expect(parseFeedFetchOutcome({ status: 'ok', posts: [youtubePost] }, 'youtube')).toEqual({
+      status: 'ok',
+      posts: [youtubePost],
+    });
+    expect(parseFeedFetchOutcome({ status: 'ok', posts: [stackPost] }, 'stack_exchange')).toEqual({
+      status: 'ok',
+      posts: [stackPost],
+    });
+  });
+
+  it('rejects a post whose platform is not the one that was requested', () => {
+    const redditPost = { ...validPost };
+    const stackPost = { ...validPost, platform: 'stack_exchange' };
+
+    expect(parseFeedFetchOutcome({ status: 'ok', posts: [redditPost] }, 'youtube')).toBeNull();
+    expect(parseFeedFetchOutcome({ status: 'ok', posts: [stackPost] }, 'reddit')).toBeNull();
+    expect(parseFeedFetchOutcome({ status: 'ok', posts: [stackPost, redditPost] }, 'stack_exchange')).toBeNull();
+  });
+
   it('rejects blocked and failed outcomes without a string reason', () => {
     expect(parseFeedFetchOutcome({ status: 'blocked' })).toBeNull();
     expect(parseFeedFetchOutcome({ status: 'failed', reason: 500 })).toBeNull();

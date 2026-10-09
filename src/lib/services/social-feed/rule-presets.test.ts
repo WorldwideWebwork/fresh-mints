@@ -4,10 +4,11 @@ import {
   createRuleFromPreset,
   isPresetInstalled,
 } from './rule-presets';
-import type { SocialMonitorRule } from './types';
+import { SocialIntentAnalyzer } from './social-intent-analyzer';
+import type { RawSocialPost, SocialMonitorRule } from './types';
 
 describe('ANNUITY_EDUCATION_PRESET shape', () => {
-  it('has the agreed name, keywords, platform, channels and threshold', () => {
+  it('has the agreed name, keywords, platforms, channels and threshold', () => {
     expect(ANNUITY_EDUCATION_PRESET.name).toBe('Annuity questions (education only)');
     expect(ANNUITY_EDUCATION_PRESET.keywords).toEqual([
       'annuity',
@@ -18,14 +19,13 @@ describe('ANNUITY_EDUCATION_PRESET shape', () => {
       '401k rollover',
       'TSP rollover',
     ]);
-    expect(ANNUITY_EDUCATION_PRESET.platforms).toEqual(['reddit']);
-    expect(ANNUITY_EDUCATION_PRESET.targetSubreddits).toEqual([
-      'retirement',
-      'personalfinance',
-      'fednews',
-      'ThriftSavingsPlan',
-    ]);
+    expect(ANNUITY_EDUCATION_PRESET.platforms).toEqual(['stack_exchange', 'youtube']);
+    expect(ANNUITY_EDUCATION_PRESET.targetSubreddits).toEqual([]);
     expect(ANNUITY_EDUCATION_PRESET.minIntentScore).toBe(50);
+  });
+
+  it('leaves Reddit out, since it is disabled pending approval and would fail every scan', () => {
+    expect(ANNUITY_EDUCATION_PRESET.platforms).not.toContain('reddit');
   });
 
   it('turns the funnel link off and ships active', () => {
@@ -36,6 +36,74 @@ describe('ANNUITY_EDUCATION_PRESET shape', () => {
   it('has no blank keywords', () => {
     const blanks = ANNUITY_EDUCATION_PRESET.keywords.filter((k) => k.trim().length === 0);
     expect(blanks).toEqual([]);
+  });
+});
+
+describe('ANNUITY_EDUCATION_PRESET relevance filtering', () => {
+  const mathNoise = [
+    'formula',
+    'calculate',
+    'calculation',
+    'present value',
+    'future value',
+    'duration',
+    'excel',
+    'homework',
+    'amortization',
+  ];
+
+  const stackPost = (title: string, content: string): RawSocialPost => ({
+    id: 'se-1',
+    platform: 'stack_exchange',
+    externalId: '1',
+    author: 'Pat',
+    title,
+    content,
+    url: 'https://money.stackexchange.com/questions/1',
+    timestamp: '2026-10-09T12:00:00.000Z',
+  });
+
+  const presetRule = createRuleFromPreset(ANNUITY_EDUCATION_PRESET, new Date('2026-10-09T12:00:00.000Z'));
+
+  it('carries every finance-math negative keyword', () => {
+    for (const term of mathNoise) {
+      expect(ANNUITY_EDUCATION_PRESET.negativeKeywords).toContain(term);
+    }
+  });
+
+  it('keeps the agreed positive keywords alongside them', () => {
+    expect(ANNUITY_EDUCATION_PRESET.keywords).toContain('annuity');
+    expect(ANNUITY_EDUCATION_PRESET.keywords).toContain('fixed indexed annuity');
+  });
+
+  it('drops a Stack Exchange duration question that mentions an annuity', () => {
+    const post = stackPost(
+      'Macaulay Duration formula not making sense',
+      'I am working through the duration of an annuity and the result looks wrong.',
+    );
+
+    expect(SocialIntentAnalyzer.evaluatePost(post, presetRule)).toBeNull();
+  });
+
+  it('drops a time-value-of-money calculation question that mentions an annuity', () => {
+    const post = stackPost(
+      'Is this time-value of money calculation correct?',
+      'Checking the present value of an annuity due.',
+    );
+
+    expect(SocialIntentAnalyzer.evaluatePost(post, presetRule)).toBeNull();
+  });
+
+  it('still surfaces a person deciding about retirement income', () => {
+    const post = stackPost(
+      'Should I put part of my TSP into an annuity?',
+      'I am 62 and weighing a fixed indexed annuity for retirement income.',
+    );
+
+    const lead = SocialIntentAnalyzer.evaluatePost(post, presetRule);
+
+    expect(lead).not.toBeNull();
+    expect(lead?.matchedKeyword).toBe('annuity');
   });
 });
 
@@ -124,11 +192,13 @@ describe('createRuleFromPreset', () => {
     const rule = createRuleFromPreset(ANNUITY_EDUCATION_PRESET, fixedNow);
 
     rule.keywords.push('injected');
+    rule.negativeKeywords.push('injected');
     rule.platforms.push('x');
     rule.targetSubreddits?.push('injected');
 
     expect(ANNUITY_EDUCATION_PRESET.keywords).not.toContain('injected');
-    expect(ANNUITY_EDUCATION_PRESET.platforms).toEqual(['reddit']);
+    expect(ANNUITY_EDUCATION_PRESET.negativeKeywords).not.toContain('injected');
+    expect(ANNUITY_EDUCATION_PRESET.platforms).toEqual(['stack_exchange', 'youtube']);
     expect(ANNUITY_EDUCATION_PRESET.targetSubreddits).not.toContain('injected');
   });
 

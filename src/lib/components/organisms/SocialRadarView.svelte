@@ -27,6 +27,7 @@
   import type { SocialLead, SocialPlatform } from "../../services/social-feed/types";
   import { SocialPostDispatcher } from "../../services/social-feed/social-post-dispatcher";
   import { ANNUITY_EDUCATION_PRESET, isPresetInstalled } from "../../services/social-feed/rule-presets";
+  import { RULE_PLATFORM_OPTIONS, describePlatform } from "../../services/social-feed/platform-descriptors";
   import { toast } from "../../stores/toast.svelte";
 
   interface Props {
@@ -152,7 +153,7 @@
           </button>
         </div>
         <p class="text-xs text-[var(--fm-text-muted)] max-w-2xl">
-          Real-time social listening across Hacker News and Reddit public feeds. Continuously monitors buyer conversations, evaluates purchase intent, and drafts immediate pitches.
+          Real-time social listening across Hacker News, Stack Exchange, YouTube comments and Reddit. Continuously monitors buyer conversations, evaluates purchase intent, and drafts immediate pitches.
         </p>
       </div>
 
@@ -261,7 +262,7 @@
       <div class="space-y-1">
         <h3 class="text-base font-bold text-[var(--fm-text)]">No Active Leads on Radar</h3>
         <p class="text-xs text-[var(--fm-text-muted)] max-w-md mx-auto">
-          Click "Scan Live Feeds" to query Hacker News Algolia and Reddit public feeds for live discussions matching your keywords.
+          Click "Scan Live Feeds" to query Hacker News, Stack Exchange, YouTube comments and Reddit for live discussions matching your keywords.
         </p>
       </div>
       <Button
@@ -279,11 +280,12 @@
     <div class="grid grid-cols-1 gap-4">
       {#each visibleLeads as lead (lead.id)}
         {@const isConverted = lead.status === 'converted'}
+        {@const platformBadge = describePlatform(lead.rawPost.platform)}
         <div class="p-5 rounded-2xl bg-[var(--fm-surface)] border border-[var(--fm-border)] hover:border-emerald-500/40 transition-all space-y-3.5 shadow-xs">
           <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
             <div class="flex items-center gap-2">
-              <Badge variant={lead.rawPost.platform === 'reddit' ? 'danger' : 'warning'} class="uppercase font-mono text-[10px]">
-                {lead.rawPost.platform.replace('_', ' ')}
+              <Badge variant={platformBadge.badgeVariant} class="uppercase font-mono text-[10px]">
+                {platformBadge.badgeLabel}
               </Badge>
               {#if lead.rawPost.subredditOrChannel}
                 <span class="text-xs font-semibold text-emerald-600 dark:text-emerald-400">
@@ -444,21 +446,19 @@
             <label class="block text-xs font-bold text-[var(--fm-text)]">
               Live Monitored Platforms
             </label>
-            <div class="flex items-center gap-2">
-              <button
-                type="button"
-                onclick={() => togglePlatform('hacker_news')}
-                class={`px-3 py-1.5 rounded-xl border text-xs font-semibold cursor-pointer ${selectedPlatforms.includes('hacker_news') ? 'bg-emerald-500/15 border-emerald-500 text-emerald-600 dark:text-emerald-400' : 'border-[var(--fm-border)] text-[var(--fm-text-muted)]'}`}
-              >
-                Hacker News (Live Algolia API)
-              </button>
-              <button
-                type="button"
-                onclick={() => togglePlatform('reddit')}
-                class={`px-3 py-1.5 rounded-xl border text-xs font-semibold cursor-pointer ${selectedPlatforms.includes('reddit') ? 'bg-emerald-500/15 border-emerald-500 text-emerald-600 dark:text-emerald-400' : 'border-[var(--fm-border)] text-[var(--fm-text-muted)]'}`}
-              >
-                Reddit (Live Public Feed)
-              </button>
+            <div class="flex flex-wrap items-center gap-2">
+              {#each RULE_PLATFORM_OPTIONS as option (option.id)}
+                {@const isSelected = selectedPlatforms.includes(option.id)}
+                <Button
+                  type="button"
+                  variant={isSelected ? 'success' : 'outline'}
+                  size="sm"
+                  aria-pressed={isSelected}
+                  onclick={() => togglePlatform(option.id)}
+                >
+                  {option.toggleLabel}
+                </Button>
+              {/each}
             </div>
           </div>
 

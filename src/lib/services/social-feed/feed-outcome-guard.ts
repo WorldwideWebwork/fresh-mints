@@ -1,4 +1,4 @@
-import type { FeedFetchOutcome, RawSocialPost } from './types';
+import type { FeedFetchOutcome, RawSocialPost, SocialPlatform } from './types';
 
 /**
  * Runtime boundary guard for the server relay's response (AGENTS.md 2.F).
@@ -26,27 +26,30 @@ const REQUIRED_POST_STRING_KEYS = [
   'timestamp',
 ] as const;
 
-const isRedditPost = (value: unknown): value is RawSocialPost => {
+const isPostFor = (value: unknown, platform: SocialPlatform): value is RawSocialPost => {
   if (!isRecord(value)) return false;
 
   const hasRequiredStrings = REQUIRED_POST_STRING_KEYS.every((key) => isString(value[key]));
-  const isRedditPlatform = value.platform === 'reddit';
+  const isExpectedPlatform = value.platform === platform;
   const hasValidOptionals =
     isOptionalNumber(value.score) &&
     isOptionalNumber(value.commentsCount) &&
     isOptionalString(value.subredditOrChannel);
 
-  return hasRequiredStrings && isRedditPlatform && hasValidOptionals;
+  return hasRequiredStrings && isExpectedPlatform && hasValidOptionals;
 };
 
-export const parseFeedFetchOutcome = (payload: unknown): FeedFetchOutcome | null => {
+export const parseFeedFetchOutcome = (
+  payload: unknown,
+  expectedPlatform: SocialPlatform = 'reddit',
+): FeedFetchOutcome | null => {
   if (!isRecord(payload)) return null;
 
   const { status } = payload;
 
   if (status === 'ok') {
     const { posts } = payload;
-    const hasValidPosts = Array.isArray(posts) && posts.every(isRedditPost);
+    const hasValidPosts = Array.isArray(posts) && posts.every((post) => isPostFor(post, expectedPlatform));
     return hasValidPosts ? { status: 'ok', posts } : null;
   }
 
