@@ -80,14 +80,9 @@
     }
   }
 
-  async function handleDemoLogin() {
-    isSubmitting = true;
+  function handleDemoLogin() {
     localError = null;
-    try {
-      await authStore.signup("Demo Hunter", "hunter@freshmints.io", "demopass123", "pro");
-    } finally {
-      isSubmitting = false;
-    }
+    authStore.startDemoSession();
   }
 </script>
 

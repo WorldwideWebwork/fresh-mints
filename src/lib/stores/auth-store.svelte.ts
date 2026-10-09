@@ -1,3 +1,5 @@
+import { DEMO_SESSION_PLAN, buildDemoSessionUser } from '../services/demo-session';
+
 export type SaasPlanTier = 'free' | 'starter' | 'pro' | 'enterprise';
 
 export interface PlanLimits {
@@ -200,6 +202,20 @@ class AuthStore {
     }
     this.isLoading = false;
     return true;
+  }
+
+  /**
+   * Starts the client-side demo sandbox. No server account backs it (the plugin
+   * has no signup or demo route), so no credentials are involved.
+   */
+  startDemoSession(): void {
+    const demoUser = buildDemoSessionUser(PLAN_LIMITS[DEMO_SESSION_PLAN], Date.now());
+    this.user = demoUser;
+    this.isLoggedIn = true;
+    this.errorMessage = null;
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('freshmints_auth_user', JSON.stringify(demoUser));
+    }
   }
 
   updatePlan(newPlan: SaasPlanTier): boolean {
