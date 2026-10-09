@@ -255,6 +255,19 @@ export function getDefaultWebsiteConfig(seed: WebsiteConfigSeed): WebsitePreview
 }
 
 /**
+ * Seed for a preview whose slug matched no lead. Only the name comes from the
+ * slug; city, state and school stay empty rather than being invented.
+ */
+export function getSlugFallbackSeed(slug: string): WebsiteConfigSeed {
+  const words = slug.replace(/-official$/i, '').replace(/[-_]+/g, ' ').trim();
+  const fullName = words
+    ? words.split(/\s+/).map((w) => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')
+    : 'Professional Practice Specialist';
+
+  return { fullName, profession: 'financial_advisor', city: '', state: '', collegeOrSchool: '' };
+}
+
+/**
  * Extract clean slug string from target input (Lead object, partial lead, or slug string).
  */
 export function resolveTargetSlug(target: string | Partial<Lead> | { id: string; fullName?: string; websiteConfig?: { previewSlug?: string } }): string {

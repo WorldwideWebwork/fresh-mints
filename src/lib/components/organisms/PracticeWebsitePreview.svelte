@@ -8,6 +8,7 @@
     getPathPreviewLink,
     getSubdomainPreviewLink,
     generateLeadPreviewSlug,
+    getSlugFallbackSeed,
   } from '../../services/website-templates';
   import { copyTextToClipboard } from '../../services/clipboard';
   import PracticeWebsiteTemplate from './PracticeWebsiteTemplate.svelte';
@@ -91,18 +92,7 @@
     } else if (activeLead) {
       baseConfig = getDefaultWebsiteConfig(activeLead);
     } else {
-      const cleanSlug = slug.replace(/-official$/i, '').replace(/[-_]+/g, ' ').trim();
-      const formattedName = cleanSlug
-        ? cleanSlug.split(' ').map((w) => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')
-        : 'Professional Practice Specialist';
-
-      baseConfig = getDefaultWebsiteConfig({
-        fullName: formattedName,
-        profession: 'financial_advisor',
-        city: 'Phoenix',
-        state: 'AZ',
-        collegeOrSchool: 'Accredited Graduate Academy',
-      });
+      baseConfig = getDefaultWebsiteConfig(getSlugFallbackSeed(slug));
     }
 
     return {

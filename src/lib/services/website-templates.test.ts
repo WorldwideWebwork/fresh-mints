@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { getDefaultWebsiteConfig } from './website-templates';
+import { getDefaultWebsiteConfig, getSlugFallbackSeed } from './website-templates';
 
 const seedWith = (city: string, state: string) => ({
   fullName: 'Test Practitioner',
@@ -38,5 +38,30 @@ describe('getDefaultWebsiteConfig location copy', () => {
     expect(config.heroSubheadline).toContain('services in your region.');
     expect(config.bioText).toContain('clients in our community');
     expect(config.services[0].description).not.toMatch(/goals in/);
+  });
+});
+
+describe('getSlugFallbackSeed', () => {
+  it('derives a display name from the slug, dropping the -official suffix', () => {
+    expect(getSlugFallbackSeed('jane-doe-official').fullName).toBe('Jane Doe');
+    expect(getSlugFallbackSeed('jane_doe').fullName).toBe('Jane Doe');
+  });
+
+  it('uses a generic name when the slug is empty', () => {
+    expect(getSlugFallbackSeed('').fullName).toBe('Professional Practice Specialist');
+  });
+
+  it('leaves location and school empty instead of inventing them', () => {
+    const seed = getSlugFallbackSeed('jane-doe');
+    expect(seed.city).toBe('');
+    expect(seed.state).toBe('');
+    expect(seed.collegeOrSchool).toBe('');
+  });
+
+  it('yields a default config that names no place and no school', () => {
+    const config = getDefaultWebsiteConfig(getSlugFallbackSeed('jane-doe'));
+    expect(config.heroSubheadline).toContain('services in your region.');
+    expect(config.heroSubheadline).not.toMatch(/Phoenix|AZ|graduate from/);
+    expect(config.bioText).not.toMatch(/Phoenix|AZ/);
   });
 });
