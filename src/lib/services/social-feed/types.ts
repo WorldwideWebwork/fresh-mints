@@ -13,6 +13,12 @@ export interface SocialMonitorRule {
   isActive: boolean;
   autoConvertToCrm?: boolean;
   createdAt: string;
+  /** Reply text with `{author}` and `{title}` placeholders. Absent or blank: the default website pitch. */
+  pitchTemplate?: string;
+  /** Absent or true: append the funnel preview link to the reply. false: send the reply text alone. */
+  appendFunnelLink?: boolean;
+  /** Base the author slug is appended to (`<base>/<slug>`). Absent or blank: https://freshmints.io/preview. */
+  funnelBaseUrl?: string;
 }
 
 export interface RawSocialPost {
@@ -40,6 +46,9 @@ export interface SocialLead {
   status: SocialLeadStatus;
   convertedLeadId?: string;
   evaluatedAt: string;
+  /** Copied from the matching rule at evaluation so the dispatcher needs no rule lookup. */
+  appendFunnelLink?: boolean;
+  funnelBaseUrl?: string;
 }
 
 /**

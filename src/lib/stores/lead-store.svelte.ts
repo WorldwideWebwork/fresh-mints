@@ -21,6 +21,7 @@ import { authStore } from './auth-store.svelte';
 import { toast } from './toast.svelte';
 import { type SocialMonitorRule, type SocialLead, type FeedScanProblem } from '../services/social-feed/types';
 import { socialFeedRegistry } from '../services/social-feed/social-feed-registry';
+import { createRuleFromPreset, isPresetInstalled, type SocialRulePreset } from '../services/social-feed/rule-presets';
 
 class LeadStoreState {
   leads = $state<Lead[]>([]);
@@ -975,15 +976,21 @@ class LeadStoreState {
     }
   }
 
-  addSocialRule(rule: Omit<SocialMonitorRule, 'id' | 'createdAt'>) {
-    const newRule: SocialMonitorRule = {
-      ...rule,
-      id: `rule-${Date.now()}`,
-      createdAt: new Date().toISOString(),
-    };
+  addSocialRule(rule: SocialRulePreset) {
+    const newRule = createRuleFromPreset(rule);
     this.socialRules.push(newRule);
     this.saveSocialRulesToStorage();
     toast.success('Social Rule Created', `Monitoring rule "${newRule.name}" is now active.`);
+  }
+
+  /** Adds a preset once. Returns false, without changing any rule, when it is already installed. */
+  addSocialRulePreset(preset: SocialRulePreset): boolean {
+    if (isPresetInstalled(this.socialRules, preset)) {
+      toast.info('Preset Already Added', `"${preset.name}" is already in your monitoring rules.`);
+      return false;
+    }
+    this.addSocialRule(preset);
+    return true;
   }
 
   toggleSocialRule(id: string) {

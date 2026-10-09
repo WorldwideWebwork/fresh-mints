@@ -8,6 +8,17 @@ export interface DispatchResult {
   dispatchedContent?: string;
 }
 
+const LEGACY_FUNNEL_BASE = 'https://freshmints.io/preview';
+
+/** The rule's own base when it set one, otherwise the legacy freshmints.io preview base. */
+const resolveFunnelBase = (lead: SocialLead): string => {
+  const customBase = (lead.funnelBaseUrl ?? '').trim().replace(/\/+$/, '');
+  return customBase || LEGACY_FUNNEL_BASE;
+};
+
+/** A reply already carrying this base (scheme aside) needs no second link. */
+const stripScheme = (url: string): string => url.replace(/^https?:\/\//i, '');
+
 export class SocialPostDispatcher {
   static async dispatchReply(
     lead: SocialLead,
@@ -15,10 +26,14 @@ export class SocialPostDispatcher {
   ): Promise<DispatchResult> {
     const tokens = socialTokensStore.tokens;
     const authorSlug = lead.rawPost.author.replace(/[^a-z0-9]+/gi, '-').toLowerCase();
-    const funnelLink = `https://freshmints.io/preview/${authorSlug || 'turnkey-demo'}`;
+    const funnelBase = resolveFunnelBase(lead);
+    const funnelLink = `${funnelBase}/${authorSlug || 'turnkey-demo'}`;
 
     let replyBody = customText || lead.suggestedPitch;
-    const shouldAppendLink = tokens.includeFunnelPreviewLink && !replyBody.includes('freshmints.io/preview');
+    const isLinkEnabledGlobally = tokens.includeFunnelPreviewLink;
+    const isLinkEnabledForRule = lead.appendFunnelLink !== false;
+    const hasLinkAlready = replyBody.includes(stripScheme(funnelBase));
+    const shouldAppendLink = isLinkEnabledGlobally && isLinkEnabledForRule && !hasLinkAlready;
     if (shouldAppendLink) {
       replyBody = `${replyBody}\n\n[Interactive Portfolio & Booking Demo]: ${funnelLink}`;
     }
