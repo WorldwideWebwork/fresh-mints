@@ -5,3 +5,5 @@ coverage/
 .env*
 !.env.example
 .superpowers/
+# Chemical X local telemetry & audit history
+.chemx/

@@ -37,7 +37,7 @@
   import CustomTabModal from './lib/components/organisms/CustomTabModal.svelte';
   import SettingsModal from './lib/components/organisms/SettingsModal.svelte';
   import UpgradePlanModal from './lib/components/organisms/UpgradePlanModal.svelte';
-  import SocialTokensModal from './lib/components/organisms/SocialTokensModal.svelte';
+  import SocialSettingsModal from './lib/components/organisms/SocialSettingsModal.svelte';
 
   // Standalone preview slug state
   let standalonePreviewSlug = $state<string | null>(null);
@@ -388,8 +388,8 @@
   onclose={closeModal}
 />
 
-<SocialTokensModal
-  open={modalState.name === 'social_tokens'}
+<SocialSettingsModal
+  open={modalState.name === 'social_settings'}
   onclose={closeModal}
 />
 

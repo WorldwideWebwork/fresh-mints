@@ -21,7 +21,7 @@
     Tag,
     Trash2,
     Filter,
-    Key,
+    Settings2,
     AlertTriangle
   } from "lucide-svelte";
   import type { SocialLead, SocialPlatform } from "../../services/social-feed/types";
@@ -165,10 +165,10 @@
           variant="secondary"
           size="sm"
           class="gap-1.5 text-xs font-semibold"
-          onclick={() => onopenmodal?.('social_tokens')}
+          onclick={() => onopenmodal?.('social_settings')}
         >
-          <Key class="w-3.5 h-3.5 text-cyan-500" />
-          <span>API Key Vault</span>
+          <Settings2 class="w-3.5 h-3.5 text-cyan-500" />
+          <span>Social Settings</span>
         </Button>
 
         <Button

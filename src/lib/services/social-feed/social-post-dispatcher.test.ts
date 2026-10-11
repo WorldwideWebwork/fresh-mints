@@ -1,23 +1,46 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import type { SocialLead } from './types';
 
-// The tokens store is a Svelte rune module; vitest here has no Svelte plugin, so stand in a plain object.
-const mockTokensStore = vi.hoisted(() => ({
-  tokens: {
+// The preferences store is a Svelte rune module; vitest here has no Svelte plugin, so stand in a plain object.
+const mockPreferencesStore = vi.hoisted(() => ({
+  preferences: {
     includeFunnelPreviewLink: true,
-    webhookUrl: '',
-    ayrshareApiKey: '',
   },
 }));
 
-vi.mock('../../stores/social-tokens-store.svelte', () => ({
-  socialTokensStore: mockTokensStore,
+vi.mock('../../stores/social-preferences-store.svelte', () => ({
+  socialPreferencesStore: mockPreferencesStore,
 }));
 
 import { SocialPostDispatcher } from './social-post-dispatcher';
 import { SocialIntentAnalyzer } from './social-intent-analyzer';
 
 const PITCH = 'A reply body.';
+const DISPATCH_URL = 'http://mycompass/wp-json/xophz-freshmints/v1/social/dispatch';
+
+const fetchMock = vi.fn();
+
+const jsonResponse = (body: unknown, status = 200): Response =>
+  new Response(JSON.stringify(body), {
+    status,
+    headers: { 'Content-Type': 'application/json' },
+  });
+
+const NOT_CONFIGURED = {
+  code: 'freshmints_webhook_not_configured',
+  message: 'No dispatch webhook is configured.',
+  data: { status: 400 },
+};
+
+// Every dispatch asks the server to relay; with no webhook configured it answers "not configured".
+const stubServer = () => {
+  fetchMock.mockReset();
+  fetchMock.mockResolvedValue(jsonResponse(NOT_CONFIGURED, 400));
+  vi.stubGlobal('fetch', fetchMock);
+  vi.stubGlobal('window', {
+    wpApiSettings: { root: 'http://mycompass/wp-json/', nonce: 'nonce-123' },
+  });
+};
 
 const makeLead = (overrides: Partial<SocialLead> = {}): SocialLead => ({
   id: 'lead-social-1',
@@ -45,9 +68,12 @@ const LEGACY_LINK_LINE = '\n\n[Interactive Portfolio & Booking Demo]: https://fr
 
 describe('SocialPostDispatcher.dispatchReply: funnel link', () => {
   beforeEach(() => {
-    mockTokensStore.tokens.includeFunnelPreviewLink = true;
-    mockTokensStore.tokens.webhookUrl = '';
-    mockTokensStore.tokens.ayrshareApiKey = '';
+    mockPreferencesStore.preferences.includeFunnelPreviewLink = true;
+    stubServer();
+  });
+
+  afterEach(() => {
+    vi.unstubAllGlobals();
   });
 
   it('appends the legacy freshmints.io preview link when the lead has no funnel fields', async () => {
@@ -70,7 +96,7 @@ describe('SocialPostDispatcher.dispatchReply: funnel link', () => {
   });
 
   it('appends no link when the global setting is off, even if the rule allows one', async () => {
-    mockTokensStore.tokens.includeFunnelPreviewLink = false;
+    mockPreferencesStore.preferences.includeFunnelPreviewLink = false;
 
     const result = await SocialPostDispatcher.dispatchReply(makeLead({ appendFunnelLink: true }));
 
@@ -111,7 +137,105 @@ describe('SocialPostDispatcher.dispatchReply: funnel link', () => {
   });
 });
 
+describe('SocialPostDispatcher.dispatchReply: server relay', () => {
+  beforeEach(() => {
+    mockPreferencesStore.preferences.includeFunnelPreviewLink = true;
+    stubServer();
+  });
+
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
+  it('keeps the copy-and-paste path when the server has no webhook configured', async () => {
+    const result = await SocialPostDispatcher.dispatchReply(makeLead());
+
+    expect(result.success).toBe(true);
+    expect(result.message).toBe('Pitch copied and formatted with your funnel link. Paste directly into the thread.');
+    expect(result.targetUrl).toBe(makeLead().rawPost.url);
+    expect(result.dispatchedContent).toBe(`${PITCH}${LEGACY_LINK_LINE}`);
+  });
+
+  it('asks the server route to relay, with the nonce and only the lead fields', async () => {
+    await SocialPostDispatcher.dispatchReply(makeLead());
+
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    const [url, init] = fetchMock.mock.calls[0];
+    expect(url).toBe(DISPATCH_URL);
+    expect(init.method).toBe('POST');
+    expect(init.headers['X-WP-Nonce']).toBe('nonce-123');
+    expect(JSON.parse(init.body)).toEqual({
+      platform: 'reddit',
+      threadUrl: 'https://www.reddit.com/r/smallbusiness/comments/abc/x/',
+      prospect: 'u/some.user',
+      intentScore: 68,
+      matchedKeyword: 'website',
+      replyBody: `${PITCH}${LEGACY_LINK_LINE}`,
+    });
+  });
+
+  it('never calls a host other than the WordPress REST route', async () => {
+    await SocialPostDispatcher.dispatchReply(makeLead());
+
+    const hosts = fetchMock.mock.calls.map(([url]) => new URL(String(url)).host);
+    expect(new Set(hosts)).toEqual(new Set(['mycompass']));
+  });
+
+  it('reports the server message when the webhook accepted the dispatch', async () => {
+    fetchMock.mockResolvedValue(jsonResponse({ success: true, message: 'Relayed.', status: 204 }));
+
+    const result = await SocialPostDispatcher.dispatchReply(makeLead());
+
+    expect(result.success).toBe(true);
+    expect(result.message).toBe('Relayed.');
+    expect(result.dispatchedContent).toBe(`${PITCH}${LEGACY_LINK_LINE}`);
+  });
+
+  it('fails with the server reason, keeping the reply text, when the webhook rejects it', async () => {
+    fetchMock.mockResolvedValue(
+      jsonResponse(
+        { code: 'freshmints_webhook_rejected', message: 'The dispatch webhook responded with HTTP 500.' },
+        502,
+      ),
+    );
+
+    const result = await SocialPostDispatcher.dispatchReply(makeLead());
+
+    expect(result.success).toBe(false);
+    expect(result.message).toBe('Webhook dispatch error: The dispatch webhook responded with HTTP 500.');
+    expect(result.dispatchedContent).toBe(`${PITCH}${LEGACY_LINK_LINE}`);
+  });
+
+  it('fails with a status line when the server error carries no message', async () => {
+    fetchMock.mockResolvedValue(new Response('not json', { status: 500 }));
+
+    const result = await SocialPostDispatcher.dispatchReply(makeLead());
+
+    expect(result.success).toBe(false);
+    expect(result.message).toBe('Webhook dispatch error: The server answered HTTP 500.');
+  });
+
+  it('fails when the server cannot be reached', async () => {
+    fetchMock.mockRejectedValue(new Error('Failed to fetch'));
+
+    const result = await SocialPostDispatcher.dispatchReply(makeLead());
+
+    expect(result.success).toBe(false);
+    expect(result.message).toBe('Webhook dispatch error: Failed to fetch');
+    expect(result.dispatchedContent).toBe(`${PITCH}${LEGACY_LINK_LINE}`);
+  });
+});
+
 describe('legacy saved rule through analyzer and dispatcher', () => {
+  beforeEach(() => {
+    mockPreferencesStore.preferences.includeFunnelPreviewLink = true;
+    stubServer();
+  });
+
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
   it('yields the website pitch and the legacy preview link end to end', async () => {
     const savedRule = JSON.parse(
       JSON.stringify({

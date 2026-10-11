@@ -1,5 +1,6 @@
 import type { SocialLead } from './types';
-import { socialTokensStore } from '../../stores/social-tokens-store.svelte';
+import { socialPreferencesStore } from '../../stores/social-preferences-store.svelte';
+import { relayDispatchToServer } from './social-dispatch-relay';
 
 export interface DispatchResult {
   success: boolean;
@@ -24,13 +25,13 @@ export class SocialPostDispatcher {
     lead: SocialLead,
     customText?: string
   ): Promise<DispatchResult> {
-    const tokens = socialTokensStore.tokens;
+    const preferences = socialPreferencesStore.preferences;
     const authorSlug = lead.rawPost.author.replace(/[^a-z0-9]+/gi, '-').toLowerCase();
     const funnelBase = resolveFunnelBase(lead);
     const funnelLink = `${funnelBase}/${authorSlug || 'turnkey-demo'}`;
 
     let replyBody = customText || lead.suggestedPitch;
-    const isLinkEnabledGlobally = tokens.includeFunnelPreviewLink;
+    const isLinkEnabledGlobally = preferences.includeFunnelPreviewLink;
     const isLinkEnabledForRule = lead.appendFunnelLink !== false;
     const hasLinkAlready = replyBody.includes(stripScheme(funnelBase));
     const shouldAppendLink = isLinkEnabledGlobally && isLinkEnabledForRule && !hasLinkAlready;
@@ -38,51 +39,26 @@ export class SocialPostDispatcher {
       replyBody = `${replyBody}\n\n[Interactive Portfolio & Booking Demo]: ${funnelLink}`;
     }
 
-    const hasWebhook = Boolean(tokens.webhookUrl.trim());
-    if (hasWebhook) {
-      try {
-        const payload = {
-          event: 'social_lead_reply_dispatched',
-          platform: lead.rawPost.platform,
-          threadUrl: lead.rawPost.url,
-          prospect: lead.rawPost.author,
-          intentScore: lead.intentScore,
-          matchedKeyword: lead.matchedKeyword,
-          replyBody,
-          timestamp: new Date().toISOString(),
-        };
+    // The webhook URL is a Connectors API credential held by the server, so the browser only
+    // asks the server to relay. A server with no webhook configured answers "not configured",
+    // and the reply then goes out by the copy-and-paste path below.
+    const relay = await relayDispatchToServer(lead, replyBody);
 
-        const res = await fetch(tokens.webhookUrl, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(payload),
-        });
-
-        const isOk = res.ok;
-        if (isOk) {
-          return {
-            success: true,
-            message: 'Pitch dispatched to connected funnel webhook (Slack/Discord/Zapier).',
-            targetUrl: lead.rawPost.url,
-            dispatchedContent: replyBody,
-          };
-        }
-      } catch (err: unknown) {
-        const errorDetail = err instanceof Error ? err.message : 'Unknown network failure';
-        return {
-          success: false,
-          message: `Webhook dispatch error: ${errorDetail}`,
-          targetUrl: lead.rawPost.url,
-          dispatchedContent: replyBody,
-        };
-      }
-    }
-
-    const hasAyrshare = Boolean(tokens.ayrshareApiKey.trim());
-    if (hasAyrshare) {
+    const isSent = relay.status === 'sent';
+    if (isSent) {
       return {
         success: true,
-        message: 'Dispatched via Ayrshare multi-network API gateway.',
+        message: relay.message,
+        targetUrl: lead.rawPost.url,
+        dispatchedContent: replyBody,
+      };
+    }
+
+    const isFailed = relay.status === 'failed';
+    if (isFailed) {
+      return {
+        success: false,
+        message: `Webhook dispatch error: ${relay.reason}`,
         targetUrl: lead.rawPost.url,
         dispatchedContent: replyBody,
       };
