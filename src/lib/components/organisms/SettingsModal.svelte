@@ -4,10 +4,11 @@
   import { BombBagService, type BombBagList } from '../../services/bomb-bag-service';
   import Dialog from '../atoms/Dialog.svelte';
   import Button from '../atoms/Button.svelte';
-  import Input from '../atoms/Input.svelte';
   import Select from '../atoms/Select.svelte';
   import Badge from '../atoms/Badge.svelte';
-  import { Settings, Save, Trash2, CheckCircle2, ShieldCheck, Mail, Globe, Sparkles } from 'lucide-svelte';
+  import { Settings, Save, Trash2, CheckCircle2, ShieldCheck, Mail, Globe, Sparkles, ExternalLink } from 'lucide-svelte';
+
+  const CONNECTORS_URL = '/wp-admin/options-connectors.php';
 
   interface Props {
     open?: boolean;
@@ -19,7 +20,6 @@
 
   let tempQuantity = $state(leadStore.fetchQuantity);
   let tempDateWindow = $state(leadStore.dateWindowFilter);
-  let tempWebhook = $state(leadStore.webhookUrl);
   let bombBagLists = $state<BombBagList[]>([]);
   let selectedBombBagList = $state<string>('');
   let autoSyncBombBag = $state(false);
@@ -28,7 +28,6 @@
     if (open) {
       tempQuantity = leadStore.fetchQuantity;
       tempDateWindow = leadStore.dateWindowFilter;
-      tempWebhook = leadStore.webhookUrl;
       loadBombBagLists();
     }
   });
@@ -70,7 +69,6 @@
     leadStore.setFetchQuantity(tempQuantity);
     leadStore.setDateWindowFilter(tempDateWindow);
     if (typeof window !== 'undefined') {
-      localStorage.setItem('licensify_crm_webhook', tempWebhook);
       localStorage.setItem('fm_default_bomb_bag_list', selectedBombBagList);
     }
     toast.success('Settings saved successfully!');
@@ -135,14 +133,24 @@
       </div>
     </div>
 
-    <!-- External Webhook URL -->
-    <div>
-      <label class="text-xs font-semibold text-slate-700 dark:text-slate-300 block mb-1">External Webhook URL (Zapier, HubSpot, Make):</label>
-      <Input
-        bind:value={tempWebhook}
-        placeholder="https://hooks.zapier.com/hooks/catch/..."
-        class="text-xs"
-      />
+    <!-- CRM Webhook URL: a credential, so it lives in WordPress Connectors and never in this browser -->
+    <div class="p-3 rounded-xl bg-emerald-500/10 border border-emerald-500/20 space-y-1.5">
+      <div class="flex items-start gap-2 text-xs text-emerald-800 dark:text-emerald-300">
+        <ShieldCheck class="w-4 h-4 text-emerald-500 flex-shrink-0 mt-0.5" />
+        <span class="leading-relaxed">
+          The CRM webhook URL (Zapier, HubSpot, Make) is a credential. It is kept on the server in WordPress
+          Connectors, never in this browser, and only the server uses it.
+        </span>
+      </div>
+      <a
+        href={CONNECTORS_URL}
+        target="_blank"
+        rel="noopener noreferrer"
+        class="inline-flex items-center gap-1.5 text-xs font-bold text-emerald-600 dark:text-emerald-400 hover:underline"
+      >
+        <span>Set the CRM Webhook URL in Settings &rsaquo; Connectors</span>
+        <ExternalLink class="w-3 h-3" />
+      </a>
     </div>
 
     <!-- Clear All Data -->

@@ -1,12 +1,43 @@
 import type { Lead } from '../types/lead';
 
-export interface WebhookPayload {
-  event: 'lead.created' | 'lead.skiptraced' | 'lead.outreach_sent' | 'lead.site_pitch' | 'batch.export' | 'leads.bulk_synced';
-  timestamp: string;
-  count: number;
-  data: any;
-  source: string;
+export type CrmWebhookEvent =
+  | 'lead.created'
+  | 'lead.skiptraced'
+  | 'lead.outreach_sent'
+  | 'lead.site_pitch'
+  | 'batch.export'
+  | 'leads.bulk_synced';
+
+export interface CrmWebhookResult {
+  success: boolean;
+  message: string;
+  /** True when the server holds no CRM Webhook URL connector value yet. */
+  notConfigured?: boolean;
 }
+
+/**
+ * The CRM webhook URL is a bearer credential, so it lives in the WordPress Connectors API
+ * (`crm_webhook_url`) and only the server POSTs to it. The browser sends the lead payload to
+ * this route and never sees, stores or sends the URL.
+ */
+const CRM_WEBHOOK_PATH = '/xophz-freshmints/v1/crm/webhook';
+const CRM_WEBHOOK_NOT_CONFIGURED_CODE = 'freshmints_crm_webhook_not_configured';
+const CRM_WEBHOOK_SENT_MESSAGE = 'Payload synced to the connected CRM webhook.';
+
+const readJsonObject = async (response: Response): Promise<Record<string, unknown>> => {
+  try {
+    const body: unknown = await response.json();
+    const isObject = typeof body === 'object' && body !== null;
+    return isObject ? (body as Record<string, unknown>) : {};
+  } catch {
+    return {};
+  }
+};
+
+const stringField = (body: Record<string, unknown>, name: string): string => {
+  const value = body[name];
+  return typeof value === 'string' ? value : '';
+};
 
 export class CRMExportService {
   /**
@@ -198,40 +229,39 @@ export class CRMExportService {
   }
 
   /**
-   * Send single lead to external webhook (Zapier, Make.com, HubSpot, GoHighLevel)
+   * Ask the server to relay a lead, or a list of leads, to the CRM webhook (Zapier, Make.com,
+   * HubSpot, GoHighLevel) held in the `crm_webhook_url` connector.
    */
   public static async postWebhook(
-    webhookUrl: string,
-    event: WebhookPayload['event'],
+    event: CrmWebhookEvent,
     leadOrLeads: Lead | Lead[]
-  ): Promise<{ success: boolean; message: string }> {
-    if (!webhookUrl || !webhookUrl.startsWith('http')) {
-      return { success: false, message: 'Invalid Webhook URL. Must start with http:// or https://' };
-    }
-
+  ): Promise<CrmWebhookResult> {
     try {
-      const payload: WebhookPayload = {
-        event,
-        timestamp: new Date().toISOString(),
-        count: Array.isArray(leadOrLeads) ? leadOrLeads.length : 1,
-        data: leadOrLeads,
-        source: 'Fresh Mints Lead Platform',
-      };
+      const restRoot = (window as any).wpApiSettings?.root || '/wp-json/';
+      const nonce = (window as any).wpApiSettings?.nonce || '';
+      const endpoint = `${restRoot.replace(/\/$/, '')}${CRM_WEBHOOK_PATH}`;
 
-      const res = await fetch(webhookUrl, {
+      const res = await fetch(endpoint, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Accept': 'application/json',
+          'X-WP-Nonce': nonce,
         },
-        body: JSON.stringify(payload),
+        body: JSON.stringify({ event, data: leadOrLeads }),
       });
 
-      if (!res.ok) {
-        throw new Error(`CRM Webhook endpoint returned HTTP ${res.status}`);
+      const body = await readJsonObject(res);
+      if (res.ok) {
+        return { success: true, message: stringField(body, 'message') || CRM_WEBHOOK_SENT_MESSAGE };
       }
 
-      return { success: true, message: `Successfully synced payload to ${webhookUrl}` };
+      const notConfigured = stringField(body, 'code') === CRM_WEBHOOK_NOT_CONFIGURED_CODE;
+      const serverMessage = stringField(body, 'message');
+      return {
+        success: false,
+        message: serverMessage || `The server answered HTTP ${res.status}.`,
+        ...(notConfigured ? { notConfigured } : {}),
+      };
     } catch (error: any) {
       console.warn('CRM Webhook error:', error);
       return { success: false, message: error.message || 'Failed to post webhook' };

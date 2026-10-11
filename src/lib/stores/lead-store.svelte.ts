@@ -13,6 +13,7 @@ import {
 } from '../types/lead';
 import { getLeadDealValue } from '../types/profession';
 import { CRMExportService } from '../services/crm-export-service';
+import { purgeLegacyCrmWebhookFromBrowser } from './legacy-crm-webhook';
 import { BombBagService, type BombBagSyncResult } from '../services/bomb-bag-service';
 import { IndexedDBStorage } from '../services/indexeddb-storage';
 import { getDefaultWebsiteConfig, generateLeadPreviewSlug } from '../services/website-templates';
@@ -28,7 +29,6 @@ class LeadStoreState {
   selectedLeadId = $state<string | null>(null);
   activeTab = $state<string>('leads');
   customTabs = $state<CustomTabConfig[]>([]);
-  webhookUrl = $state<string>('');
   fetchQuantity = $state<number>(25);
   isInitialized = $state<boolean>(false);
   isSearchingRegistry = $state<boolean>(false);
@@ -78,7 +78,7 @@ class LeadStoreState {
 
   async initFromStorage() {
     if (typeof window !== 'undefined') {
-      this.webhookUrl = localStorage.getItem('licensify_crm_webhook') || '';
+      purgeLegacyCrmWebhookFromBrowser();
       const savedQuantity = localStorage.getItem('licensify_fetch_quantity');
       if (savedQuantity) {
         this.fetchQuantity = parseInt(savedQuantity, 10) || 25;
