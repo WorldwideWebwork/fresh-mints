@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import type { Lead } from '../types/lead';
+import type { Lead, SkipTraceResult } from '../types/lead';
 import { CRMExportService } from './crm-export-service';
 
 const WEBHOOK_ROUTE = 'http://mycompass/wp-json/xophz-freshmints/v1/crm/webhook';
@@ -225,5 +225,64 @@ describe('CRMExportService.exportToCSV compliance columns', () => {
     expect(cells[columns.indexOf('Phone Type')]).toBe('Unknown');
     expect(cells[columns.indexOf('DNC Status')]).toBe('Unknown');
     expect(csv).not.toMatch(/Carrier Verified|Not on DNC List/);
+  });
+
+  const legacyTrace: SkipTraceResult = {
+    verifiedPhone: 'phone-on-file',
+    phoneType: 'Mobile (Carrier Verified)',
+    phoneSource: 'Google Places',
+    confidenceScore: 98,
+    dncStatus: 'Clean - Not on DNC List',
+    primaryEmail: 'email-on-file',
+    emailValidation: 'Website Scraped & Verified',
+    currentAddress: 'Albany',
+    enrichmentNotes: '',
+  };
+  const columnsOf = (csv: string): Record<string, string> => {
+    const [header, row] = csv.split('\n');
+    const cells = row.split(',');
+    return Object.fromEntries(header.split(',').map((name, index) => [name, cells[index]]));
+  };
+
+  it('exports a lead saved by an older build with Unknown, not its stored clearance or carrier check', async () => {
+    const legacyLead = makeLead({ skipTraceStatus: 'Traced', skipTraceData: legacyTrace });
+
+    const csv = await exportedCsv([legacyLead]);
+    const exported = columnsOf(csv);
+
+    expect(exported['Phone Type']).toBe('Unknown');
+    expect(exported['DNC Status']).toBe('Unknown');
+    expect(exported['Verified Phone']).toBe('phone-on-file');
+    expect(csv).not.toMatch(/Carrier Verified|Not on DNC List|Public (Business )?Directory/);
+  });
+
+  it('also exports the stored public-directory label as Unknown', async () => {
+    const csv = await exportedCsv([
+      makeLead({ skipTraceStatus: 'Traced', skipTraceData: { ...legacyTrace, dncStatus: 'Public Business Directory' } }),
+    ]);
+
+    expect(columnsOf(csv)['DNC Status']).toBe('Unknown');
+  });
+
+  it('leaves the stored lead as it was; only the exported copy is normalized', async () => {
+    const legacyLead = makeLead({ skipTraceStatus: 'Traced', skipTraceData: legacyTrace });
+
+    await exportedCsv([legacyLead]);
+
+    expect(legacyLead.skipTraceData?.dncStatus).toBe('Clean - Not on DNC List');
+    expect(legacyLead.skipTraceData?.phoneType).toBe('Mobile (Carrier Verified)');
+  });
+
+  it('exports a real phone type and DNC status exactly as stored', async () => {
+    const csv = await exportedCsv([
+      makeLead({
+        skipTraceStatus: 'Traced',
+        skipTraceData: { ...legacyTrace, phoneType: 'Landline', dncStatus: 'On DNC List' },
+      }),
+    ]);
+    const exported = columnsOf(csv);
+
+    expect(exported['Phone Type']).toBe('Landline');
+    expect(exported['DNC Status']).toBe('On DNC List');
   });
 });

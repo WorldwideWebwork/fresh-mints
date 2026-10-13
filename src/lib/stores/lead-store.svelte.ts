@@ -18,6 +18,7 @@ import { BombBagService, type BombBagSyncResult } from '../services/bomb-bag-ser
 import { IndexedDBStorage } from '../services/indexeddb-storage';
 import { getDefaultWebsiteConfig, generateLeadPreviewSlug } from '../services/website-templates';
 import { EMAIL_FOUND_ON_WEBSITE } from '../services/skip-trace';
+import { normalizeLegacyLeads } from '../services/legacy-lead-claims';
 import { INITIAL_VERIFIED_LEADS } from '../services/initial-seeds';
 import { authStore } from './auth-store.svelte';
 import { toast } from './toast.svelte';
@@ -129,8 +130,15 @@ class LeadStoreState {
       try {
         const storedLeads = await IndexedDBStorage.getAllLeads();
         if (storedLeads && storedLeads.length > 0) {
-          this.leads = storedLeads;
-          this.selectedLeadId = storedLeads[0]?.id || null;
+          // Leads saved before the honest-label fixes can hold contact claims no check produced: rewrite them once.
+          const { leads: normalizedLeads, changed } = normalizeLegacyLeads(storedLeads);
+          this.leads = normalizedLeads;
+          this.selectedLeadId = normalizedLeads[0]?.id || null;
+          if (changed.length > 0) {
+            void IndexedDBStorage.saveAllLeads(changed).catch((saveErr) =>
+              console.warn('Could not save normalized leads', saveErr),
+            );
+          }
         } else {
           this.leads = [];
           this.selectedLeadId = null;

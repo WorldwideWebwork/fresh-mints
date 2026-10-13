@@ -1,4 +1,5 @@
 import type { Lead } from '../types/lead';
+import { normalizeLegacyLeads } from './legacy-lead-claims';
 
 export type CrmWebhookEvent =
   | 'lead.created'
@@ -128,7 +129,8 @@ export class CRMExportService {
       'Created At',
     ];
 
-    const rows = leads.map((lead) => [
+    // A lead saved by an older build can still hold a DNC clearance or carrier check no lookup produced.
+    const rows = normalizeLegacyLeads(leads).leads.map((lead) => [
       lead.id,
       this.escapeCSV(lead.fullName),
       lead.profession,

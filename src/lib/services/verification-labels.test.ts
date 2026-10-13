@@ -66,6 +66,11 @@ describe('verification labels', () => {
     expect(read('lib/components/organisms/PlacesSearchView.svelte')).not.toMatch(/<th[^>]*>\s*Verified Phone/);
   });
 
+  it('normalizes legacy contact claims when leads load and before they are exported', () => {
+    expect(read('lib/stores/lead-store.svelte.ts')).toContain('normalizeLegacyLeads(storedLeads)');
+    expect(read('lib/services/crm-export-service.ts')).toContain('normalizeLegacyLeads(leads)');
+  });
+
   it('falls back to a formatter that reads Not checked, not a literal claim', () => {
     const modal = read('lib/components/organisms/LeadDetailModal.svelte');
 
