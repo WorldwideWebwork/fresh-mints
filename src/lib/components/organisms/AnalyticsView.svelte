@@ -82,7 +82,7 @@
 
         <div>
           <div class="flex justify-between py-1 text-slate-700 dark:text-slate-300">
-            <span>2. Skip-Traced Contact Verified</span>
+            <span>2. Skip-Traced Contacts</span>
             <span class="font-bold font-mono">{stats.skipTracedCount}</span>
           </div>
           <div class="w-full h-2 rounded-full bg-slate-100 dark:bg-slate-800 overflow-hidden">

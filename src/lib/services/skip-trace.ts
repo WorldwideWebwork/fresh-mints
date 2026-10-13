@@ -36,6 +36,29 @@ export function formatConfidenceBadge(data?: SkipTraceResult): SkipTraceSummary[
   return { label: 'Unverified', color: UNVERIFIED_COLOR };
 }
 
+/** Nothing in the app verifies an email; this is what an absent validation reads as. */
+export const EMAIL_NOT_CHECKED = 'Not checked';
+/** Source wording for an email taken from a scraped web page. */
+export const EMAIL_FOUND_ON_WEBSITE = 'Found on website, not verified';
+/** Source wording for a suggested address built from the practice's domain. */
+export const EMAIL_GUESSED_FROM_DOMAIN = 'Guessed from domain, not verified';
+const EMAIL_UNVERIFIED = 'Unverified';
+
+/** Strings older builds stored as if a check had run. They are shown as what actually happened. */
+const LEGACY_EMAIL_CLAIMS: ReadonlyArray<readonly [RegExp, string]> = [
+  [/^website scraped (&|and) verified$/i, EMAIL_FOUND_ON_WEBSITE],
+  [/^grounding verified$/i, EMAIL_NOT_CHECKED],
+  [/^valid\b.*\bdeliverable/i, EMAIL_UNVERIFIED],
+];
+
+/** Email validation text for display: blank reads Not checked, a claim no check produced reads as its real source. */
+export function formatEmailValidation(data?: Pick<SkipTraceResult, 'emailValidation'>): string {
+  const text = data?.emailValidation?.trim();
+  if (!text) return EMAIL_NOT_CHECKED;
+  const legacy = LEGACY_EMAIL_CLAIMS.find(([claim]) => claim.test(text));
+  return legacy ? legacy[1] : text;
+}
+
 /** Phone type plus its score when one exists, else its source. Never invents either. */
 export function formatPhoneLabel(data: SkipTraceResult): string {
   const type = data.phoneType?.trim() || 'Phone';

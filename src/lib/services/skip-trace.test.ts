@@ -1,7 +1,11 @@
 import { describe, it, expect } from 'vitest';
 import type { SkipTraceResult } from '../types/lead';
 import {
+  EMAIL_FOUND_ON_WEBSITE,
+  EMAIL_GUESSED_FROM_DOMAIN,
+  EMAIL_NOT_CHECKED,
   formatConfidenceBadge,
+  formatEmailValidation,
   formatPhoneLabel,
   formatSkipTraceSummary,
   getConfidenceScore,
@@ -94,6 +98,45 @@ describe('formatPhoneLabel', () => {
 
     expect(label).toBe('Unknown (CSV import)');
     expect(label).not.toMatch(/mobile|carrier|verified|clean/i);
+  });
+});
+
+describe('formatEmailValidation', () => {
+  it('reads Not checked when no validation ran, never a verified state', () => {
+    expect(formatEmailValidation(undefined)).toBe(EMAIL_NOT_CHECKED);
+    expect(formatEmailValidation(makeTrace({ emailValidation: '' }))).toBe('Not checked');
+    expect(formatEmailValidation(makeTrace({ emailValidation: '   ' }))).toBe('Not checked');
+    expect(EMAIL_NOT_CHECKED).not.toMatch(/verified|valid|clean/i);
+  });
+
+  it('keeps an honest stored value as it is', () => {
+    expect(formatEmailValidation(makeTrace({ emailValidation: 'Unverified' }))).toBe('Unverified');
+    expect(formatEmailValidation(makeTrace({ emailValidation: 'No email located' }))).toBe('No email located');
+    expect(formatEmailValidation(makeTrace({ emailValidation: EMAIL_FOUND_ON_WEBSITE }))).toBe(EMAIL_FOUND_ON_WEBSITE);
+  });
+
+  it('shows a scraped email as found on the website and unverified', () => {
+    expect(EMAIL_FOUND_ON_WEBSITE).toBe('Found on website, not verified');
+    expect(EMAIL_GUESSED_FROM_DOMAIN).toBe('Guessed from domain, not verified');
+  });
+
+  it('rewrites the claims older builds stored without any check', () => {
+    const scraped = makeTrace({ emailValidation: 'Website Scraped & Verified' });
+    const grounding = makeTrace({ emailValidation: 'Grounding Verified' });
+    const csv = makeTrace({ emailValidation: 'Valid & Deliverable (98% Score)' });
+
+    expect(formatEmailValidation(scraped)).toBe(EMAIL_FOUND_ON_WEBSITE);
+    expect(formatEmailValidation(grounding)).toBe(EMAIL_NOT_CHECKED);
+    expect(formatEmailValidation(csv)).toBe('Unverified');
+  });
+
+  it('turns every old claim into wording that says no check ran', () => {
+    const honest = [EMAIL_FOUND_ON_WEBSITE, EMAIL_NOT_CHECKED, 'Unverified'];
+    const stored = ['Website Scraped & Verified', 'Grounding Verified', 'Valid & Deliverable (98% Score)'];
+
+    for (const emailValidation of stored) {
+      expect(honest).toContain(formatEmailValidation(makeTrace({ emailValidation })));
+    }
   });
 });
 

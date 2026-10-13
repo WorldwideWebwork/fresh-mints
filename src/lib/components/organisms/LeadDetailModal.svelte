@@ -13,7 +13,7 @@
   import { BombBagService } from '../../services/bomb-bag-service';
   import { getPreviewLink, getSubdomainPreviewLink } from '../../services/website-templates';
   import { copyTextToClipboard } from '../../services/clipboard';
-  import { formatConfidenceBadge } from '../../services/skip-trace';
+  import { formatConfidenceBadge, formatEmailValidation } from '../../services/skip-trace';
   import Dialog from '../atoms/Dialog.svelte';
   import Button from '../atoms/Button.svelte';
   import Badge from '../atoms/Badge.svelte';
@@ -687,7 +687,7 @@
               <!-- Enrichment notes -->
               <div class="flex justify-between py-1">
                 <span class="text-slate-500 dark:text-slate-400">Validation:</span>
-                <span class="text-slate-800 dark:text-slate-200 text-[11px] truncate max-w-[180px]">{lead.skipTraceData.emailValidation || 'Grounding Verified'}</span>
+                <span class="text-slate-800 dark:text-slate-200 text-[11px] truncate max-w-[180px]">{formatEmailValidation(lead.skipTraceData)}</span>
               </div>
             </div>
           {:else}

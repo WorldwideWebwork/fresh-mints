@@ -17,6 +17,7 @@ import { purgeLegacyCrmWebhookFromBrowser } from './legacy-crm-webhook';
 import { BombBagService, type BombBagSyncResult } from '../services/bomb-bag-service';
 import { IndexedDBStorage } from '../services/indexeddb-storage';
 import { getDefaultWebsiteConfig, generateLeadPreviewSlug } from '../services/website-templates';
+import { EMAIL_FOUND_ON_WEBSITE } from '../services/skip-trace';
 import { INITIAL_VERIFIED_LEADS } from '../services/initial-seeds';
 import { authStore } from './auth-store.svelte';
 import { toast } from './toast.svelte';
@@ -582,7 +583,7 @@ class LeadStoreState {
         verifiedPhone: resolvedPhone,
         phoneType: 'Google Business Line',
         phoneSource: 'Google Places',
-        dncStatus: 'Public Business Directory',
+        dncStatus: 'Unknown',
         primaryEmail: '',
         emailValidation: 'Unverified',
         websiteUrl: place.website || '',
@@ -731,7 +732,7 @@ class LeadStoreState {
       const skipData: SkipTraceResult = data.data || {
         verifiedPhone: '',
         phoneType: 'Unverified',
-        dncStatus: 'Public Directory',
+        dncStatus: 'Unknown',
         primaryEmail: '',
         emailValidation: 'No email located',
         currentAddress: `${lead.city}, ${lead.state}`,
@@ -817,7 +818,7 @@ class LeadStoreState {
         tracedAt: new Date().toISOString(),
         verifiedPhone: '',
         phoneType: 'Unverified',
-        dncStatus: 'Public Business Directory',
+        dncStatus: 'Unknown',
         primaryEmail: '',
         emailValidation: '',
         currentAddress: `${lead.city}, ${lead.state}`,
@@ -828,6 +829,7 @@ class LeadStoreState {
       const extractedPhones = auditData.extractedPhones || [];
       const updatedPrimaryEmail = currentSkip.primaryEmail || (extractedEmails.length > 0 ? extractedEmails[0] : '');
       const updatedPrimaryPhone = currentSkip.verifiedPhone || (extractedPhones.length > 0 ? extractedPhones[0] : '');
+      const emailTakenFromWebsite = !currentSkip.primaryEmail && extractedEmails.length > 0;
 
       const updatedSkipTrace: SkipTraceResult = {
         ...currentSkip,
@@ -836,7 +838,7 @@ class LeadStoreState {
         extractedPhones: Array.from(new Set([...(currentSkip.extractedPhones || []), ...extractedPhones])),
         primaryEmail: updatedPrimaryEmail,
         verifiedPhone: updatedPrimaryPhone,
-        emailValidation: updatedPrimaryEmail ? (currentSkip.emailValidation || 'Website Scraped & Verified') : currentSkip.emailValidation,
+        emailValidation: emailTakenFromWebsite ? EMAIL_FOUND_ON_WEBSITE : currentSkip.emailValidation,
       };
 
       const hasContact = Boolean(updatedSkipTrace.verifiedPhone || updatedSkipTrace.primaryEmail);

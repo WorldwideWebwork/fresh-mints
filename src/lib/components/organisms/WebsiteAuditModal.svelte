@@ -3,6 +3,7 @@
   import { leadStore } from '../../stores/lead-store.svelte';
   import { toast } from '../../stores/toast.svelte';
   import { copyTextToClipboard } from '../../services/clipboard';
+  import { EMAIL_FOUND_ON_WEBSITE, EMAIL_GUESSED_FROM_DOMAIN } from '../../services/skip-trace';
   import Dialog from '../atoms/Dialog.svelte';
   import Button from '../atoms/Button.svelte';
   import Badge from '../atoms/Badge.svelte';
@@ -91,16 +92,16 @@
     if (success) toast.success(`${label} copied`);
   }
 
-  async function handleSetAsPrimaryEmail(email: string) {
+  async function handleSetAsPrimaryEmail(email: string, validation = EMAIL_FOUND_ON_WEBSITE) {
     const target = activeLead || lead;
     if (!target) return;
     const currentSkip = target.skipTraceData || {
       tracedAt: new Date().toISOString(),
       verifiedPhone: '',
       phoneType: 'Unverified',
-      dncStatus: 'Public Business Directory',
+      dncStatus: 'Unknown',
       primaryEmail: '',
-      emailValidation: 'Website Scraped & Verified',
+      emailValidation: '',
       currentAddress: `${target.city}, ${target.state}`,
       enrichmentNotes: 'Scraped from website.',
     };
@@ -108,7 +109,7 @@
       skipTraceData: {
         ...currentSkip,
         primaryEmail: email,
-        emailValidation: 'Website Scraped & Verified',
+        emailValidation: validation,
         websiteUrl: audit?.existingUrl || currentSkip.websiteUrl,
       },
       skipTraceStatus: 'Traced',
@@ -343,7 +344,7 @@
                         {#if activeLead?.skipTraceData?.primaryEmail !== perm}
                           <button
                             type="button"
-                            onclick={() => handleSetAsPrimaryEmail(perm)}
+                            onclick={() => handleSetAsPrimaryEmail(perm, EMAIL_GUESSED_FROM_DOMAIN)}
                             class="text-[9px] text-cyan-600 dark:text-cyan-400 hover:underline font-semibold cursor-pointer"
                             title="Use as primary contact"
                           >

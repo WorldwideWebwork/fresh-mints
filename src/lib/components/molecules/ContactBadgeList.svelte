@@ -71,6 +71,6 @@
   {/if}
 
   {#if !data?.verifiedPhone && !data?.primaryEmail && !data?.websiteUrl}
-    <span class="text-xs text-slate-400 dark:text-slate-400 italic">No contact verified</span>
+    <span class="text-xs text-slate-400 dark:text-slate-400 italic">No contact found</span>
   {/if}
 </div>

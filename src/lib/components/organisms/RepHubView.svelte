@@ -893,7 +893,7 @@
                     </span>
                     <IndustryBadge profession={lead.profession} variant="badge" size="sm" />
                     {#if lead.skipTraceData?.verifiedPhone}
-                      <span class="w-2 h-2 rounded-full bg-emerald-500 flex-shrink-0" title="Phone verified"></span>
+                      <span class="w-2 h-2 rounded-full bg-emerald-500 flex-shrink-0" title="Phone on file"></span>
                     {/if}
                   </div>
                   <div class="text-[11px] text-slate-500 truncate">

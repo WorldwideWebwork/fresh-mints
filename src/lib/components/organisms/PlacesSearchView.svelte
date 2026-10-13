@@ -424,7 +424,7 @@
       <Card class="p-4 bg-slate-50 dark:bg-slate-900 border-slate-200 dark:border-slate-800">
         <div class="text-[11px] font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">Total Scanned</div>
         <div class="text-xl font-bold text-slate-900 dark:text-white mt-1 font-mono">{leadStore.placesLastResponse.totalQueried}</div>
-        <div class="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5">Google Places verified listings</div>
+        <div class="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5">Google Places listings</div>
       </Card>
 
       <Card class="p-4 bg-emerald-50/50 dark:bg-emerald-950/20 border-emerald-200 dark:border-emerald-900/40">
@@ -660,7 +660,7 @@
                 <tr class="bg-slate-50 dark:bg-slate-950/80 border-b border-slate-200 dark:border-slate-800 text-slate-500 dark:text-slate-400 font-bold uppercase tracking-wider">
                   <th class="py-3 px-4">Business Name & Address</th>
                   <th class="py-3 px-4">Rating</th>
-                  <th class="py-3 px-4">Verified Phone</th>
+                  <th class="py-3 px-4">Phone</th>
                   <th class="py-3 px-4">Website Footprint</th>
                   <th class="py-3 px-4">Est. Value</th>
                   <th class="py-3 px-4 text-right">Actions</th>
