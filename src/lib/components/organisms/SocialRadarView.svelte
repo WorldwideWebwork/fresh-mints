@@ -27,6 +27,7 @@
   import type { SocialLead, SocialPlatform } from "../../services/social-feed/types";
   import { SocialPostDispatcher } from "../../services/social-feed/social-post-dispatcher";
   import { ANNUITY_EDUCATION_PRESET, isPresetInstalled } from "../../services/social-feed/rule-presets";
+  import { ANNUITY_RULE_PACK } from "../../services/social-feed/annuity-rule-pack";
   import { RULE_PLATFORM_OPTIONS, describePlatform } from "../../services/social-feed/platform-descriptors";
   import { toast } from "../../stores/toast.svelte";
 
@@ -50,12 +51,10 @@
   const activeRules = $derived(leadStore.socialRules.filter((r) => r.isActive));
   const visibleLeads = $derived(leadStore.socialLeads.filter((l) => l.status !== "dismissed"));
   const scanProblems = $derived(leadStore.socialScanProblems);
-  const isAnnuityPresetInstalled = $derived(isPresetInstalled(leadStore.socialRules, ANNUITY_EDUCATION_PRESET));
-  const annuityPresetLabel = $derived(isAnnuityPresetInstalled ? "Annuity preset added" : "Add annuity education preset");
-
-  function handleAddAnnuityPreset() {
-    leadStore.addSocialRulePreset(ANNUITY_EDUCATION_PRESET);
-  }
+  const RULE_PRESET_OPTIONS = [
+    { preset: ANNUITY_EDUCATION_PRESET, addLabel: "Add annuity education preset", addedLabel: "Annuity preset added" },
+    { preset: ANNUITY_RULE_PACK, addLabel: "Add annuity rule pack", addedLabel: "Annuity rule pack added" },
+  ];
 
   async function handleScan() {
     await leadStore.scanSocialFeeds();
@@ -218,16 +217,19 @@
           </button>
         </div>
       {/each}
-      <Button
-        variant="outline"
-        size="sm"
-        class="gap-1.5 text-xs font-semibold"
-        onclick={handleAddAnnuityPreset}
-        disabled={isAnnuityPresetInstalled}
-      >
-        <Sparkles class="w-3.5 h-3.5" />
-        <span>{annuityPresetLabel}</span>
-      </Button>
+      {#each RULE_PRESET_OPTIONS as option (option.preset.name)}
+        {@const isInstalled = isPresetInstalled(leadStore.socialRules, option.preset)}
+        <Button
+          variant="outline"
+          size="sm"
+          class="gap-1.5 text-xs font-semibold"
+          onclick={() => leadStore.addSocialRulePreset(option.preset)}
+          disabled={isInstalled}
+        >
+          <Sparkles class="w-3.5 h-3.5" />
+          <span>{isInstalled ? option.addedLabel : option.addLabel}</span>
+        </Button>
+      {/each}
     </div>
   </div>
 

@@ -56,9 +56,12 @@ const buildFallbackPainPoint = (rule: SocialMonitorRule, matchedKeyword: string)
   hasCustomTemplate(rule) ? `Mentions "${matchedKeyword}"` : DEFAULT_PAIN_POINT;
 
 /** Only carries fields the rule actually sets, so a legacy rule yields a lead shaped exactly as before. */
-const funnelFieldsFrom = (rule: SocialMonitorRule): Pick<SocialLead, 'appendFunnelLink' | 'funnelBaseUrl'> => ({
+const funnelFieldsFrom = (
+  rule: SocialMonitorRule,
+): Pick<SocialLead, 'appendFunnelLink' | 'funnelBaseUrl' | 'attributeFunnelLink'> => ({
   ...(rule.appendFunnelLink !== undefined && { appendFunnelLink: rule.appendFunnelLink }),
   ...(rule.funnelBaseUrl !== undefined && { funnelBaseUrl: rule.funnelBaseUrl }),
+  ...(rule.attributeFunnelLink !== undefined && { attributeFunnelLink: rule.attributeFunnelLink }),
 });
 
 export class SocialIntentAnalyzer {

@@ -6,8 +6,15 @@
  * stored them under LEGACY_SOCIAL_TOKENS_KEY, so loading purges that record on sight.
  */
 
+import { normalizeGuidePageUrl } from '../services/social-feed/funnel-link';
+
 export interface SocialPreferences {
   includeFunnelPreviewLink: boolean;
+  /**
+   * Public capture page that attributed reply links point at (the annuity guide). A page address,
+   * not a credential. Absent until the owner sets one.
+   */
+  guidePageUrl?: string;
 }
 
 export const SOCIAL_PREFERENCES_KEY = 'fresh_mints_social_preferences';
@@ -40,8 +47,23 @@ export const pickSocialPreferences = (value: unknown): Partial<SocialPreferences
   if (!isRecord) {
     return {};
   }
-  const candidate = (value as Record<string, unknown>).includeFunnelPreviewLink;
-  return typeof candidate === 'boolean' ? { includeFunnelPreviewLink: candidate } : {};
+  const record = value as Record<string, unknown>;
+  const includeLink = record.includeFunnelPreviewLink;
+  const guidePageUrl = normalizeGuidePageUrl(record.guidePageUrl);
+  return {
+    ...(typeof includeLink === 'boolean' && { includeFunnelPreviewLink: includeLink }),
+    ...(guidePageUrl !== '' && { guidePageUrl }),
+  };
+};
+
+/** Merges an update into the current preferences. A blank or non-http(s) guide page URL clears it. */
+export const applySocialPreferenceUpdates = (
+  current: SocialPreferences,
+  updates: Partial<SocialPreferences>,
+): SocialPreferences => {
+  const { guidePageUrl, ...withoutGuide } = { ...current, ...updates };
+  const normalizedGuide = normalizeGuidePageUrl(guidePageUrl);
+  return normalizedGuide === '' ? withoutGuide : { ...withoutGuide, guidePageUrl: normalizedGuide };
 };
 
 const readItem = (storage: PreferencesStorage, key: string): string | null => {

@@ -15,10 +15,19 @@ export interface SocialMonitorRule {
   createdAt: string;
   /** Reply text with `{author}` and `{title}` placeholders. Absent or blank: the default website pitch. */
   pitchTemplate?: string;
-  /** Absent or true: append the funnel preview link to the reply. false: send the reply text alone. */
+  /**
+   * Absent or true: append the funnel link to the reply. false: no trailing link. A `{funnel_link}`
+   * line in the template still gets its link, so a closing disclosure can stay last.
+   */
   appendFunnelLink?: boolean;
   /** Base the author slug is appended to (`<base>/<slug>`). Absent or blank: https://freshmints.io/preview. */
   funnelBaseUrl?: string;
+  /**
+   * true: the link is `funnelBaseUrl` (blank: the guide page URL in Social Radar Settings) with no
+   * author slug, carrying utm_source, utm_medium=social_reply, utm_campaign (rule id), fm_thread and
+   * fm_reply (lead id). Absent or false: the plain `<base>/<slug>` link.
+   */
+  attributeFunnelLink?: boolean;
 }
 
 export interface RawSocialPost {
@@ -49,6 +58,7 @@ export interface SocialLead {
   /** Copied from the matching rule at evaluation so the dispatcher needs no rule lookup. */
   appendFunnelLink?: boolean;
   funnelBaseUrl?: string;
+  attributeFunnelLink?: boolean;
 }
 
 /**

@@ -1,5 +1,6 @@
 import {
   DEFAULT_SOCIAL_PREFERENCES,
+  applySocialPreferenceUpdates,
   loadSocialPreferences,
   saveSocialPreferences,
   type PreferencesStorage,
@@ -26,7 +27,7 @@ class SocialPreferencesStore {
   }
 
   save(updates: Partial<SocialPreferences>) {
-    this.preferences = { ...this.preferences, ...updates };
+    this.preferences = applySocialPreferenceUpdates(this.preferences, updates);
     saveSocialPreferences(resolveStorage(), this.preferences);
   }
 }

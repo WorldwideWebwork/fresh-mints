@@ -3,6 +3,9 @@
   import { toast } from '../../stores/toast.svelte';
   import Dialog from '../atoms/Dialog.svelte';
   import Button from '../atoms/Button.svelte';
+  import FormField from '../atoms/FormField.svelte';
+  import Input from '../atoms/Input.svelte';
+  import { normalizeGuidePageUrl } from '../../services/social-feed/funnel-link';
   import { ShieldCheck, ExternalLink } from 'lucide-svelte';
 
   const CONNECTORS_URL = '/wp-admin/options-connectors.php';
@@ -15,16 +18,28 @@
   let { open = $bindable(false), onclose }: Props = $props();
 
   let includeFunnelLink = $state(true);
+  let guidePageUrl = $state('');
+
+  const guidePageUrlError = $derived(
+    guidePageUrl.trim() !== '' && normalizeGuidePageUrl(guidePageUrl) === ''
+      ? 'Use the full address, starting with https:// or http://.'
+      : ''
+  );
 
   $effect(() => {
     if (open) {
       includeFunnelLink = socialPreferencesStore.preferences.includeFunnelPreviewLink;
+      guidePageUrl = socialPreferencesStore.preferences.guidePageUrl ?? '';
     }
   });
 
   function handleSave(e: SubmitEvent) {
     e.preventDefault();
-    socialPreferencesStore.save({ includeFunnelPreviewLink: includeFunnelLink });
+    if (guidePageUrlError) {
+      toast.error('Guide page URL not saved', guidePageUrlError);
+      return;
+    }
+    socialPreferencesStore.save({ includeFunnelPreviewLink: includeFunnelLink, guidePageUrl });
 
     toast.success('Social Settings Saved', 'Your Social Radar preferences have been updated.');
     open = false;
@@ -74,6 +89,22 @@
           Automatically inject personalized Turnkey Website Demo link into all drafted pitches
         </span>
       </label>
+    </div>
+
+    <div class="space-y-1.5">
+      <FormField label="Guide page URL" error={guidePageUrlError}>
+        <Input
+          bind:value={guidePageUrl}
+          type="url"
+          placeholder="https://your-site.example/annuity-guide/"
+          autocomplete="off"
+        />
+      </FormField>
+      <p class="text-[10px] text-[var(--fm-text-muted)]">
+        The capture page that annuity replies link to. Each link carries the platform, rule, thread and reply
+        it came from, so an opt-in can be traced to the post that earned it. Leave blank to send annuity
+        replies without a link.
+      </p>
     </div>
 
     <div class="flex items-center justify-end gap-2 pt-3 border-t border-[var(--fm-border)]">

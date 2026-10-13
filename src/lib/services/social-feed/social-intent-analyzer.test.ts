@@ -73,6 +73,7 @@ describe('SocialIntentAnalyzer.evaluatePost: backward compatibility', () => {
     expect(lead).not.toBeNull();
     expect(lead).not.toHaveProperty('appendFunnelLink');
     expect(lead).not.toHaveProperty('funnelBaseUrl');
+    expect(lead).not.toHaveProperty('attributeFunnelLink');
   });
 
   it('treats a whitespace-only pitchTemplate as unset and uses the website pitch', () => {
@@ -151,6 +152,20 @@ describe('SocialIntentAnalyzer.evaluatePost: funnel fields', () => {
     const lead = SocialIntentAnalyzer.evaluatePost(makePost(), rule);
 
     expect(lead?.funnelBaseUrl).toBe('https://example.org/start');
+  });
+
+  it('copies attributeFunnelLink from the rule onto the lead', () => {
+    const lead = SocialIntentAnalyzer.evaluatePost(makePost(), makeRule({ attributeFunnelLink: true }));
+
+    expect(lead?.attributeFunnelLink).toBe(true);
+  });
+
+  it('leaves a {funnel_link} placeholder in the pitch for the dispatcher to fill', () => {
+    const rule = makeRule({ pitchTemplate: 'Hi {author}.\n\nGuide: {funnel_link}' });
+
+    const lead = SocialIntentAnalyzer.evaluatePost(makePost(), rule);
+
+    expect(lead?.suggestedPitch).toBe('Hi u/dr_dana.\n\nGuide: {funnel_link}');
   });
 });
 

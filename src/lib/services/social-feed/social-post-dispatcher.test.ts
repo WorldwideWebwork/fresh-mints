@@ -5,6 +5,7 @@ import type { SocialLead } from './types';
 const mockPreferencesStore = vi.hoisted(() => ({
   preferences: {
     includeFunnelPreviewLink: true,
+    guidePageUrl: '',
   },
 }));
 
@@ -14,6 +15,8 @@ vi.mock('../../stores/social-preferences-store.svelte', () => ({
 
 import { SocialPostDispatcher } from './social-post-dispatcher';
 import { SocialIntentAnalyzer } from './social-intent-analyzer';
+import { ANNUITY_DISCLOSURE, ANNUITY_RULE_PACK } from './annuity-rule-pack';
+import { createRuleFromPreset } from './rule-presets';
 
 const PITCH = 'A reply body.';
 const DISPATCH_URL = 'http://mycompass/wp-json/xophz-freshmints/v1/social/dispatch';
@@ -258,5 +261,95 @@ describe('legacy saved rule through analyzer and dispatcher', () => {
 
     expect(result.dispatchedContent).toContain('Fresh Mints builds turnkey');
     expect(result.dispatchedContent?.endsWith(LEGACY_LINK_LINE)).toBe(true);
+  });
+});
+
+describe('annuity rule pack through analyzer and dispatcher', () => {
+  const GUIDE_PAGE = 'https://guide.example.org/annuity-guide/';
+  const packRule = createRuleFromPreset(ANNUITY_RULE_PACK, new Date('2026-10-12T12:00:00.000Z'));
+  const annuityPost = {
+    ...makeLead().rawPost,
+    title: 'Is an annuity right for my retirement income?',
+    content: 'I am weighing my options before I decide.',
+    url: 'https://www.reddit.com/r/retirement/comments/abc/is_an_annuity_right/',
+  };
+  const makeAnnuityLead = (): SocialLead => {
+    const lead = SocialIntentAnalyzer.evaluatePost(annuityPost, packRule);
+    expect(lead).not.toBeNull();
+    return lead as SocialLead;
+  };
+
+  beforeEach(() => {
+    mockPreferencesStore.preferences.includeFunnelPreviewLink = true;
+    mockPreferencesStore.preferences.guidePageUrl = GUIDE_PAGE;
+    stubServer();
+  });
+
+  afterEach(() => {
+    mockPreferencesStore.preferences.guidePageUrl = '';
+    vi.unstubAllGlobals();
+  });
+
+  it('sends the taught reply with the attributed guide link inside it and the disclosure last', async () => {
+    const lead = makeAnnuityLead();
+
+    const result = await SocialPostDispatcher.dispatchReply(lead);
+    const body = result.dispatchedContent ?? '';
+    const link = new URL(body.match(/https?:\/\/\S+/)?.[0] ?? 'http://missing.invalid');
+
+    expect(result.success).toBe(true);
+    expect(body.startsWith('Hi u/some.user, this is general education')).toBe(true);
+    expect(body.endsWith(ANNUITY_DISCLOSURE)).toBe(true);
+    expect(body).not.toContain('{');
+    expect(body.match(/https?:\/\//g)).toHaveLength(1);
+    expect(link.origin + link.pathname).toBe(GUIDE_PAGE);
+    expect(Object.fromEntries(link.searchParams)).toEqual({
+      utm_source: 'reddit',
+      utm_medium: 'social_reply',
+      utm_campaign: packRule.id,
+      fm_thread: annuityPost.url,
+      fm_reply: lead.id,
+    });
+  });
+
+  it('relays exactly the text it hands back', async () => {
+    await SocialPostDispatcher.dispatchReply(makeAnnuityLead());
+
+    const sentBody = JSON.parse(fetchMock.mock.calls[0][1].body);
+    expect(sentBody.replyBody.endsWith(ANNUITY_DISCLOSURE)).toBe(true);
+    expect(sentBody.replyBody).toContain('utm_medium=social_reply');
+  });
+
+  it('sends the reply without a link, still ending in the disclosure, when no guide page URL is set', async () => {
+    mockPreferencesStore.preferences.guidePageUrl = '';
+
+    const result = await SocialPostDispatcher.dispatchReply(makeAnnuityLead());
+
+    expect(result.success).toBe(true);
+    expect(result.message).toBe(
+      'Reply copied without the guide link: add your guide page URL in Social Radar Settings. Paste directly into the thread.',
+    );
+    expect(result.dispatchedContent).not.toContain('http');
+    expect(result.dispatchedContent).not.toContain('{');
+    expect(result.dispatchedContent?.endsWith(ANNUITY_DISCLOSURE)).toBe(true);
+  });
+
+  it('sends the reply without a link when the global link setting is off', async () => {
+    mockPreferencesStore.preferences.includeFunnelPreviewLink = false;
+
+    const result = await SocialPostDispatcher.dispatchReply(makeAnnuityLead());
+
+    expect(result.message).toBe('Pitch copied and formatted with your funnel link. Paste directly into the thread.');
+    expect(result.dispatchedContent).not.toContain('http');
+    expect(result.dispatchedContent?.endsWith(ANNUITY_DISCLOSURE)).toBe(true);
+  });
+
+  it('fills the link into text the human edited, wherever the placeholder was left', async () => {
+    const edited = `Short answer first.\n\nGuide: {funnel_link}\n\n${ANNUITY_DISCLOSURE}`;
+
+    const result = await SocialPostDispatcher.dispatchReply(makeAnnuityLead(), edited);
+
+    expect(result.dispatchedContent?.startsWith('Short answer first.\n\nGuide: https://guide.example.org/')).toBe(true);
+    expect(result.dispatchedContent?.endsWith(ANNUITY_DISCLOSURE)).toBe(true);
   });
 });

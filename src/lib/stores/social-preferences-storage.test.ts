@@ -2,6 +2,7 @@ import { describe, it, expect } from 'vitest';
 import {
   LEGACY_SOCIAL_TOKENS_KEY,
   SOCIAL_PREFERENCES_KEY,
+  applySocialPreferenceUpdates,
   loadSocialPreferences,
   pickSocialPreferences,
   saveSocialPreferences,
@@ -159,5 +160,82 @@ describe('saveSocialPreferences', () => {
 describe('pickSocialPreferences', () => {
   it.each([null, undefined, 'text', 7, [], [true]])('returns nothing for %j', (value) => {
     expect(pickSocialPreferences(value)).toEqual({});
+  });
+});
+
+describe('guidePageUrl preference', () => {
+  const GUIDE_PAGE = 'https://guide.example.org/annuity-guide/';
+
+  it('keeps a valid address, trimmed, alongside the funnel-link preference', () => {
+    const picked = pickSocialPreferences({ includeFunnelPreviewLink: true, guidePageUrl: `  ${GUIDE_PAGE} ` });
+
+    expect(picked).toEqual({ includeFunnelPreviewLink: true, guidePageUrl: GUIDE_PAGE });
+  });
+
+  it.each(['', '   ', 'guide.example.org', '/annuity-guide/', 'javascript:alert(1)', 7, null, true])(
+    'drops the invalid value %j',
+    (value) => {
+      expect(pickSocialPreferences({ guidePageUrl: value })).toEqual({});
+    },
+  );
+
+  it('saves and loads the address', () => {
+    const { storage, data } = makeStorage();
+
+    saveSocialPreferences(storage, { includeFunnelPreviewLink: false, guidePageUrl: GUIDE_PAGE });
+
+    expect(JSON.parse(data.get(SOCIAL_PREFERENCES_KEY) as string)).toEqual({
+      includeFunnelPreviewLink: false,
+      guidePageUrl: GUIDE_PAGE,
+    });
+    expect(loadSocialPreferences(storage)).toEqual({ includeFunnelPreviewLink: false, guidePageUrl: GUIDE_PAGE });
+  });
+
+  it('is absent from the defaults, so a first visit holds only the funnel-link preference', () => {
+    expect(loadSocialPreferences(makeStorage().storage)).not.toHaveProperty('guidePageUrl');
+  });
+});
+
+describe('applySocialPreferenceUpdates', () => {
+  const GUIDE_PAGE = 'https://guide.example.org/annuity-guide/';
+  const current = { includeFunnelPreviewLink: true };
+
+  it('merges an update over the current preferences', () => {
+    expect(applySocialPreferenceUpdates(current, { includeFunnelPreviewLink: false })).toEqual({
+      includeFunnelPreviewLink: false,
+    });
+  });
+
+  it('stores a normalized guide page URL', () => {
+    expect(applySocialPreferenceUpdates(current, { guidePageUrl: ` ${GUIDE_PAGE}` })).toEqual({
+      includeFunnelPreviewLink: true,
+      guidePageUrl: GUIDE_PAGE,
+    });
+  });
+
+  it('keeps the guide page URL when only another preference changes', () => {
+    const withGuide = { includeFunnelPreviewLink: true, guidePageUrl: GUIDE_PAGE };
+
+    expect(applySocialPreferenceUpdates(withGuide, { includeFunnelPreviewLink: false })).toEqual({
+      includeFunnelPreviewLink: false,
+      guidePageUrl: GUIDE_PAGE,
+    });
+  });
+
+  it.each(['', '  ', 'not a url'])('clears the guide page URL when it is updated to "%s"', (value) => {
+    const withGuide = { includeFunnelPreviewLink: true, guidePageUrl: GUIDE_PAGE };
+
+    const next = applySocialPreferenceUpdates(withGuide, { guidePageUrl: value });
+
+    expect(next).toEqual({ includeFunnelPreviewLink: true });
+    expect(next).not.toHaveProperty('guidePageUrl');
+  });
+
+  it('does not change the object it was given', () => {
+    const withGuide = { includeFunnelPreviewLink: true, guidePageUrl: GUIDE_PAGE };
+
+    applySocialPreferenceUpdates(withGuide, { guidePageUrl: '' });
+
+    expect(withGuide.guidePageUrl).toBe(GUIDE_PAGE);
   });
 });
