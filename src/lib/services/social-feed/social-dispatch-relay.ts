@@ -59,6 +59,7 @@ export const relayDispatchToServer = async (
       },
       body: JSON.stringify({
         platform: lead.rawPost.platform,
+        leadId: lead.id,
         threadUrl: lead.rawPost.url,
         prospect: lead.rawPost.author,
         intentScore: lead.intentScore,

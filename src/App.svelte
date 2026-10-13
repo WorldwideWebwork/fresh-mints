@@ -26,6 +26,7 @@
   import RepHubView from './lib/components/organisms/RepHubView.svelte';
   import W4EconomicsView from './lib/components/organisms/W4EconomicsView.svelte';
   import AnalyticsView from './lib/components/organisms/AnalyticsView.svelte';
+  import PilotReportView from './lib/components/organisms/PilotReportView.svelte';
 
   // Modals
   import WebsiteBuilderModal from './lib/components/organisms/WebsiteBuilderModal.svelte';
@@ -141,7 +142,7 @@
       const [pathSegment, querySegment] = cleanHash.split('?');
       const params = new URLSearchParams(querySegment || '');
 
-      const validTabs = ['search', 'places', 'social_radar', 'leads', 'kanban', 'rephub', 'economics', 'analytics'];
+      const validTabs = ['search', 'places', 'social_radar', 'leads', 'kanban', 'rephub', 'economics', 'analytics', 'pilot_report'];
       let targetTab = pathSegment;
       if (targetTab.startsWith('view/')) {
         targetTab = targetTab.replace('view/', '');
@@ -322,6 +323,8 @@
       <W4EconomicsView />
     {:else if leadStore.activeTab === 'analytics'}
       <AnalyticsView />
+    {:else if leadStore.activeTab === 'pilot_report'}
+      <PilotReportView />
     {:else}
       <!-- Custom Saved Preset View -->
       <LeadTable onopenmodal={openModal} />

@@ -159,7 +159,7 @@ describe('SocialPostDispatcher.dispatchReply: server relay', () => {
     expect(result.dispatchedContent).toBe(`${PITCH}${LEGACY_LINK_LINE}`);
   });
 
-  it('asks the server route to relay, with the nonce and only the lead fields', async () => {
+  it('asks the server route to relay, with the nonce, the lead fields and the lead id the pilot report counts the reply by', async () => {
     await SocialPostDispatcher.dispatchReply(makeLead());
 
     expect(fetchMock).toHaveBeenCalledTimes(1);
@@ -169,6 +169,7 @@ describe('SocialPostDispatcher.dispatchReply: server relay', () => {
     expect(init.headers['X-WP-Nonce']).toBe('nonce-123');
     expect(JSON.parse(init.body)).toEqual({
       platform: 'reddit',
+      leadId: makeLead().id,
       threadUrl: 'https://www.reddit.com/r/smallbusiness/comments/abc/x/',
       prospect: 'u/some.user',
       intentScore: 68,

@@ -31,7 +31,8 @@
     LogOut,
     User,
     ShieldCheck,
-    Radio
+    Radio,
+    ClipboardCheck
   } from "lucide-svelte";
 
   interface Props {
@@ -101,6 +102,13 @@
       id: "analytics",
       label: "Analytics",
       icon: BarChart3,
+      badge: null,
+      badgeType: null
+    },
+    {
+      id: "pilot_report",
+      label: "Pilot Report",
+      icon: ClipboardCheck,
       badge: null,
       badgeType: null
     }
