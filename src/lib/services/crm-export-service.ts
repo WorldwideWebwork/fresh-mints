@@ -209,8 +209,9 @@ export class CRMExportService {
           tracedAt: new Date().toISOString().split('T')[0],
           verifiedPhone: rowMap['verified phone'] || '',
           phoneSource: rowMap['verified phone'] ? 'CSV import' : undefined,
-          phoneType: rowMap['phone type'] || 'Mobile (Carrier Verified)',
-          dncStatus: rowMap['dnc status'] || 'Clean - Not on DNC List',
+          // A CSV without these columns says nothing about line type or DNC status: never claim either.
+          phoneType: rowMap['phone type'] || 'Unknown',
+          dncStatus: rowMap['dnc status'] || 'Unknown',
           primaryEmail: rowMap['primary email'] || '',
           emailValidation: 'Unverified',
           linkedInUrl: rowMap['linkedin url'] || '',

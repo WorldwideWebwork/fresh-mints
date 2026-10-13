@@ -140,3 +140,90 @@ describe('CRMExportService.postWebhook', () => {
     expect(targets.every((target) => target === WEBHOOK_ROUTE)).toBe(true);
   });
 });
+
+const CSV_HEADER_NO_COMPLIANCE_COLUMNS = 'Full Name,State,City,Verified Phone,Primary Email';
+const CSV_HEADER_WITH_COMPLIANCE_COLUMNS = `${CSV_HEADER_NO_COMPLIANCE_COLUMNS},Phone Type,DNC Status`;
+const INVENTED_CLAIM = /mobile|carrier|verified|clean|not on dnc|cleared|safe/i;
+
+describe('CRMExportService.parseCSV compliance defaults', () => {
+  it('marks phone type and DNC status Unknown when the CSV has no such columns', () => {
+    const [lead] = CRMExportService.parseCSV(
+      `${CSV_HEADER_NO_COMPLIANCE_COLUMNS}\nTest Person,NY,Albany,phone-from-csv,`,
+    );
+
+    expect(lead.skipTraceData?.verifiedPhone).toBe('phone-from-csv');
+    expect(lead.skipTraceData?.phoneSource).toBe('CSV import');
+    expect(lead.skipTraceData?.phoneType).toBe('Unknown');
+    expect(lead.skipTraceData?.dncStatus).toBe('Unknown');
+  });
+
+  it('never claims a carrier check or a DNC clearance the CSV did not supply', () => {
+    const [lead] = CRMExportService.parseCSV(
+      `${CSV_HEADER_NO_COMPLIANCE_COLUMNS}\nTest Person,NY,Albany,phone-from-csv,`,
+    );
+
+    expect(lead.skipTraceData?.phoneType).not.toMatch(INVENTED_CLAIM);
+    expect(lead.skipTraceData?.dncStatus).not.toMatch(INVENTED_CLAIM);
+  });
+
+  it('treats blank phone type and DNC cells as Unknown', () => {
+    const [lead] = CRMExportService.parseCSV(
+      `${CSV_HEADER_WITH_COMPLIANCE_COLUMNS}\nTest Person,NY,Albany,phone-from-csv,,,`,
+    );
+
+    expect(lead.skipTraceData?.phoneType).toBe('Unknown');
+    expect(lead.skipTraceData?.dncStatus).toBe('Unknown');
+  });
+
+  it('keeps the phone type and DNC status the CSV supplies', () => {
+    const [lead] = CRMExportService.parseCSV(
+      `${CSV_HEADER_WITH_COMPLIANCE_COLUMNS}\nTest Person,NY,Albany,phone-from-csv,,Landline,On DNC List`,
+    );
+
+    expect(lead.skipTraceData?.phoneType).toBe('Landline');
+    expect(lead.skipTraceData?.dncStatus).toBe('On DNC List');
+  });
+
+  it('creates no trace data for a row with neither phone nor email', () => {
+    const [lead] = CRMExportService.parseCSV(
+      `${CSV_HEADER_NO_COMPLIANCE_COLUMNS}\nTest Person,NY,Albany,,`,
+    );
+
+    expect(lead.skipTraceData).toBeUndefined();
+    expect(lead.skipTraceStatus).toBe('Not Traced');
+  });
+});
+
+describe('CRMExportService.exportToCSV compliance columns', () => {
+  const exportedCsv = async (leads: Lead[]): Promise<string> => {
+    let exported: Blob | undefined;
+    vi.stubGlobal('URL', {
+      createObjectURL: (blob: Blob) => {
+        exported = blob;
+        return 'blob:test';
+      },
+    });
+    vi.stubGlobal('document', {
+      createElement: () => ({ setAttribute: () => undefined, click: () => undefined, style: {} }),
+      body: { appendChild: () => undefined, removeChild: () => undefined },
+    });
+
+    CRMExportService.exportToCSV(leads, 'test.csv');
+    return exported ? exported.text() : '';
+  };
+
+  it('exports an imported Unknown phone type and DNC status as Unknown, never as clean', async () => {
+    const [imported] = CRMExportService.parseCSV(
+      `${CSV_HEADER_NO_COMPLIANCE_COLUMNS}\nTest Person,NY,Albany,phone-from-csv,`,
+    );
+
+    const csv = await exportedCsv([makeLead(imported as Partial<Lead>)]);
+    const [header, row] = csv.split('\n');
+    const columns = header.split(',');
+    const cells = row.split(',');
+
+    expect(cells[columns.indexOf('Phone Type')]).toBe('Unknown');
+    expect(cells[columns.indexOf('DNC Status')]).toBe('Unknown');
+    expect(csv).not.toMatch(/Carrier Verified|Not on DNC List/);
+  });
+});

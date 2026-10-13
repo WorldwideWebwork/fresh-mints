@@ -199,7 +199,7 @@
     try {
       const res = await leadStore.performSkipTrace(activeLead.id);
       if (res && res.verifiedPhone) {
-        toast.success(`Phone Located for ${activeLead.fullName}`, `${res.verifiedPhone} (${res.phoneType || 'Mobile'})`);
+        toast.success(`Phone Located for ${activeLead.fullName}`, `${res.verifiedPhone} (${res.phoneType || 'Unknown'})`);
       } else {
         toast.warning('No direct phone located', 'Public directory records checked.');
       }

@@ -86,6 +86,15 @@ describe('formatPhoneLabel', () => {
     expect(label).toBe('Phone');
     expect(label).not.toMatch(/verified/i);
   });
+
+  it('shows an Unknown phone type as Unknown, never as mobile or carrier verified', () => {
+    const label = formatPhoneLabel(
+      makeTrace({ phoneType: 'Unknown', dncStatus: 'Unknown', phoneSource: 'CSV import' }),
+    );
+
+    expect(label).toBe('Unknown (CSV import)');
+    expect(label).not.toMatch(/mobile|carrier|verified|clean/i);
+  });
 });
 
 describe('formatSkipTraceSummary', () => {
