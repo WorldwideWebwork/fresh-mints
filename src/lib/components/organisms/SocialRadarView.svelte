@@ -69,6 +69,12 @@
   }
 
   async function handleAutoPost(lead: SocialLead) {
+    const blockReason = await leadStore.socialDispatchBlockReason(lead.id);
+    const isBlocked = blockReason !== null;
+    if (isBlocked) {
+      toast.error('Dispatch Blocked', blockReason);
+      return;
+    }
     const res = await SocialPostDispatcher.dispatchReply(lead);
     if (res.success) {
       toast.success('Pitch Dispatched', res.message);
@@ -297,9 +303,11 @@
                   {lead.rawPost.subredditOrChannel}
                 </span>
               {/if}
-              <span class="text-[11px] text-[var(--fm-text-muted)] flex items-center gap-1">
-                <User class="w-3 h-3" /> {lead.rawPost.author}
-              </span>
+              {#if lead.rawPost.author}
+                <span class="text-[11px] text-[var(--fm-text-muted)] flex items-center gap-1">
+                  <User class="w-3 h-3" /> {lead.rawPost.author}
+                </span>
+              {/if}
             </div>
 
             <div class="flex items-center gap-2">

@@ -22,6 +22,12 @@ import { authStore } from './auth-store.svelte';
 import { toast } from './toast.svelte';
 import { type SocialMonitorRule, type SocialLead, type FeedScanProblem } from '../services/social-feed/types';
 import { socialFeedRegistry } from '../services/social-feed/social-feed-registry';
+import { minimizeSocialLead, minimizeSocialLeads, redditThreadLeadName } from '../services/social-feed/social-retention';
+import {
+  applySocialDataRules,
+  socialDispatchBlockReason,
+  type SocialLeadHost,
+} from '../services/social-feed/social-data-rules';
 import { createRuleFromPreset, isPresetInstalled, type SocialRulePreset } from '../services/social-feed/rule-presets';
 
 class LeadStoreState {
@@ -107,11 +113,14 @@ class LeadStoreState {
         const savedSocialLeads = localStorage.getItem('fresh_mints_social_leads');
         if (savedSocialLeads) {
           const parsed: SocialLead[] = JSON.parse(savedSocialLeads);
-          this.socialLeads = parsed.filter((item) => {
+          const realLeads = parsed.filter((item) => {
             const isMockPlatform = (item.rawPost.platform as string) === 'mock';
             const isMockUrl = item.rawPost.url.includes('_mock');
             return !isMockPlatform && !isMockUrl;
           });
+          // Leads saved before data handling still hold post text and closed leads' handles: strip them now.
+          this.socialLeads = minimizeSocialLeads(realLeads);
+          this.saveSocialLeadsToStorage();
         }
       } catch (socialErr) {
         console.warn('Could not load social leads', socialErr);
@@ -131,6 +140,7 @@ class LeadStoreState {
         this.selectedLeadId = null;
       }
       this.isInitialized = true;
+      void this.applySocialDataRules();
     }
   }
 
@@ -1011,7 +1021,8 @@ class LeadStoreState {
       this.socialScanProblems = problems;
 
       const existingUrls = new Set(this.socialLeads.map((l) => l.rawPost.url));
-      const freshLeads = detected.filter((l) => !existingUrls.has(l.rawPost.url));
+      // The post text is only needed to evaluate a post. Keep the minimal fields, never the body.
+      const freshLeads = minimizeSocialLeads(detected.filter((l) => !existingUrls.has(l.rawPost.url)));
       const hasFreshLeads = freshLeads.length > 0;
       const hasProblems = problems.length > 0;
 
@@ -1039,6 +1050,7 @@ class LeadStoreState {
           'All feeds responded. No new matching posts found in this scan cycle.'
         );
       }
+      await this.applySocialDataRules();
       return freshLeads.length;
     } catch (error: unknown) {
       const detail = error instanceof Error ? error.message : 'unknown error';
@@ -1056,12 +1068,17 @@ class LeadStoreState {
       return null;
     }
 
-    const raw = targetSocialLead.rawPost;
+    // A Reddit author never agreed to be in our CRM, so a Reddit lead is built from the lead as it
+    // is once closed (no handle, no post text) and named for the thread, not the person.
+    const isReddit = targetSocialLead.rawPost.platform === 'reddit';
+    const source = isReddit ? minimizeSocialLead({ ...targetSocialLead, status: 'converted' }) : targetSocialLead;
+    const raw = source.rawPost;
     const authorName = raw.author.replace(/^u\//, '');
-    const cleanName = authorName
+    const authorDisplayName = authorName
       .split(/[._-]/)
       .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
       .join(' ') || 'Social Prospect';
+    const cleanName = isReddit ? redditThreadLeadName(raw.title) : authorDisplayName;
 
     const newLead: Lead = {
       id: `lead-soc-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
@@ -1086,9 +1103,9 @@ class LeadStoreState {
         matchedKeyword: targetSocialLead.matchedKeyword,
         intentScore: targetSocialLead.intentScore,
         detectedPainPoint: targetSocialLead.detectedPainPoint,
-        suggestedPitch: targetSocialLead.suggestedPitch,
+        suggestedPitch: source.suggestedPitch,
       },
-      notes: `[Social Radar (${raw.platform})] ${raw.title}\nIntent Score: ${targetSocialLead.intentScore}%\nURL: ${raw.url}\n\nSuggested Pitch: ${targetSocialLead.suggestedPitch}`,
+      notes: `[Social Radar (${raw.platform})] ${raw.title}\nIntent Score: ${targetSocialLead.intentScore}%\nURL: ${raw.url}\n\nSuggested Pitch: ${source.suggestedPitch}`,
       createdAt: new Date().toISOString(),
       outreachLogs: [],
     };
@@ -1099,7 +1116,7 @@ class LeadStoreState {
 
     this.socialLeads = this.socialLeads.map((l) => {
       const isTarget = l.id === socialLeadId;
-      return isTarget ? { ...l, status: 'converted', convertedLeadId: newLead.id } : l;
+      return isTarget ? minimizeSocialLead({ ...l, status: 'converted', convertedLeadId: newLead.id }) : l;
     });
     this.saveSocialLeadsToStorage();
 
@@ -1113,9 +1130,35 @@ class LeadStoreState {
   dismissSocialLead(socialLeadId: string) {
     this.socialLeads = this.socialLeads.map((l) => {
       const isTarget = l.id === socialLeadId;
-      return isTarget ? { ...l, status: 'dismissed' } : l;
+      return isTarget ? minimizeSocialLead({ ...l, status: 'dismissed' }) : l;
     });
     this.saveSocialLeadsToStorage();
+  }
+
+  private removeSocialLeads(ids: ReadonlySet<string>) {
+    if (ids.size === 0) {
+      return;
+    }
+    this.socialLeads = this.socialLeads.filter((l) => !ids.has(l.id));
+    this.saveSocialLeadsToStorage();
+  }
+
+  private get socialLeadHost(): SocialLeadHost {
+    return {
+      leads: () => this.socialLeads,
+      remove: (ids) => this.removeSocialLeads(ids),
+      notify: (kind, title, message) => toast[kind](title, message),
+    };
+  }
+
+  /** Reddit data handling: retention window and posts deleted or removed on Reddit (see social-data-rules). */
+  applySocialDataRules(): Promise<void> {
+    return applySocialDataRules(this.socialLeadHost);
+  }
+
+  /** Run before a reply goes out. Null: it may go. Otherwise why it must not (see social-data-rules). */
+  socialDispatchBlockReason(socialLeadId: string): Promise<string | null> {
+    return socialDispatchBlockReason(this.socialLeadHost, socialLeadId);
   }
 }
 
