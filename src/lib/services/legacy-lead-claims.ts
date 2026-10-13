@@ -13,8 +13,11 @@ const UNKNOWN = 'Unknown';
 /** DNC wording stored with no DNC lookup behind it: a clearance, or a directory label parked in the DNC column. */
 const LEGACY_DNC_CLAIMS: readonly RegExp[] = [/^clean\b.*\bnot on dnc\b/i, /^public (?:business )?directory$/i];
 
-/** A carrier check older builds claimed for every imported phone. */
-const LEGACY_PHONE_TYPE_CLAIMS: readonly RegExp[] = [/^mobile\s*\(carrier\s+verified\)$/i];
+/** A carrier check older builds claimed for every imported phone, and the practice-line label the old enrichment endpoint wrote. */
+const LEGACY_PHONE_TYPE_CLAIMS: readonly RegExp[] = [
+  /^mobile\s*\(carrier\s+verified\)$/i,
+  /^verified\s+practice\s+line$/i,
+];
 
 /**
  * Scores older builds wrote from a hardcoded constant: Places and NPPES imports (98), the

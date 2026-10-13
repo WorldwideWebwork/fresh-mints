@@ -1,5 +1,5 @@
 import type { Lead } from '../types/lead';
-import { normalizeLegacyLeads } from './legacy-lead-claims';
+import { normalizeLegacyLead, normalizeLegacyLeads } from './legacy-lead-claims';
 
 export type CrmWebhookEvent =
   | 'lead.created'
@@ -40,6 +40,14 @@ const stringField = (body: Record<string, unknown>, name: string): string => {
   return typeof value === 'string' ? value : '';
 };
 
+/**
+ * A copy of the lead, or leads, for the wire. A lead that never went through the store can still
+ * hold a contact claim an older build invented, and nothing leaves the browser carrying one.
+ * The caller's leads are not modified.
+ */
+const outboundLeads = (leadOrLeads: Lead | Lead[]): Lead | Lead[] =>
+  Array.isArray(leadOrLeads) ? normalizeLegacyLeads(leadOrLeads).leads : normalizeLegacyLead(leadOrLeads);
+
 export class CRMExportService {
   /**
    * 1-Click Sync single lead directly into Questbook CRM via WP REST API
@@ -56,7 +64,7 @@ export class CRMExportService {
           'Content-Type': 'application/json',
           'X-WP-Nonce': nonce,
         },
-        body: JSON.stringify({ lead }),
+        body: JSON.stringify({ lead: outboundLeads(lead) }),
       });
 
       if (!res.ok) {
@@ -250,7 +258,7 @@ export class CRMExportService {
           'Content-Type': 'application/json',
           'X-WP-Nonce': nonce,
         },
-        body: JSON.stringify({ event, data: leadOrLeads }),
+        body: JSON.stringify({ event, data: outboundLeads(leadOrLeads) }),
       });
 
       const body = await readJsonObject(res);

@@ -53,6 +53,19 @@ describe('normalizeLegacySkipTrace: phone type', () => {
   it('turns the invented carrier check into Unknown', () => {
     expect(normalizeLegacySkipTrace(makeTrace({ phoneType: 'Mobile (Carrier Verified)' })).phoneType).toBe('Unknown');
   });
+
+  it.each(['Verified Practice Line', '  verified  PRACTICE line '])(
+    'turns the old enrichment label %j into Unknown',
+    (legacy) => {
+      expect(normalizeLegacySkipTrace(makeTrace({ phoneType: legacy })).phoneType).toBe('Unknown');
+    },
+  );
+
+  it.each(['Landline', 'Mobile', 'VoIP', 'Unknown'])('keeps the real phone type %s as the same object', (real) => {
+    const trace = makeTrace({ phoneType: real });
+
+    expect(normalizeLegacySkipTrace(trace)).toBe(trace);
+  });
 });
 
 describe('normalizeLegacySkipTrace: confidence score', () => {

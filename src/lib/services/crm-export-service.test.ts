@@ -286,3 +286,91 @@ describe('CRMExportService.exportToCSV compliance columns', () => {
     expect(exported['DNC Status']).toBe('On DNC List');
   });
 });
+
+describe('outbound CRM payloads carry no legacy contact claims', () => {
+  const storedTrace: SkipTraceResult = {
+    verifiedPhone: 'phone-on-file',
+    phoneType: 'Mobile (Carrier Verified)',
+    phoneSource: 'Google Places',
+    confidenceScore: 98,
+    dncStatus: 'Clean - Not on DNC List',
+    primaryEmail: 'email-on-file',
+    emailValidation: 'Website Scraped & Verified',
+    currentAddress: 'Albany',
+    enrichmentNotes: '',
+  };
+  const legacyLead = (id: string, overrides: Partial<SkipTraceResult> = {}): Lead =>
+    makeLead({ id, skipTraceStatus: 'Traced', skipTraceData: { ...storedTrace, ...overrides } });
+
+  const sentBody = (): { lead?: Lead; data?: Lead | Lead[] } => JSON.parse(fetchMock.mock.calls[0][1].body);
+  const sentTrace = (lead: Lead | Lead[] | undefined): SkipTraceResult | undefined =>
+    Array.isArray(lead) ? lead[0].skipTraceData : lead?.skipTraceData;
+
+  const expectNoLegacyClaims = (trace: SkipTraceResult | undefined): void => {
+    expect(trace?.phoneType).toBe('Unknown');
+    expect(trace?.dncStatus).toBe('Unknown');
+    expect(trace).not.toHaveProperty('confidenceScore');
+    expect(trace?.emailValidation).not.toMatch(/scraped & verified/i);
+    expect(trace?.verifiedPhone).toBe('phone-on-file');
+    expect(trace?.phoneSource).toBe('Google Places');
+  };
+
+  it('syncToQuestbook sends a legacy lead with Unknown and no score', async () => {
+    fetchMock.mockResolvedValue(jsonResponse({ success: true }));
+
+    await CRMExportService.syncToQuestbook(legacyLead('legacy-sync'));
+
+    expectNoLegacyClaims(sentTrace(sentBody().lead));
+  });
+
+  it('postWebhook sends a legacy lead with Unknown and no score', async () => {
+    fetchMock.mockResolvedValue(jsonResponse({ success: true }));
+
+    await CRMExportService.postWebhook('lead.created', legacyLead('legacy-hook'));
+
+    expectNoLegacyClaims(sentTrace(sentBody().data));
+  });
+
+  it('postWebhook sends a list of legacy leads with Unknown and no score on each', async () => {
+    fetchMock.mockResolvedValue(jsonResponse({ success: true }));
+
+    await CRMExportService.postWebhook('batch.export', [legacyLead('a'), legacyLead('b')]);
+
+    const { data } = sentBody();
+    expect(data).toHaveLength(2);
+    (data as Lead[]).forEach((lead) => expectNoLegacyClaims(lead.skipTraceData));
+  });
+
+  it('sends the old enrichment practice-line label as Unknown', async () => {
+    fetchMock.mockResolvedValue(jsonResponse({ success: true }));
+
+    await CRMExportService.postWebhook('lead.skiptraced', legacyLead('practice', { phoneType: 'Verified Practice Line' }));
+
+    expect(sentTrace(sentBody().data)?.phoneType).toBe('Unknown');
+  });
+
+  it('leaves the caller leads as they were; only the sent copy is normalized', async () => {
+    fetchMock.mockResolvedValue(jsonResponse({ success: true }));
+    const single = legacyLead('single');
+    const list = [legacyLead('listed')];
+
+    await CRMExportService.syncToQuestbook(single);
+    await CRMExportService.postWebhook('batch.export', list);
+
+    expect(single.skipTraceData).toEqual(storedTrace);
+    expect(list[0].skipTraceData).toEqual(storedTrace);
+  });
+
+  it('sends real values exactly as stored', async () => {
+    fetchMock.mockResolvedValue(jsonResponse({ success: true }));
+    const real = { phoneType: 'Landline', dncStatus: 'On DNC List', confidenceScore: 91, emailValidation: 'MX records found' };
+    const lead = legacyLead('real', real);
+
+    await CRMExportService.syncToQuestbook(lead);
+    await CRMExportService.postWebhook('lead.created', lead);
+
+    const bodies = fetchMock.mock.calls.map(([, init]) => JSON.parse(init.body));
+    expect(bodies[0].lead.skipTraceData).toMatchObject(real);
+    expect(bodies[1].data.skipTraceData).toMatchObject(real);
+  });
+});
