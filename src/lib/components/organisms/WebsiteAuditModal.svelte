@@ -96,7 +96,6 @@
     if (!target) return;
     const currentSkip = target.skipTraceData || {
       tracedAt: new Date().toISOString(),
-      confidenceScore: 90,
       verifiedPhone: '',
       phoneType: 'Unverified',
       dncStatus: 'Public Business Directory',

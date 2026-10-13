@@ -43,9 +43,15 @@ export const OUTREACH_STAGES: OutreachStatus[] = [
 
 export interface SkipTraceResult {
   tracedAt?: string;
-  confidenceScore: number;
+  /**
+   * 0-100 score from a real verification step. Leave it unset when none ran:
+   * a phone copied from a directory listing has a source, not a score.
+   */
+  confidenceScore?: number;
   verifiedPhone: string;
   phoneType: string;
+  /** Where the phone number came from, e.g. 'Google Places'. */
+  phoneSource?: string;
   dncStatus: string;
   primaryEmail: string;
   emailValidation: string;

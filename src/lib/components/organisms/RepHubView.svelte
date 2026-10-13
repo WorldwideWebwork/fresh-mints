@@ -12,6 +12,7 @@
   import { generateColdCallScript, type ColdCallScriptData } from '../../services/outreach-generator';
   import { getPreviewLink } from '../../services/website-templates';
   import { CRMExportService } from '../../services/crm-export-service';
+  import { formatConfidenceBadge, formatPhoneLabel } from '../../services/skip-trace';
   import Card from '../atoms/Card.svelte';
   import Button from '../atoms/Button.svelte';
   import Badge from '../atoms/Badge.svelte';
@@ -517,8 +518,8 @@
                     <Copy class="w-3.5 h-3.5" />
                   </button>
 
-                  <Badge variant="success" class="text-[10px]">
-                    {activeLead.skipTraceData.phoneType || 'Verified Mobile'} ({activeLead.skipTraceData.confidenceScore}%)
+                  <Badge class="text-[10px] {formatConfidenceBadge(activeLead.skipTraceData).color}">
+                    {formatPhoneLabel(activeLead.skipTraceData)}
                   </Badge>
                 {:else}
                   <button

@@ -13,6 +13,7 @@
   import { BombBagService } from '../../services/bomb-bag-service';
   import { getPreviewLink, getSubdomainPreviewLink } from '../../services/website-templates';
   import { copyTextToClipboard } from '../../services/clipboard';
+  import { formatConfidenceBadge } from '../../services/skip-trace';
   import Dialog from '../atoms/Dialog.svelte';
   import Button from '../atoms/Button.svelte';
   import Badge from '../atoms/Badge.svelte';
@@ -582,7 +583,8 @@
               <span>Skip Trace Contact Record</span>
             </div>
             {#if lead.skipTraceData}
-              <Badge variant="success">{lead.skipTraceData.confidenceScore}% Score</Badge>
+              {@const confidence = formatConfidenceBadge(lead.skipTraceData)}
+              <Badge class={confidence.color}>{confidence.label}</Badge>
             {/if}
           </div>
 

@@ -569,15 +569,15 @@ class LeadStoreState {
       skipTraceStatus: resolvedPhone ? 'Traced' : (place.skipTraceStatus || 'Not Traced'),
       skipTraceData: place.skipTraceData || (resolvedPhone ? {
         tracedAt: new Date().toISOString(),
-        confidenceScore: 98,
         verifiedPhone: resolvedPhone,
         phoneType: 'Google Business Line',
+        phoneSource: 'Google Places',
         dncStatus: 'Public Business Directory',
         primaryEmail: '',
         emailValidation: 'Unverified',
         websiteUrl: place.website || '',
         currentAddress: place.formattedAddress,
-        enrichmentNotes: `Google Places Verified (Rating: ${place.rating} stars across ${place.userRatingsTotal} reviews)`,
+        enrichmentNotes: `Phone from the Google Places listing (rating: ${place.rating} stars across ${place.userRatingsTotal} reviews). Not independently verified.`,
       } : undefined),
       outreachStatus: 'Uncontacted',
       websiteConfig: place.websiteConfig || getDefaultWebsiteConfig(place),
@@ -719,7 +719,6 @@ class LeadStoreState {
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const data = await res.json();
       const skipData: SkipTraceResult = data.data || {
-        confidenceScore: 85,
         verifiedPhone: '',
         phoneType: 'Unverified',
         dncStatus: 'Public Directory',
@@ -806,7 +805,6 @@ class LeadStoreState {
       // Synchronize scraped emails and website URL into lead skipTraceData
       const currentSkip = lead.skipTraceData || {
         tracedAt: new Date().toISOString(),
-        confidenceScore: auditData.hasWebsite ? 90 : 30,
         verifiedPhone: '',
         phoneType: 'Unverified',
         dncStatus: 'Public Business Directory',
